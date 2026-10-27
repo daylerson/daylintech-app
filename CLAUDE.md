@@ -9,6 +9,8 @@ App da DaylinTech, empresa de instalação de câmeras, alarmes, interfones, fec
 - `dados/<coleção>/*.json`: os mesmos dados, um arquivo por documento.
 - `config.js`: URL e chave pública (anon/publishable) do Supabase. Vazio = modo local, só no navegador. Nunca colocar a chave `service_role`/secret.
 - `supabase/schema.sql`: tabelas `docs` e `membros`, regras de acesso (RLS) e realtime. Rodar uma vez no SQL Editor do Supabase.
+- `supabase/propostas.sql`: tabela `propostas` e funções `ver_proposta` / `aceitar_proposta` (proposta com link). Rodar depois do schema.sql.
+- `proposta.html`: página pública que o cliente abre (`proposta.html#<token>`), sem login.
 - `vendor/supabase-2.117.3.js`: biblioteca do Supabase servida pelo próprio site (funciona offline pelo service worker). Para atualizar, trocar o arquivo e `SUPABASE_SRC` no index.html e a lista em `sw.js`.
 - `manifest.webmanifest`, `sw.js` e `icons/`: PWA (instalar na tela inicial e abrir sem internet). O service worker busca na rede primeiro e usa o cache só offline. Ao mudar a lista de arquivos do cache, subir a versão em `CACHE`.
 
@@ -31,6 +33,7 @@ Para rodar, sirva a pasta com qualquer servidor estático (ex.: `npx serve .`). 
 - Mão de obra são produtos com `categoria: 'servicos'`. Ficam fora do catálogo e da lista de compras.
 - Pix: payload BR Code estático com CRC16-CCITT (funções `pixPayload` e `crc16`). Desconto do Pix em `empresa.descontoPix`.
 - Cartão: parcelas pela tabela Price, acima de `cartaoSemJuros`, com juros de `cartaoJuros` ao mês.
+- Com a nuvem ligada, "Link da proposta" grava uma cópia da proposta (`css`, `corpo`, `dados`) em `propostas` com um token aleatório de 43 caracteres (`o.linkToken`) e gera `proposta.html#token`. Clicar de novo atualiza a cópia e mantém o link. O cliente só acessa pelas funções `security definer`; o valor do aceite é calculado no banco a partir de `dados` (`totalN`, `vpN`, `parc[].tN`), não do navegador. O aceite grava `o.aceite` (com `via: 'link'`) e muda o status para aprovado direto na tabela `docs`, e o app avisa pelo realtime. Excluir o orçamento apaga a página; "Desfazer aceite" libera o link de novo; "Duplicar" não copia o link.
 - A proposta baixada é um HTML autônomo para o cliente. Ela mostra o Pix, o cartão e o aceite, que gera mensagem no WhatsApp (`wa.me`). No app, "Registrar aceite" lê essa mensagem.
 - Status dos orçamentos: rascunho, enviado, revisao, aprovado, recusado, execucao, concluido. Pagamento em `o.pgto` e aceite em `o.aceite`.
 
@@ -55,5 +58,6 @@ O app foi feito como artefato do claude.ai e usa `window.claude.use(...)`. Fora 
 
 1. ~~Trocar `baixar()` por download comum.~~ Feito.
 2. Publicar em hospedagem estática (Vercel, Netlify ou GitHub Pages) para abrir no celular. A parte de PWA já está pronta.
-3. ~~Banco real com login.~~ Feito (Supabase). Falta criar o projeto e preencher `config.js`.
-4. Proposta como página online com link, para o aceite cair direto no sistema. Pix automático exige integração com um banco ou empresa de pagamentos (Mercado Pago, Asaas etc.).
+3. ~~Banco real com login.~~ Feito (Supabase).
+4. ~~Proposta como página online com link.~~ Feito.
+5. Pix automático (confirmação do pagamento sem conferir o extrato) exige integração com um banco ou empresa de pagamentos (Mercado Pago, Asaas etc.), com backend.

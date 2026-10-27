@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#0A1C3D">
+<title>Proposta</title>
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Barlow:wght@400;500;600;700&display=swap">
+<style>
+/* Só para as telas de carregando e erro. A proposta traz o próprio estilo, igual ao do app. */
+body{margin:0;background:#EEF2F7;color:#0B1A33;font:15px/1.5 Barlow,system-ui,-apple-system,sans-serif;color-scheme:light}
+.msg{max-width:440px;margin:80px auto;padding:0 16px;text-align:center;color:#5B6A80}
+.msg b{display:block;color:#0B1A33;font-size:18px;margin-bottom:6px}
+</style>
+</head>
+<body>
+<main id="raiz"><p class="msg">Carregando a proposta…</p></main>
+<script src="config.js"></script>
+<script src="vendor/supabase-2.117.3.js"></script>
+<script>
+(async function(){
+  var raiz=document.getElementById('raiz'),token=decodeURIComponent(location.hash.slice(1));
+  function $(i){return document.getElementById(i)}
+  function aviso(titulo,texto){raiz.innerHTML='<div class="msg"><b></b><span></span></div>';raiz.querySelector('b').textContent=titulo;raiz.querySelector('span').textContent=texto}
+  var C=window.DAYLINTECH_CONFIG||{};
+  if(!token||!C.supabaseUrl||!window.supabase){aviso('Link incompleto','Confira se o link foi copiado inteiro ou peça um novo para quem te enviou.');return}
+  // Sem login: o cliente só acessa esta proposta, pelas funções ver_proposta e aceitar_proposta.
+  var sb=window.supabase.createClient(C.supabaseUrl,C.supabaseKey,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
+  var r;try{r=await sb.rpc('ver_proposta',{p_token:token})}catch(e){r={error:e}}
+  if(r.error){aviso('Não foi possível abrir a proposta','Confira a internet e tente de novo.');return}
+  if(!r.data){aviso('Proposta não encontrada','Este link não está mais ativo. Peça um novo para quem te enviou.');return}
+  var P=r.data,D=P.dados||{};
+  var st=document.createElement('style');
+  st.textContent=P.css+'\nbody{background:#EEF2F7;padding:20px 12px;color-scheme:light}.paper{margin-bottom:16px}@media print{body{background:#fff;padding:0}.paper{box-shadow:none}.acc{display:none}}';
+  document.head.appendChild(st);
+  raiz.innerHTML=P.corpo;
+  document.title='Proposta Nº '+D.num+' — '+D.emp;
+
+  document.addEventListener('click',function(e){var c=e.target.closest&&e.target.closest('[data-copy]');if(!c)return;var t=c.getAttribute('data-copy');function ok(){c.textContent='Código copiado!'}
+    function fb(){var a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();try{document.execCommand('copy');ok()}catch(x){}a.remove()}
+    if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(ok,fb);else fb()});
+
+  var ok=$('acc_ok'),f=$('acc_form');if(!ok||!f)return;
+  function fmt(iso){var d=new Date(iso);return d.toLocaleDateString('pt-BR')+' às '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')}
+  function pagtoTxt(a){if(a.forma==='pix')return 'Pix'+(D.dp?' com '+D.dp+' de desconto':'')+': '+D.vp;
+    if(a.forma==='cartao'){var p=(D.parc||[]).filter(function(x){return x.n===a.parcelas})[0];return p?'Cartão de crédito em '+p.n+'x de '+p.p+(p.j?' (total '+p.t+')':' sem juros'):'Cartão de crédito'}
+    return 'A combinar'}
+  function concluido(a,agora){
+    $('acc_btns').hidden=true;f.hidden=true;$('acc_done').hidden=false;
+    if(!agora){$('acc_done_t').textContent='Proposta aceita em '+fmt(a.data)+'.';$('acc_done_s').textContent='Aceite de '+a.nome+'. Pagamento: '+pagtoTxt(a)+'.'}
+    if(a.forma==='pix'){$('acc_pix').hidden=false;var px=$('pay_pix');if(px)px.classList.add('hl')}
+    if(agora&&D.wa){var msg=['*ACEITE DE PROPOSTA*','Proposta: Nº '+D.num+' — '+D.emp,'Cliente: '+a.nome,'CPF/CNPJ: '+(a.doc||'não informado'),'Valor da proposta: '+D.total,'Pagamento: '+pagtoTxt(a),'Data: '+fmt(a.data).replace(' às ',' '),'','Li e aceito a proposta e as condições.'].join('\n');
+      $('acc_wa').href='https://wa.me/'+D.wa+'?text='+encodeURIComponent(msg);$('acc_wa_w').hidden=false}
+  }
+  if(P.aceite){concluido(P.aceite,false);return}
+
+  ok.addEventListener('click',function(e){e.preventDefault();f.hidden=false;$('acc_btns').hidden=true;$('acc_nome').focus()});
+  $('acc_cancel').onclick=function(){f.hidden=true;$('acc_btns').hidden=false};
+  function fp(){var x=f.querySelector('input[name=fp]:checked');return x?x.value:'combinar'}
+  f.addEventListener('change',function(){$('acc_parc').disabled=fp()!=='cartao'});
+  f.addEventListener('submit',async function(e){e.preventDefault();
+    var nome=$('acc_nome').value.trim(),doc=$('acc_doc').value.trim(),err=$('acc_err');
+    if(!nome||!$('acc_ok2').checked){err.textContent='Preencha seu nome e marque que leu e aceita a proposta.';err.hidden=false;return}
+    err.hidden=true;var b=$('acc_send');b.disabled=true;b.textContent='Enviando…';
+    var res;try{res=await sb.rpc('aceitar_proposta',{p_token:token,p_nome:nome,p_doc:doc,p_forma:fp(),p_parcela:+$('acc_parc').value||0})}catch(x){res={error:x}}
+    if(res.error||!res.data){b.disabled=false;b.textContent='Confirmar aceite';err.textContent='Não foi possível registrar o aceite. Confira a internet e tente de novo.';err.hidden=false;return}
+    concluido(res.data,res.data.nome===nome);
+  });
+})();
+</script>
+</body>
+</html>

@@ -437,6 +437,7 @@ body.apresentacao .internal{display:none!important}
 @media (min-width:761px){.toast{bottom:24px}}
 .loading{padding:40px;text-align:center;color:var(--muted)}
 body.bloqueado .gear,body.bloqueado .present{display:none}
+a.btn{text-decoration:none}
 .acesso{max-width:420px;margin:24px auto 0;display:flex;flex-direction:column;gap:14px;width:100%}
 .note{font-size:12.5px;color:var(--muted);background:var(--surface-2);border-radius:8px;padding:10px 12px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
@@ -616,7 +617,10 @@ function nuvemDb(linhas){
   linhas.forEach(put);
   sb.channel('docs').on('postgres_changes',{event:'*',schema:'public',table:'docs'},p=>{
     if(p.eventType==='DELETE'){const o=p.old||{};if(o.col){tira(o.col,o.id);fire(o.col)}}
-    else if(p.new&&p.new.col){put(p.new);fire(p.new.col)}
+    else if(p.new&&p.new.col){
+      const antes=cache[p.new.col]&&cache[p.new.col][p.new.id],ac=p.new.data&&p.new.data.aceite;
+      if(p.new.col==='orcamentos'&&ac&&ac.via==='link'&&!(antes&&antes.aceite))toast(`Proposta Nº ${nOrc(p.new.data.numero)} aceita por ${ac.nome}!`);
+      put(p.new);fire(p.new.col)}
   }).subscribe();
   // Se a conexão ao vivo cair, recarrega tudo ao voltar para o app.
   document.addEventListener('visibilitychange',async()=>{if(document.visibilityState!=='visible')return;try{trocarTudo(await carregarTudo())}catch(e){}});
@@ -1660,16 +1664,16 @@ async function pagamentoHTML(o){
       ${ps.length>1?`<table class="parc"><tbody>${ps.map(x=>`<tr><td>${x.n}x</td><td>${money(x.p)}</td><td>${x.juros?`total ${money(x.total)}`:'sem juros'}</td></tr>`).join('')}</tbody></table>`:''}
       ${lk?`<a class="pay-link" href="${esc(lk)}" target="_blank" rel="noopener">Pagar com cartão ↗</a>`:`<div class="pay-s">Pagamento na maquininha, no dia da instalação.</div>`}</div>
   </div></div>`}
-function aceiteHTML(o){
+function aceiteHTML(o,link){
   const t=calc(o),e=S.empresa,dp=num(e.descontoPix),pl=!!pixChave(),ps=parcelas(t.total),c=S.clientes.find(x=>x.id===o.clienteId)||{};
   const n=nOrc(o.numero),emp=e.nome||'DaylinTech';
   const simples=`*ACEITE DE PROPOSTA*\nProposta: Nº ${n} — ${emp}\nCliente: ${cliNome(o)}\nValor da proposta: ${money(t.total)}\n\nLi e aceito a proposta e as condições.`;
   const ajuste=`Olá! Sobre a proposta Nº ${n} da ${emp}, gostaria de ajustar: `;
   const recusa=`Olá! Recebi a proposta Nº ${n} da ${emp}, mas não vou seguir no momento.`;
   return `<section class="acc" id="acc"><div class="pp-cat">Aprovar esta proposta</div>
-    <p class="acc-p">Gostou? Aceite por aqui. A confirmação vai direto para o WhatsApp da ${esc(emp)}.</p>
+    <p class="acc-p">${link?`Gostou? Aceite por aqui. A ${esc(emp)} recebe a confirmação na hora.`:`Gostou? Aceite por aqui. A confirmação vai direto para o WhatsApp da ${esc(emp)}.`}</p>
     <div class="acc-btns" id="acc_btns">
-      <a class="acc-b ok" id="acc_ok" href="${esc(waLink(simples))}">Aceitar proposta</a>
+      <a class="acc-b ok" id="acc_ok" href="${link?'#':esc(waLink(simples))}">Aceitar proposta</a>
       <a class="acc-b" href="${esc(waLink(ajuste))}">Pedir ajuste</a>
       <a class="acc-b no" href="${esc(waLink(recusa))}">Recusar</a>
     </div>
@@ -1684,9 +1688,10 @@ function aceiteHTML(o){
       </fieldset>
       <label class="acc-r"><input type="checkbox" id="acc_ok2" required> Li e aceito a proposta e as condições.</label>
       <p class="acc-err" id="acc_err" hidden>Preencha seu nome e marque que leu e aceita a proposta.</p>
-      <div class="acc-btns"><button type="submit" class="acc-b ok">Confirmar aceite pelo WhatsApp</button><button type="button" class="acc-b" id="acc_cancel">Voltar</button></div>
+      <div class="acc-btns"><button type="submit" class="acc-b ok" id="acc_send">${link?'Confirmar aceite':'Confirmar aceite pelo WhatsApp'}</button><button type="button" class="acc-b" id="acc_cancel">Voltar</button></div>
     </form>
-    <div id="acc_done" class="acc-done" hidden><b>Obrigado! Seu aceite foi preparado no WhatsApp.</b><span>Se o WhatsApp não abriu, <a id="acc_wa" href="#">toque aqui para enviar</a>.</span><span id="acc_pix" hidden>Para pagar com Pix, use o QR Code ou o código copia e cola acima.</span></div>
+    ${link?`<div id="acc_done" class="acc-done" hidden><b id="acc_done_t">Obrigado! Seu aceite foi registrado.</b><span id="acc_done_s">A ${esc(emp)} já recebeu e vai entrar em contato.</span><span id="acc_pix" hidden>Para pagar com Pix, use o QR Code ou o código copia e cola acima.</span><span id="acc_wa_w" hidden><a id="acc_wa" href="#" target="_blank" rel="noopener">Avisar também pelo WhatsApp</a></span></div>`
+    :`<div id="acc_done" class="acc-done" hidden><b>Obrigado! Seu aceite foi preparado no WhatsApp.</b><span>Se o WhatsApp não abriu, <a id="acc_wa" href="#">toque aqui para enviar</a>.</span><span id="acc_pix" hidden>Para pagar com Pix, use o QR Code ou o código copia e cola acima.</span></div>`}
   </section>`}
 const CLIENT_JS=`(function(){var D=JSON.parse(document.getElementById('dados').textContent);function $(i){return document.getElementById(i)}
 document.addEventListener('click',function(e){var c=e.target.closest&&e.target.closest('[data-copy]');if(!c)return;var t=c.getAttribute('data-copy');function ok(){c.textContent='Código copiado!'}
@@ -1703,10 +1708,30 @@ var d=new Date(),dt=d.toLocaleDateString('pt-BR')+' '+String(d.getHours()).padSt
 var msg=['*ACEITE DE PROPOSTA*','Proposta: Nº '+D.num+' — '+D.emp,'Cliente: '+nome,'CPF/CNPJ: '+(doc||'não informado'),'Valor da proposta: '+D.total,'Pagamento: '+pg,'Data: '+dt,'','Li e aceito a proposta e as condições.'].join('\\n');
 var url='https://wa.me/'+D.wa+'?text='+encodeURIComponent(msg);$('acc_wa').href=url;f.hidden=true;$('acc_done').hidden=false;
 if(x==='pix'){$('acc_pix').hidden=false;var px=$('pay_pix');if(px){px.classList.add('hl');}}window.location.href=url});})();`;
-function dadosCliente(o){const t=calc(o),e=S.empresa;return {num:nOrc(o.numero),emp:e.nome||'DaylinTech',total:money(t.total),vp:money(valorPix(t.total)),dp:num(e.descontoPix)?fmtPct(e.descontoPix):'',wa:waNum(),parc:parcelas(t.total).map(x=>({n:x.n,p:money(x.p),t:money(x.total),j:x.juros}))}}
+function dadosCliente(o){const t=calc(o),e=S.empresa,r2=v=>Math.round(num(v)*100)/100;return {num:nOrc(o.numero),emp:e.nome||'DaylinTech',total:money(t.total),totalN:r2(t.total),vp:money(valorPix(t.total)),...(pixChave()?{vpN:r2(valorPix(t.total))}:{}),dp:num(e.descontoPix)?fmtPct(e.descontoPix):'',wa:waNum(),parc:parcelas(t.total).map(x=>({n:x.n,p:money(x.p),t:money(x.total),tN:r2(x.total),j:x.juros}))}}
 function docHTML(title,body,script){
   const css=[...document.querySelectorAll('style')].map(s=>s.textContent).join('\n');
   return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)}</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Barlow:wght@400;500;600;700&display=swap"><style>${css}\nbody{background:#EEF2F7;padding:20px 12px;color-scheme:light}.paper{margin-bottom:16px}@media print{body{background:#fff;padding:0}.paper{box-shadow:none}.acc{display:none}}</style></head><body>${body}${script||''}</body></html>`}
+const novoToken=()=>{const b=crypto.getRandomValues(new Uint8Array(32));return btoa(String.fromCharCode(...b)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')};
+async function linkProposta(o){
+  const cur=S.orcamentos.find(x=>x.id===o.id)||o,token=cur.linkToken||novoToken();
+  const corpo=`${propostaHTML(cur)}<div class="paper pp-extra"><div class="pp-body">${await pagamentoHTML(cur)}${aceiteHTML(cur,true)}</div></div>`;
+  const css=[...document.querySelectorAll('style')].map(s=>s.textContent).join('\n');
+  const {error}=await sb.from('propostas').upsert({token,orcamento_id:cur.id,css,corpo,dados:dadosCliente(cur)});if(error)throw error;
+  if(!cur.linkToken||cur.status==='rascunho')await store.save('orcamentos',{...cur,linkToken:token,status:cur.status==='rascunho'?'enviado':cur.status,atualizadoEm:new Date().toISOString()});
+  const url=new URL('proposta.html',location.href);url.hash=token;
+  let info=null;try{info=(await sb.from('propostas').select('visto_em,aceito_em').eq('token',token).maybeSingle()).data}catch(e){}
+  const c=S.clientes.find(x=>x.id===cur.clienteId)||{},tel=soDig(c.telefone),emp=S.empresa.nome||'DaylinTech';
+  const txt=`Olá${c.nome?', '+c.nome.split(' ')[0]:''}! Segue a proposta Nº ${nOrc(cur.numero)} da ${emp}:\n${url}\n\nPor esse link você vê os valores, paga com Pix e aceita a proposta.`;
+  const waCli=`https://wa.me/${tel?(tel.length<=11?'55'+tel:tel):''}?text=${encodeURIComponent(txt)}`;
+  const situ=info&&info.aceito_em?`Aceita pelo cliente em ${fmtDT(info.aceito_em)}.`:info&&info.visto_em?`O cliente abriu o link em ${fmtDT(info.visto_em)}.`:'O cliente ainda não abriu o link.';
+  openSheet('Link da proposta',`<p style="margin-top:0">Mande este link para o cliente. Ele vê a proposta, as formas de pagamento e aceita por ali. O aceite aparece aqui na hora.</p>
+    <div class="field"><label for="lk_url">Link</label><input id="lk_url" readonly value="${esc(url.href)}"></div>
+    <p class="hint">${esc(situ)}</p>
+    <p class="note">Editou o orçamento? Toque de novo em "Link da proposta" para atualizar a página do cliente. O link continua o mesmo.</p>`,
+    `<a class="btn" href="${esc(url.href)}" target="_blank" rel="noopener">Abrir</a><button class="btn" id="lk_copy">Copiar link</button><a class="btn primary" href="${esc(waCli)}" target="_blank" rel="noopener">Enviar no WhatsApp</a>`,
+    L=>{L.querySelector('#lk_copy').onclick=async()=>{try{await navigator.clipboard.writeText(url.href);toast('Link copiado')}catch(e){const i=L.querySelector('#lk_url');i.focus();i.select()}}});
+}
 async function baixar(nome,html,tipo='text/html;charset=utf-8'){
   try{
     const url=URL.createObjectURL(new Blob([html],{type:tipo}));
@@ -1743,7 +1768,7 @@ function registrarAceite(o){
         try{await store.save('orcamentos',{...cur,aceite:ac,status:vendido(cur)?cur.status:'aprovado',atualizadoEm:new Date().toISOString()});
           if(c.id&&ac.doc&&!c.documento){try{await store.save('clientes',{...c,documento:ac.doc})}catch(err){}}
           closeSheet();render();toast('Aceite registrado. Proposta aprovada!')}catch(err){toast('Não foi possível salvar. Tente de novo.')}};
-      if(o.aceite)$('ac_del').onclick=async()=>{const cur=S.orcamentos.find(x=>x.id===o.id)||o;const n={...cur};delete n.aceite;try{await store.save('orcamentos',n);closeSheet();render();toast('Aceite removido')}catch(err){toast('Não foi possível salvar.')}};
+      if(o.aceite)$('ac_del').onclick=async()=>{const cur=S.orcamentos.find(x=>x.id===o.id)||o;const n={...cur};delete n.aceite;try{await store.save('orcamentos',n);if(sb&&cur.linkToken){try{await sb.from('propostas').update({aceite:null,aceito_em:null}).eq('orcamento_id',cur.id)}catch(e){}}closeSheet();render();toast('Aceite removido')}catch(err){toast('Não foi possível salvar.')}};
     });
 }
 function registrarPagamento(o){
@@ -1805,7 +1830,7 @@ function vProposta(app){
   <section class="panel internal">
     <div class="spread" style="align-items:center"><h2 class="h2">Fechamento</h2><span class="hint">Aceite, pagamento e recibo</span></div>
     <div class="steps">
-      <div class="step ${a?'done':''}"><span class="st-n">${a?'✓':'1'}</span><div class="st-t"><b>Aceite do cliente</b><span class="hint">${a?`${esc(a.nome)} aceitou em ${fmtDT(a.data)} · ${esc(formaTxt(a))}${a.valor?` · ${money(a.valor)}`:''}`:'Quando o cliente aceitar pelo WhatsApp, cole a mensagem aqui.'}</span></div><button class="btn sm ${a?'':'primary'}" id="fx_ac">${a?'Editar':'Registrar aceite'}</button></div>
+      <div class="step ${a?'done':''}"><span class="st-n">${a?'✓':'1'}</span><div class="st-t"><b>Aceite do cliente</b><span class="hint">${a?`${esc(a.nome)} aceitou em ${fmtDT(a.data)} · ${esc(formaTxt(a))}${a.valor?` · ${money(a.valor)}`:''}`:(sb?'Mande o link da proposta: o aceite do cliente aparece aqui sozinho.':'Quando o cliente aceitar pelo WhatsApp, cole a mensagem aqui.')}</span></div><button class="btn sm ${a?'':'primary'}" id="fx_ac">${a?'Editar':'Registrar aceite'}</button></div>
       <div class="step ${p?'done':''}"><span class="st-n">${p?'✓':'2'}</span><div class="st-t"><b>Pagamento</b><span class="hint">${p?`${money(p.valor)} via ${esc(formaTxt(p))} em ${fmtDate(p.data+'T12:00:00')}${p.tipo==='parcial'?' · parcial':''}`:'Registre quando o dinheiro entrar.'}</span></div><button class="btn sm ${a&&!p?'primary':''}" id="fx_pg">${p?'Editar':'Registrar pagamento'}</button></div>
       <div class="step"><span class="st-n">3</span><div class="st-t"><b>Recibo</b><span class="hint">${p?'Pronto, com sua assinatura.':'Liberado depois do pagamento.'}</span></div><button class="btn sm ${p?'primary':''}" id="fx_rc" ${p?'':'disabled'}>Ver recibo</button></div>
     </div>
@@ -1813,7 +1838,8 @@ function vProposta(app){
   </section>
   <div class="paper-wrap">${propostaHTML(o)}<div class="paper pp-extra"><div class="pp-body" id="pp_pay"><span class="hint">Carregando formas de pagamento…</span></div></div></div>
   <div class="actions">
-    <button class="btn ${vendido(o)?'':'primary'}" id="pp_dl">${svg(UI.dl)}Baixar proposta com aceite</button>
+    ${sb?`<button class="btn ${vendido(o)?'':'primary'}" id="pp_link">${svg(UI.copy)}Link da proposta</button>`:''}
+    <button class="btn ${vendido(o)||sb?'':'primary'}" id="pp_dl">${svg(UI.dl)}Baixar proposta com aceite</button>
     <button class="btn ${vendido(o)&&o.status!=='concluido'?'primary':''} internal" id="pp_buy">${svg(UI.cart)}Lista de compras</button>
     <button class="btn" id="pp_copy">${svg(UI.copy)}Copiar para WhatsApp</button>
     <button class="btn internal" id="pp_edit">${svg(UI.edit)}Editar</button>
@@ -1824,13 +1850,14 @@ function vProposta(app){
   pagamentoHTML(o).then(h=>{const el=$('pp_pay');if(el)el.innerHTML=h});
   $('st_sel').onchange=async e=>{try{await store.save('orcamentos',{...o,status:e.target.value,atualizadoEm:new Date().toISOString()});toast(e.target.value==='aprovado'?'Aprovado! Veja a lista de compras.':'Status: '+STATUS[e.target.value])}catch(err){toast('Não foi possível alterar o status.')}};
   $('fx_ac').onclick=()=>registrarAceite(o);
+  if(sb)$('pp_link').onclick=async()=>{const b=$('pp_link');b.disabled=true;try{await linkProposta(o)}catch(e){toast('Não foi possível criar o link. Confira a internet e tente de novo.')}finally{b.disabled=false}};
   $('fx_pg').onclick=()=>registrarPagamento(o);
   $('fx_rc').onclick=()=>verRecibo(o.id);
   $('pp_copy').onclick=()=>copyText(propostaTexto(o));
   $('pp_buy').onclick=()=>listaCompras(o.id);
   $('pp_edit').onclick=()=>editarOrc(o);
-  $('pp_dup').onclick=()=>{const c=JSON.parse(JSON.stringify(o));delete c.aceite;delete c.pgto;delete c.comprados;draft={...c,id:uid(),numero:null,status:'rascunho',criadoEm:new Date().toISOString(),_dirty:true,_new:true};go('editor',{force:true})};
-  $('pp_del').onclick=()=>confirmSheet('Excluir orçamento?',`O orçamento Nº ${nOrc(o.numero)} de ${esc(cliNome(o))} será apagado.`,'Excluir',async()=>{await store.remove('orcamentos',o.id);toast('Orçamento excluído');go('inicio',{force:true})});
+  $('pp_dup').onclick=()=>{const c=JSON.parse(JSON.stringify(o));delete c.aceite;delete c.pgto;delete c.comprados;delete c.linkToken;draft={...c,id:uid(),numero:null,status:'rascunho',criadoEm:new Date().toISOString(),_dirty:true,_new:true};go('editor',{force:true})};
+  $('pp_del').onclick=()=>confirmSheet('Excluir orçamento?',`O orçamento Nº ${nOrc(o.numero)} de ${esc(cliNome(o))} será apagado.`,'Excluir',async()=>{if(sb){try{await sb.from('propostas').delete().eq('orcamento_id',o.id)}catch(e){}}await store.remove('orcamentos',o.id);toast('Orçamento excluído');go('inicio',{force:true})});
   $('pp_dl').onclick=async()=>{
     const b=$('pp_dl');b.disabled=true;
     try{const pay=await pagamentoHTML(o);
