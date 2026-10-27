@@ -1,2 +1,6 @@
 node_modules/
 .DS_Store
+
+# Dados reais (CPF de clientes, chave Pix, assinatura): nunca enviar ao GitHub
+dados/
+*.json

@@ -536,7 +536,7 @@ let draft=null;
 /* ---------- Armazenamento ---------- */
 let db=null;const LS='daylintech:v1';
 const lsGet=()=>{try{return JSON.parse(localStorage.getItem(LS))||{}}catch(e){return {}}};
-const lsSet=o=>{try{localStorage.setItem(LS,JSON.stringify(o))}catch(e){}};
+const lsSet=o=>{try{localStorage.setItem(LS,JSON.stringify(o));return true}catch(e){return false}};
 const store={
   async save(col,obj){
     if(db){await db.collection(col).doc(obj.id).set(obj);S[col]=S[col].filter(x=>x.id!==obj.id).concat([obj]);return}
@@ -554,8 +554,8 @@ const store={
 async function initStore(){
   try{db=window.claude&&window.claude.use?await window.claude.use('db'):null}catch(e){db=null}
   if(!db){
-    let all=lsGet();
-    if(!all.produtos){try{const r=await fetch('dados/backup-daylintech.json');if(r.ok){all=await r.json();lsSet(all)}}catch(e){}}['produtos','clientes','orcamentos'].forEach(c=>{S[c]=all[c]||[];S.ready[c]=true});
+    const all=lsGet();
+    ['produtos','clientes','orcamentos'].forEach(c=>{S[c]=all[c]||[];S.ready[c]=true});
     S.empresa={...DEF_EMPRESA,...(all.empresa||{})};S.ready.empresa=true;render();return;
   }
   ['produtos','clientes','orcamentos'].forEach(c=>{
@@ -1199,7 +1199,12 @@ function vAjustes(app){
     </div>
     <div class="row" style="justify-content:flex-end"><button class="btn primary" id="e_save">Salvar dados</button></div>
   </section>
-  ${db?'':`<p class="note">Os dados estão guardados apenas neste navegador. Abra o app pelo Claude para salvar com segurança na sua conta.</p>`}`;
+  <div class="internal"><h2 class="h2">Backup</h2><p class="muted" style="margin:4px 0 0">Produtos, clientes, orçamentos e dados da empresa em um arquivo .json. Guarde em lugar seguro: ele tem CPF de clientes, chave Pix e assinatura.</p></div>
+  <section class="panel internal">
+    ${db?'':`<p class="note" style="margin-top:0">Os dados ficam guardados só neste navegador. Exporte um backup de vez em quando e use “Restaurar backup” para levar os dados a outro aparelho.</p>`}
+    <input type="file" id="e_bkfile" accept=".json,application/json" hidden>
+    <div class="row" style="justify-content:flex-end"><button class="btn" id="e_bkin" type="button">Restaurar backup</button><button class="btn primary" id="e_bkout" type="button">Exportar backup</button></div>
+  </section>`;
   const $=id=>app.querySelector('#'+id);
   const ler=()=>({...S.empresa,nome:$('e_nome').value.trim()||'DaylinTech',cnpj:$('e_cnpj').value.trim(),slogan:$('e_slogan').value.trim(),telefone:$('e_tel').value.trim(),email:$('e_email').value.trim(),endereco:$('e_end').value.trim(),
     imposto:num($('e_imp').value),despesas:num($('e_desp').value),margem:num($('e_marg').value),arredondar:num($('e_arr').value),metaMensal:num($('e_meta').value),whatsapp:$('e_wa').value.trim(),cidade:$('e_cid').value.trim(),pixTipo:$('e_ptipo').value,pixChave:$('e_pchave').value.trim(),pixNome:$('e_pnome').value.trim(),descontoPix:num($('e_pdesc').value),cartaoMax:Math.max(1,Math.round(num($('e_cmax').value))||1),cartaoSemJuros:Math.max(1,Math.round(num($('e_csj').value))||1),cartaoJuros:num($('e_cjur').value),linkPagamento:normUrl($('e_link').value),responsavel:$('e_resp').value.trim(),
@@ -1228,6 +1233,32 @@ function vAjustes(app){
       let url='';if(x1>=0){const pad=6;x0=Math.max(0,x0-pad);y0=Math.max(0,y0-pad);x1=Math.min(w-1,x1+pad);y1=Math.min(h-1,y1+pad);const cw=x1-x0+1,ch=y1-y0+1,k=Math.min(1,140/ch,520/cw);const o=document.createElement('canvas');o.width=Math.round(cw*k);o.height=Math.round(ch*k);o.getContext('2d').drawImage(cv,x0,y0,cw,ch,0,0,o.width,o.height);url=o.toDataURL('image/png')}
       try{await store.saveEmpresa({...S.empresa,...ler(),assinatura:url});S.empresa={...S.empresa,assinatura:url,responsavel:$('e_resp').value.trim()};toast(url?'Assinatura salva':'Assinatura removida')}catch(err){toast('Não foi possível salvar a assinatura.')}};
   })();
+  $('e_bkout').onclick=async()=>{
+    const bk={produtos:S.produtos,clientes:S.clientes,orcamentos:S.orcamentos,empresa:S.empresa};
+    if(await baixar(`backup-daylintech-${new Date().toISOString().slice(0,10)}.json`,JSON.stringify(bk,null,2),'application/json'))toast('Backup exportado. Guarde o arquivo em lugar seguro.');
+  };
+  $('e_bkin').onclick=()=>$('e_bkfile').click();
+  $('e_bkfile').onchange=async ev=>{
+    const f=ev.target.files[0];ev.target.value='';if(!f)return;
+    let bk;try{bk=JSON.parse(await f.text())}catch(err){toast('Esse arquivo não é um backup válido.');return}
+    const cols=['produtos','clientes','orcamentos'];
+    if(!bk||typeof bk!=='object'||!cols.some(c=>Array.isArray(bk[c]))&&!bk.empresa){toast('Esse arquivo não é um backup da DaylinTech.');return}
+    const n=c=>Array.isArray(bk[c])?bk[c].length:0;
+    confirmSheet('Restaurar backup?',`O arquivo tem ${n('produtos')} produtos, ${n('clientes')} clientes e ${n('orcamentos')} orçamentos. Ele vai <b>substituir</b> tudo o que está no app agora. Se quiser guardar os dados atuais, exporte um backup antes.`,'Restaurar',async()=>{
+      try{
+        if(db){
+          for(const c of cols){const novos=Array.isArray(bk[c])?bk[c]:[];const ids=new Set(novos.map(x=>x.id));
+            for(const x of S[c].filter(x=>!ids.has(x.id)))await store.remove(c,x.id);
+            for(const x of novos)await store.save(c,x)}
+          await store.saveEmpresa(bk.empresa||{});
+        }else{
+          const all={};cols.forEach(c=>all[c]=Array.isArray(bk[c])?bk[c]:[]);all.empresa=bk.empresa||{};if(!lsSet(all)){toast('O navegador não deixou gravar o backup. Libere espaço e tente de novo.');return}
+          cols.forEach(c=>S[c]=all[c]);
+        }
+        S.empresa={...DEF_EMPRESA,...(bk.empresa||{})};render();toast('Backup restaurado');
+      }catch(err){toast('Não foi possível restaurar. Tente de novo.')}
+    });
+  };
   $('e_recalc').onclick=async()=>{
     if(!await salvar())return;
     const auto=S.produtos.filter(p=>!p.precoManual&&num(p.custo)>0);
@@ -1549,9 +1580,9 @@ function dadosCliente(o){const t=calc(o),e=S.empresa;return {num:nOrc(o.numero),
 function docHTML(title,body,script){
   const css=[...document.querySelectorAll('style')].map(s=>s.textContent).join('\n');
   return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)}</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Barlow:wght@400;500;600;700&display=swap"><style>${css}\nbody{background:#EEF2F7;padding:20px 12px;color-scheme:light}.paper{margin-bottom:16px}@media print{body{background:#fff;padding:0}.paper{box-shadow:none}.acc{display:none}}</style></head><body>${body}${script||''}</body></html>`}
-async function baixar(nome,html){
+async function baixar(nome,html,tipo='text/html;charset=utf-8'){
   try{
-    const url=URL.createObjectURL(new Blob([html],{type:'text/html;charset=utf-8'}));
+    const url=URL.createObjectURL(new Blob([html],{type:tipo}));
     const a=document.createElement('a');a.href=url;a.download=nome;document.body.appendChild(a);a.click();a.remove();
     setTimeout(()=>URL.revokeObjectURL(url),4000);return true;
   }catch(e){toast('Não foi possível baixar aqui.');return false}}

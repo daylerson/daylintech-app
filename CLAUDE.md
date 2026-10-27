@@ -5,11 +5,11 @@ App da DaylinTech, empresa de instalação de câmeras, alarmes, interfones, fec
 ## Estrutura
 
 - `index.html`: o app inteiro em um arquivo, com HTML, CSS e JavaScript puro, sem framework. Logo e imagens estão embutidas em base64.
-- `dados/backup-daylintech.json`: dados reais exportados (produtos, clientes, orçamentos e `empresa`). Tem o mesmo formato que o app grava no `localStorage` (chave `daylintech:v1`).
+- `dados/backup-daylintech.json`: dados reais exportados (produtos, clientes, orçamentos e `empresa`). Tem o mesmo formato que o app grava no `localStorage` (chave `daylintech:v1`). **Só local: `dados/` e `*.json` estão no `.gitignore`**, porque o site é público e o arquivo tem CPF de clientes, chave Pix e assinatura. Nunca commitar dados reais.
 - `dados/<coleção>/*.json`: os mesmos dados, um arquivo por documento.
 - `manifest.webmanifest`, `sw.js` e `icons/`: PWA (instalar na tela inicial e abrir sem internet). O service worker busca na rede primeiro e usa o cache só offline. Ao mudar a lista de arquivos do cache, subir a versão em `CACHE`.
 
-Para rodar, sirva a pasta com qualquer servidor estático (ex.: `npx serve .`). Com o `localStorage` vazio, o app carrega o backup sozinho.
+Para rodar, sirva a pasta com qualquer servidor estático (ex.: `npx serve .`). O app abre vazio. Para carregar os dados, use **Empresa → Restaurar backup** e escolha o `.json`. **Exportar backup** baixa um `.json` com tudo, no mesmo formato.
 
 ## Telas
 
@@ -19,7 +19,7 @@ Para rodar, sirva a pasta com qualquer servidor estático (ex.: `npx serve .`). 
 - Catálogo de materiais: foto, datasheet, várias lojas por produto, importação de cotação.
 - Mão de obra.
 - Clientes.
-- Empresa: preços e impostos, Pix, cartão, WhatsApp e assinatura.
+- Empresa: preços e impostos, Pix, cartão, WhatsApp, assinatura e backup (exportar e restaurar).
 
 ## Regras de negócio importantes
 
