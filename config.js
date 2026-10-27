@@ -4,6 +4,6 @@
 // "service_role" / "secret".
 // Com os dois vazios, o app funciona só neste navegador, como antes.
 window.DAYLINTECH_CONFIG = {
-  supabaseUrl: '',
-  supabaseKey: ''
+  supabaseUrl: 'https://pxlftfobcgrmdvbhxunr.supabase.co',
+  supabaseKey: 'sb_publishable_c2ssAJpgIstK-1pEZfqMeQ_XOp6FsgP'
 };
