@@ -436,6 +436,8 @@ body.apresentacao .internal{display:none!important}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(92px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:9px;font-weight:600;z-index:60;box-shadow:0 8px 24px rgba(0,0,0,.2);max-width:calc(100% - 32px)}
 @media (min-width:761px){.toast{bottom:24px}}
 .loading{padding:40px;text-align:center;color:var(--muted)}
+body.bloqueado .gear,body.bloqueado .present{display:none}
+.acesso{max-width:420px;margin:24px auto 0;display:flex;flex-direction:column;gap:14px;width:100%}
 .note{font-size:12.5px;color:var(--muted);background:var(--surface-2);border-radius:8px;padding:10px 12px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -455,6 +457,7 @@ body.apresentacao .internal{display:none!important}
 <nav class="bottomnav" id="bottomnav"></nav>
 <div id="layer"></div>
 
+<script src="config.js"></script>
 <script>
 (function(){
 const CATS=[
@@ -552,7 +555,8 @@ const store={
   }
 };
 async function initStore(){
-  try{db=window.claude&&window.claude.use?await window.claude.use('db'):null}catch(e){db=null}
+  if(temNuvem()){db=await conectarNuvem();if(!db)return}
+  else try{db=window.claude&&window.claude.use?await window.claude.use('db'):null}catch(e){db=null}
   if(!db){
     const all=lsGet();
     ['produtos','clientes','orcamentos'].forEach(c=>{S[c]=all[c]||[];S.ready[c]=true});
@@ -562,7 +566,123 @@ async function initStore(){
     db.collection(c).onSnapshot(snap=>{S[c]=snap.docs.map(d=>d.data());S.ready[c]=true;render(true)},err=>{S.ready[c]=true;toast('Não foi possível carregar '+c+'.');render()});
   });
   db.doc('config/empresa').onSnapshot(s=>{S.empresa={...DEF_EMPRESA,...(s.exists?s.data():{})};S.ready.empresa=true;render(true)},()=>{S.ready.empresa=true;render()});
+  if(db.vazio&&db.vazio())oferecerMigracao();
 }
+
+/* ---------- Nuvem (Supabase) com login ---------- */
+const NUVEM=window.DAYLINTECH_CONFIG||{};
+const temNuvem=()=>!!(NUVEM.supabaseUrl&&NUVEM.supabaseKey);
+const SUPABASE_SRC='vendor/supabase-2.117.3.js';
+let sb=null,tela=null,recuperando=false;
+function mostrarTela(f){tela=f;render()}
+async function conectarNuvem(){
+  try{await loadScript(SUPABASE_SRC)}catch(e){mostrarTela(telaErroNuvem);return null}
+  if(!sb){
+    sb=window.supabase.createClient(NUVEM.supabaseUrl,NUVEM.supabaseKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+    sb.auth.onAuthStateChange(ev=>{if(ev==='PASSWORD_RECOVERY'){recuperando=true;setTimeout(()=>mostrarTela(telaNovaSenha))}if(ev==='SIGNED_OUT')location.reload()});
+  }
+  let sessao=null;try{sessao=(await sb.auth.getSession()).data.session}catch(e){}
+  if(!sessao){mostrarTela(telaLogin);return null}
+  if(recuperando){mostrarTela(telaNovaSenha);return null}
+  try{
+    const {data:membro,error}=await sb.rpc('e_membro');if(error)throw error;
+    if(!membro){mostrarTela(telaSemAcesso);return null}
+    const linhas=await carregarTudo();if(recuperando){mostrarTela(telaNovaSenha);return null}
+    const d=nuvemDb(linhas);tela=null;document.body.classList.remove('bloqueado');return d;
+  }catch(e){mostrarTela(telaErroNuvem);return null}
+}
+async function carregarTudo(){
+  const out=[];
+  for(let de=0;;de+=1000){
+    const {data,error}=await sb.from('docs').select('col,id,data').order('col').order('id').range(de,de+999);
+    if(error)throw error;out.push(...data);if(data.length<1000)return out;
+  }
+}
+// Mesmo formato do banco do artefato (collection/doc/onSnapshot), para o resto do app não mudar.
+function nuvemDb(linhas){
+  let cache={};const subs={};
+  const put=r=>{(cache[r.col]=cache[r.col]||{})[r.id]=r.data};
+  const tira=(c,id)=>{if(cache[c])delete cache[c][id]};
+  const fire=c=>(subs[c]||[]).forEach(f=>f());
+  const ouvir=(c,f)=>{(subs[c]=subs[c]||[]).push(f);f()};
+  const ok=({error})=>{if(error)throw error};
+  const docSnap=(c,id)=>{const d=cache[c]&&cache[c][id];return {exists:!!d,data:()=>d}};
+  const ref=(c,id)=>({
+    async set(data){ok(await sb.from('docs').upsert({col:c,id,data}));put({col:c,id,data});fire(c)},
+    async delete(){ok(await sb.from('docs').delete().eq('col',c).eq('id',id));tira(c,id);fire(c)},
+    onSnapshot(f){ouvir(c,()=>f(docSnap(c,id)))}
+  });
+  const trocarTudo=ls=>{cache={};ls.forEach(put);Object.keys(subs).forEach(fire)};
+  linhas.forEach(put);
+  sb.channel('docs').on('postgres_changes',{event:'*',schema:'public',table:'docs'},p=>{
+    if(p.eventType==='DELETE'){const o=p.old||{};if(o.col){tira(o.col,o.id);fire(o.col)}}
+    else if(p.new&&p.new.col){put(p.new);fire(p.new.col)}
+  }).subscribe();
+  // Se a conexão ao vivo cair, recarrega tudo ao voltar para o app.
+  document.addEventListener('visibilitychange',async()=>{if(document.visibilityState!=='visible')return;try{trocarTudo(await carregarTudo())}catch(e){}});
+  return {
+    collection:c=>({doc:id=>ref(c,id),onSnapshot:f=>ouvir(c,()=>f({docs:Object.values(cache[c]||{}).map(d=>({data:()=>d}))}))}),
+    doc:path=>{const [c,id]=path.split('/');return ref(c,id)},
+    vazio:()=>!Object.values(cache).some(x=>Object.keys(x).length),
+    // Substitui tudo pelo conteúdo de um backup.
+    async importar(bk){
+      const cols=['produtos','clientes','orcamentos'],ls=[];
+      cols.forEach(c=>(Array.isArray(bk[c])?bk[c]:[]).filter(x=>x&&x.id).forEach(x=>ls.push({col:c,id:String(x.id),data:x})));
+      ls.push({col:'config',id:'empresa',data:bk.empresa||{}});
+      for(let i=0;i<ls.length;i+=200)ok(await sb.from('docs').upsert(ls.slice(i,i+200)));
+      for(const c of cols){const ids=new Set(ls.filter(r=>r.col===c).map(r=>r.id));const sobra=Object.keys(cache[c]||{}).filter(id=>!ids.has(id));
+        for(let i=0;i<sobra.length;i+=200)ok(await sb.from('docs').delete().eq('col',c).in('id',sobra.slice(i,i+200)))}
+      trocarTudo(ls);
+    }
+  };
+}
+function oferecerMigracao(){
+  const loc=lsGet(),n=c=>(loc[c]||[]).length;if(!n('produtos')&&!n('clientes')&&!n('orcamentos'))return;
+  openSheet('Enviar dados para a nuvem?',`<p>A nuvem ainda está vazia. Este aparelho tem ${n('produtos')} produtos, ${n('clientes')} clientes e ${n('orcamentos')} orçamentos salvos. Quer enviar tudo para a nuvem? Depois disso eles aparecem em qualquer aparelho em que você entrar.</p>`,
+    `<button class="btn" data-act="close">Agora não</button><button class="btn primary" id="mg_ok">Enviar</button>`,
+    L=>{L.querySelector('#mg_ok').onclick=async()=>{closeSheet();try{await db.importar(loc);toast('Dados enviados para a nuvem')}catch(e){toast('Não foi possível enviar. Tente de novo.')}}});
+}
+function telaAcesso(app,titulo,corpo){app.innerHTML=`<div class="acesso"><div><div class="eyebrow">DaylinTech</div><h1 class="h1">${titulo}</h1></div><section class="panel">${corpo}</section></div>`}
+function telaLogin(app){
+  telaAcesso(app,'Entrar',`<form id="lg_form" class="form" novalidate>
+    <div class="field full"><label for="lg_email">E-mail</label><input id="lg_email" type="email" autocomplete="username" inputmode="email" required></div>
+    <div class="field full"><label for="lg_senha">Senha</label><input id="lg_senha" type="password" autocomplete="current-password" required></div>
+    <p class="note full" id="lg_msg" role="alert" hidden></p>
+    <div class="row full" style="justify-content:flex-end"><button class="btn" type="button" id="lg_esq">Esqueci a senha</button><button class="btn primary" type="submit" id="lg_ok">Entrar</button></div>
+  </form>`);
+  const $=id=>app.querySelector('#'+id),msg=t=>{$('lg_msg').textContent=t;$('lg_msg').hidden=!t};
+  $('lg_form').onsubmit=async ev=>{ev.preventDefault();const email=$('lg_email').value.trim(),password=$('lg_senha').value;
+    if(!email||!password){msg('Preencha o e-mail e a senha.');return}
+    $('lg_ok').disabled=true;msg('');
+    let error;try{({error}=await sb.auth.signInWithPassword({email,password}))}catch(e){error=e}
+    if(error){$('lg_ok').disabled=false;msg(/invalid login/i.test(error.message||'')?'E-mail ou senha incorretos.':/not confirmed/i.test(error.message||'')?'Confirme o e-mail pelo link que chegou na sua caixa de entrada.':'Não foi possível entrar. Confira a internet e tente de novo.');return}
+    entrar()};
+  $('lg_esq').onclick=async()=>{const email=$('lg_email').value.trim();if(!email){msg('Digite seu e-mail e toque de novo em "Esqueci a senha".');$('lg_email').focus();return}
+    try{const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});if(error)throw error;msg('Se esse e-mail tiver acesso, chega um link para criar uma senha nova.')}catch(e){msg('Não foi possível enviar o link. Tente de novo em alguns minutos.')}};
+}
+function telaNovaSenha(app){
+  telaAcesso(app,'Criar nova senha',`<form id="ns_form" class="form" novalidate>
+    <div class="field full"><label for="ns_senha">Nova senha</label><input id="ns_senha" type="password" autocomplete="new-password" minlength="8"><span class="hint">Pelo menos 8 caracteres.</span></div>
+    <p class="note full" id="ns_msg" role="alert" hidden></p>
+    <div class="row full" style="justify-content:flex-end"><button class="btn primary" type="submit" id="ns_ok">Salvar senha</button></div>
+  </form>`);
+  const $=id=>app.querySelector('#'+id),msg=t=>{$('ns_msg').textContent=t;$('ns_msg').hidden=!t};
+  $('ns_form').onsubmit=async ev=>{ev.preventDefault();const password=$('ns_senha').value;if(password.length<8){msg('A senha precisa ter pelo menos 8 caracteres.');return}
+    $('ns_ok').disabled=true;let error;try{({error}=await sb.auth.updateUser({password}))}catch(e){error=e}
+    if(error){$('ns_ok').disabled=false;msg('Não foi possível salvar a senha. Tente de novo.');return}
+    recuperando=false;toast('Senha salva');history.replaceState(null,'',location.pathname);entrar()};
+}
+function telaSemAcesso(app){
+  telaAcesso(app,'Sem acesso',`<p>Este e-mail entrou, mas ainda não tem permissão para ver os dados da DaylinTech. Peça ao responsável para incluir o seu e-mail na lista de membros.</p>
+    <div class="row" style="justify-content:flex-end"><button class="btn" id="sa_sair">Sair</button></div>`);
+  app.querySelector('#sa_sair').onclick=()=>sb.auth.signOut();
+}
+function telaErroNuvem(app){
+  telaAcesso(app,'Sem conexão',`<p>Não consegui falar com o banco de dados. Confira a internet e tente de novo.</p>
+    <div class="row" style="justify-content:flex-end"><button class="btn primary" id="en_ok">Tentar de novo</button></div>`);
+  app.querySelector('#en_ok').onclick=entrar;
+}
+function entrar(){tela=null;document.getElementById('app').innerHTML='<div class="loading">Carregando seus dados…</div>';initStore()}
 
 /* ---------- Utilidades de UI ---------- */
 let toastT;
@@ -601,6 +721,7 @@ function go(name,extra={}){
 /* ---------- Render principal ---------- */
 function allReady(){return Object.values(S.ready).every(Boolean)}
 function render(fromSnap){
+  if(tela){document.body.classList.add('bloqueado');document.getElementById('toptabs').innerHTML='';document.getElementById('bottomnav').innerHTML='';tela(document.getElementById('app'));return}
   renderNav();
   const app=document.getElementById('app');
   if(!allReady()){app.innerHTML='<div class="loading">Carregando seus dados…</div>';return}
@@ -1204,7 +1325,11 @@ function vAjustes(app){
     ${db?'':`<p class="note" style="margin-top:0">Os dados ficam guardados só neste navegador. Exporte um backup de vez em quando e use “Restaurar backup” para levar os dados a outro aparelho.</p>`}
     <input type="file" id="e_bkfile" accept=".json,application/json" hidden>
     <div class="row" style="justify-content:flex-end"><button class="btn" id="e_bkin" type="button">Restaurar backup</button><button class="btn primary" id="e_bkout" type="button">Exportar backup</button></div>
-  </section>`;
+  </section>
+  ${sb?`<div><h2 class="h2">Conta</h2></div>
+  <section class="panel"><p style="margin:0">Conectado como <b id="e_conta"></b>. Os dados ficam salvos na nuvem e aparecem em qualquer aparelho em que você entrar.</p>
+    <div class="row" style="justify-content:flex-end"><button class="btn" id="e_sair" type="button">Sair</button></div>
+  </section>`:''}`;
   const $=id=>app.querySelector('#'+id);
   const ler=()=>({...S.empresa,nome:$('e_nome').value.trim()||'DaylinTech',cnpj:$('e_cnpj').value.trim(),slogan:$('e_slogan').value.trim(),telefone:$('e_tel').value.trim(),email:$('e_email').value.trim(),endereco:$('e_end').value.trim(),
     imposto:num($('e_imp').value),despesas:num($('e_desp').value),margem:num($('e_marg').value),arredondar:num($('e_arr').value),metaMensal:num($('e_meta').value),whatsapp:$('e_wa').value.trim(),cidade:$('e_cid').value.trim(),pixTipo:$('e_ptipo').value,pixChave:$('e_pchave').value.trim(),pixNome:$('e_pnome').value.trim(),descontoPix:num($('e_pdesc').value),cartaoMax:Math.max(1,Math.round(num($('e_cmax').value))||1),cartaoSemJuros:Math.max(1,Math.round(num($('e_csj').value))||1),cartaoJuros:num($('e_cjur').value),linkPagamento:normUrl($('e_link').value),responsavel:$('e_resp').value.trim(),
@@ -1233,6 +1358,7 @@ function vAjustes(app){
       let url='';if(x1>=0){const pad=6;x0=Math.max(0,x0-pad);y0=Math.max(0,y0-pad);x1=Math.min(w-1,x1+pad);y1=Math.min(h-1,y1+pad);const cw=x1-x0+1,ch=y1-y0+1,k=Math.min(1,140/ch,520/cw);const o=document.createElement('canvas');o.width=Math.round(cw*k);o.height=Math.round(ch*k);o.getContext('2d').drawImage(cv,x0,y0,cw,ch,0,0,o.width,o.height);url=o.toDataURL('image/png')}
       try{await store.saveEmpresa({...S.empresa,...ler(),assinatura:url});S.empresa={...S.empresa,assinatura:url,responsavel:$('e_resp').value.trim()};toast(url?'Assinatura salva':'Assinatura removida')}catch(err){toast('Não foi possível salvar a assinatura.')}};
   })();
+  if(sb){sb.auth.getSession().then(r=>{const u=r.data.session&&r.data.session.user;if(u&&$('e_conta'))$('e_conta').textContent=u.email}).catch(()=>{});$('e_sair').onclick=()=>sb.auth.signOut()}
   $('e_bkout').onclick=async()=>{
     const bk={produtos:S.produtos,clientes:S.clientes,orcamentos:S.orcamentos,empresa:S.empresa};
     if(await baixar(`backup-daylintech-${new Date().toISOString().slice(0,10)}.json`,JSON.stringify(bk,null,2),'application/json'))toast('Backup exportado. Guarde o arquivo em lugar seguro.');
@@ -1246,7 +1372,8 @@ function vAjustes(app){
     const n=c=>Array.isArray(bk[c])?bk[c].length:0;
     confirmSheet('Restaurar backup?',`O arquivo tem ${n('produtos')} produtos, ${n('clientes')} clientes e ${n('orcamentos')} orçamentos. Ele vai <b>substituir</b> tudo o que está no app agora. Se quiser guardar os dados atuais, exporte um backup antes.`,'Restaurar',async()=>{
       try{
-        if(db){
+        if(db&&db.importar)await db.importar(bk);
+        else if(db){
           for(const c of cols){const novos=Array.isArray(bk[c])?bk[c]:[];const ids=new Set(novos.map(x=>x.id));
             for(const x of S[c].filter(x=>!ids.has(x.id)))await store.remove(c,x.id);
             for(const x of novos)await store.save(c,x)}

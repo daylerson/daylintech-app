@@ -7,6 +7,9 @@ App da DaylinTech, empresa de instalação de câmeras, alarmes, interfones, fec
 - `index.html`: o app inteiro em um arquivo, com HTML, CSS e JavaScript puro, sem framework. Logo e imagens estão embutidas em base64.
 - `dados/backup-daylintech.json`: dados reais exportados (produtos, clientes, orçamentos e `empresa`). Tem o mesmo formato que o app grava no `localStorage` (chave `daylintech:v1`). **Só local: `dados/` e `*.json` estão no `.gitignore`**, porque o site é público e o arquivo tem CPF de clientes, chave Pix e assinatura. Nunca commitar dados reais.
 - `dados/<coleção>/*.json`: os mesmos dados, um arquivo por documento.
+- `config.js`: URL e chave pública (anon/publishable) do Supabase. Vazio = modo local, só no navegador. Nunca colocar a chave `service_role`/secret.
+- `supabase/schema.sql`: tabelas `docs` e `membros`, regras de acesso (RLS) e realtime. Rodar uma vez no SQL Editor do Supabase.
+- `vendor/supabase-2.117.3.js`: biblioteca do Supabase servida pelo próprio site (funciona offline pelo service worker). Para atualizar, trocar o arquivo e `SUPABASE_SRC` no index.html e a lista em `sw.js`.
 - `manifest.webmanifest`, `sw.js` e `icons/`: PWA (instalar na tela inicial e abrir sem internet). O service worker busca na rede primeiro e usa o cache só offline. Ao mudar a lista de arquivos do cache, subir a versão em `CACHE`.
 
 Para rodar, sirva a pasta com qualquer servidor estático (ex.: `npx serve .`). O app abre vazio. Para carregar os dados, use **Empresa → Restaurar backup** e escolha o `.json`. **Exportar backup** baixa um `.json` com tudo, no mesmo formato.
@@ -35,13 +38,22 @@ Para rodar, sirva a pasta com qualquer servidor estático (ex.: `npx serve .`). 
 
 O app foi feito como artefato do claude.ai e usa `window.claude.use(...)`. Fora do Claude, essas funções não existem:
 
-- `db`: banco na nuvem. Fora do Claude, o app já cai para o `localStorage`, que guarda os dados só naquele navegador. Para usar em vários aparelhos, trocar o objeto `store` e a função `initStore` por um banco real (ex.: Supabase ou Firebase), com login.
+- `db`: já trocado. Com `config.js` preenchido, o app usa o Supabase com login (e-mail e senha); sem ele, cai para o `localStorage`.
 - `downloads`: já trocado. `baixar()` agora faz download comum (Blob + `<a download>`).
 - `sample`: leitura de cotações com IA (`lerCotacao`). Fora do Claude, precisa de um backend que chame a API da Anthropic. Nunca colocar a chave de API no front-end.
+
+## Banco na nuvem (Supabase)
+
+- Tudo fica na tabela `docs` (`col`, `id`, `data` jsonb), um registro por documento, no mesmo formato do backup. A empresa é `col='config'`, `id='empresa'`.
+- `nuvemDb()` no index.html imita a API do banco do artefato (`collection().doc().set/delete`, `onSnapshot`), então `store` e as telas não mudaram. Atualiza ao vivo pelo realtime e recarrega tudo ao voltar para o app.
+- Dados da empresa são compartilhados: qualquer e-mail na tabela `membros` vê e edita tudo. Quem não está lá entra, mas vê a tela "Sem acesso" e o banco não devolve nada.
+- Usuários são criados no painel do Supabase (Authentication → Users → Add user, com "Auto confirm"). Deixar desligado o cadastro público ("Allow new users to sign up").
+- Login, "Esqueci a senha" (link volta ao site e abre "Criar nova senha") e "Sair" na aba Empresa.
+- Ao entrar com a nuvem vazia, o app oferece enviar os dados que estão no `localStorage` daquele aparelho. "Restaurar backup" na nuvem substitui tudo em lote (`db.importar`).
 
 ## Próximos passos sugeridos
 
 1. ~~Trocar `baixar()` por download comum.~~ Feito.
 2. Publicar em hospedagem estática (Vercel, Netlify ou GitHub Pages) para abrir no celular. A parte de PWA já está pronta.
-3. Banco real com login, migrando os dados de `dados/backup-daylintech.json`.
+3. ~~Banco real com login.~~ Feito (Supabase). Falta criar o projeto e preencher `config.js`.
 4. Proposta como página online com link, para o aceite cair direto no sistema. Pix automático exige integração com um banco ou empresa de pagamentos (Mercado Pago, Asaas etc.).
