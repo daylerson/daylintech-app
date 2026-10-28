@@ -38,7 +38,7 @@ body{margin:0;background:#EEF2F7;color:#0B1A33;font:15px/1.5 Barlow,system-ui,-a
   st.textContent=P.css+'\nbody{background:#EEF2F7;padding:20px 12px;color-scheme:light}.paper{margin-bottom:16px}@media print{body{background:#fff;padding:0}.paper{box-shadow:none}.acc{display:none}}';
   document.head.appendChild(st);
   raiz.innerHTML=P.corpo;
-  document.title='Proposta Nº '+D.num+' — '+D.emp;
+  document.title=(D.tipo==='os'?'OS Nº ':'Proposta Nº ')+D.num+' — '+D.emp;
 
   document.addEventListener('click',function(e){var c=e.target.closest&&e.target.closest('[data-copy]');if(!c)return;var t=c.getAttribute('data-copy');function ok(){c.textContent='Código copiado!'}
     function fb(){var a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();try{document.execCommand('copy');ok()}catch(x){}a.remove()}
