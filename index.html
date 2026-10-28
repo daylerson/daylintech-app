@@ -1395,8 +1395,14 @@ function vClientes(app){
     return `<div class="li" data-edit-cli="${c.id}" tabindex="0" role="button"><div><div class="t">${esc(c.nome)}</div><div class="d">${esc([c.telefone,[c.bairro,c.cidade].filter(Boolean).join(', ')].filter(Boolean).join(' · ')||'Sem contato cadastrado')}</div></div>
     <div class="r"><span class="d">${os.length} orçamento${os.length===1?'':'s'}</span>${ap?`<span class="num" style="font-weight:700;color:var(--ok)">${money(ap)}</span>`:''}</div></div>`}).join('')}</div>`}`;
 }
+// Rota e CEP: Google Maps / Waze abrem o app no celular; CEP pelo ViaCEP (gratuito, sem cadastro).
+const rotaURL=(end,app)=>app==='waze'?`https://waze.com/ul?q=${encodeURIComponent(end)}&navigate=yes`:`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(end)}`;
+const endRota=c=>[c.endereco,c.bairro,c.cidade,c.cep].filter(Boolean).join(', ');
+const fmtCEP=v=>{const d=soDig(v).slice(0,8);return d.length>5?d.slice(0,5)+'-'+d.slice(5):d};
+async function buscaCEP(cep){const d=soDig(cep);if(d.length!==8)throw new Error('formato');
+  const r=await fetch(`https://viacep.com.br/ws/${d}/json/`);if(!r.ok)throw new Error('rede');const j=await r.json();if(j.erro)throw new Error('naoachou');return j}
 function formCli(c,onSaved){
-  const isNew=!c;c=c||{id:uid(),nome:'',tipo:'PF',documento:'',telefone:'',email:'',endereco:'',bairro:'',cidade:'',obs:''};
+  const isNew=!c;c=c||{id:uid(),nome:'',tipo:'PF',documento:'',telefone:'',email:'',cep:'',endereco:'',bairro:'',cidade:'',obs:''};
   const os=isNew?[]:S.orcamentos.filter(o=>o.clienteId===c.id).sort((a,b)=>(b.criadoEm||'').localeCompare(a.criadoEm||''));
   openSheet(isNew?'Novo cliente':c.nome,`
    <div class="form">
@@ -1405,16 +1411,36 @@ function formCli(c,onSaved){
     <div class="field"><label for="c_doc">CPF ou CNPJ</label><input id="c_doc" value="${esc(c.documento)}" inputmode="numeric"></div>
     <div class="field"><label for="c_tel">Telefone / WhatsApp</label><input id="c_tel" value="${esc(c.telefone)}" inputmode="tel" placeholder="(11) 90000-0000"></div>
     <div class="field"><label for="c_email">E-mail</label><input id="c_email" value="${esc(c.email)}" inputmode="email"></div>
+    <div class="field"><label for="c_cep">CEP</label><div class="row" style="gap:6px;flex-wrap:nowrap"><input id="c_cep" value="${esc(fmtCEP(c.cep||''))}" inputmode="numeric" autocomplete="postal-code" placeholder="00000-000" style="flex:1;min-width:0"><button class="btn" type="button" id="c_cepb">Buscar</button></div><span class="hint" id="c_ceph">Digite o CEP e o endereço é preenchido sozinho.</span></div>
     <div class="field full"><label for="c_end">Endereço da instalação</label><input id="c_end" value="${esc(c.endereco)}" placeholder="Rua, número, complemento"></div>
     <div class="field"><label for="c_bairro">Bairro</label><input id="c_bairro" value="${esc(c.bairro)}"></div>
     <div class="field"><label for="c_cid">Cidade</label><input id="c_cid" value="${esc(c.cidade)}"></div>
+    <div class="row full" style="gap:8px"><a class="btn sm" id="c_gmaps" target="_blank" rel="noopener">Rota no Google Maps</a><a class="btn sm" id="c_waze" target="_blank" rel="noopener">Rota no Waze</a></div>
     <div class="field full"><label for="c_obs">Observações</label><textarea id="c_obs" placeholder="Ex.: portão de garagem, 3 andares, prefere visita à tarde">${esc(c.obs)}</textarea></div>
    </div>
    ${os.length?`<div class="eyebrow">Orçamentos deste cliente</div><div class="list">${os.map(o=>`<div class="li" data-open-orc="${o.id}"><div><div class="t mono">Nº ${nOrc(o.numero)}</div><div class="d">${fmtDate(o.criadoEm)}</div></div><div class="r"><span class="num">${money(calc(o).total)}</span><span class="pill st-${o.status}">${STATUS[o.status]}</span></div></div>`).join('')}</div>`:''}`,
    `${isNew?'':`<button class="btn danger left" id="c_del">${svg(UI.trash)}Excluir</button><button class="btn" id="c_orc">Novo orçamento</button>`}<button class="btn" data-act="close">Cancelar</button><button class="btn primary" id="c_save">Salvar</button>`,
    L=>{
      const $=id=>L.querySelector('#'+id);
-     const read=()=>({...c,nome:$('c_nome').value.trim(),tipo:$('c_tipo').value,documento:$('c_doc').value.trim(),telefone:$('c_tel').value.trim(),email:$('c_email').value.trim(),endereco:$('c_end').value.trim(),bairro:$('c_bairro').value.trim(),cidade:$('c_cid').value.trim(),obs:$('c_obs').value.trim(),atualizadoEm:new Date().toISOString()});
+     const read=()=>({...c,nome:$('c_nome').value.trim(),tipo:$('c_tipo').value,documento:$('c_doc').value.trim(),telefone:$('c_tel').value.trim(),email:$('c_email').value.trim(),cep:fmtCEP($('c_cep').value),endereco:$('c_end').value.trim(),bairro:$('c_bairro').value.trim(),cidade:$('c_cid').value.trim(),obs:$('c_obs').value.trim(),atualizadoEm:new Date().toISOString()});
+     // Rota: os links acompanham o que está digitado.
+     const rotas=()=>{const e=endRota({endereco:$('c_end').value.trim(),bairro:$('c_bairro').value.trim(),cidade:$('c_cid').value.trim(),cep:fmtCEP($('c_cep').value)});
+       ['c_gmaps','c_waze'].forEach(id=>{const a=$(id);if(e){a.href=rotaURL(e,id==='c_waze'?'waze':'');a.removeAttribute('aria-disabled');a.style.opacity=''}else{a.removeAttribute('href');a.setAttribute('aria-disabled','true');a.style.opacity='.5'}})};
+     ['c_end','c_bairro','c_cid','c_cep'].forEach(id=>$(id).addEventListener('input',rotas));rotas();
+     // CEP: busca ao completar 8 números ou no botão.
+     let ultimoCEP=soDig(c.cep||''),buscando='';
+     const preencher=async()=>{const d=soDig($('c_cep').value),h=$('c_ceph');if(d.length!==8){h.textContent='O CEP tem 8 números.';return}
+       if(buscando===d)return;buscando=d;h.textContent='Buscando…';
+       try{const j=await buscaCEP(d);ultimoCEP=d;
+         const rua=[j.logradouro,j.complemento].filter(Boolean).join(' - ');const end=$('c_end');
+         if(rua&&(!end.value.trim()||!normNome(end.value).startsWith(normNome(j.logradouro))))end.value=rua+', ';
+         if(j.bairro)$('c_bairro').value=j.bairro;if(j.localidade)$('c_cid').value=j.localidade+(j.uf?' - '+j.uf:'');
+         rotas();h.textContent=rua?'Endereço encontrado. Complete o número.':'CEP de cidade inteira: digite a rua e o número.';
+         end.focus();const n=end.value.length;try{end.setSelectionRange(n,n)}catch(e){}}
+       catch(e){h.textContent=e.message==='naoachou'?'CEP não encontrado. Confira os números.':'Não consegui buscar agora. Confira a internet ou preencha à mão.'}
+       finally{buscando=''}};
+     $('c_cep').addEventListener('input',()=>{const el=$('c_cep'),f=fmtCEP(el.value);if(el.value!==f)el.value=f;const d=soDig(f);if(d.length===8&&d!==ultimoCEP)preencher()});
+     $('c_cepb').onclick=preencher;
      $('c_save').onclick=async()=>{const o=read();if(!o.nome){toast('Informe o nome do cliente.');$('c_nome').focus();return}
        try{await store.save('clientes',o);S.clientes=S.clientes.filter(x=>x.id!==o.id).concat([o]);closeSheet();toast(isNew?'Cliente cadastrado':'Cliente atualizado');onSaved&&onSaved(o)}catch(e){toast('Não foi possível salvar. Tente de novo.')}};
      if(!isNew){
@@ -2225,7 +2251,8 @@ function vOS(app){
   app.innerHTML=`
   <div class="row" style="justify-content:space-between"><button class="btn ghost" data-nav="agenda">${svg(UI.back)}Agenda</button><span class="os-fase">${fase}</span></div>
   <div><div class="eyebrow">Ordem de serviço Nº ${nOrc(o.numero)}</div><h1 class="h1">${esc(c.nome)}</h1>
-    <p class="muted" style="margin:6px 0 0">${esc(cap(diaTxt(g.data,true)))}${g.hora?` às ${esc(g.hora)}`:''}${g.endereco?` · ${esc(g.endereco)}`:''}</p></div>
+    <p class="muted" style="margin:6px 0 0">${esc(cap(diaTxt(g.data,true)))}${g.hora?` às ${esc(g.hora)}`:''}${g.endereco?` · ${esc(g.endereco)}`:''}</p>
+    ${g.endereco?`<div class="row" style="gap:8px;margin-top:10px">${(e=>`<a class="btn sm" href="${esc(rotaURL(e))}" target="_blank" rel="noopener">Rota no Google Maps</a><a class="btn sm" href="${esc(rotaURL(e,'waze'))}" target="_blank" rel="noopener">Rota no Waze</a>`)([g.endereco,c.cep].filter(Boolean).join(', '))}</div>`:''}</div>
   <section class="panel"><div class="spread" style="align-items:center"><h2 class="h2">Andamento</h2><button class="btn sm" id="ox_ed">Editar agendamento</button></div>
     <div class="os-tempo"><div><span class="hint">Início</span><b>${g.inicio?hm(g.inicio):'—'}</b></div><div><span class="hint">Término</span><b>${g.fim?hm(g.fim):'—'}</b></div><div><span class="hint">${dur?'Duração':'Duração aproximada'}</span><b>${dur||esc(g.duracao||'—')}</b></div></div>
     <div class="row">${!g.inicio?`<button class="btn primary" id="os_ini">Iniciar serviço</button>`:!g.fim?`<button class="btn primary" id="os_fim">Finalizar serviço</button>`:''}${g.inicio?`<button class="btn ghost sm" id="os_hr">Corrigir horários</button>`:''}</div>
@@ -2270,7 +2297,7 @@ function vAgenda(app){
   const mes=iso=>new Date(iso+'T12:00:00').toLocaleDateString('pt-BR',{month:'short'}).replace('.','');
   const card=(o,cls)=>{const g=o.agenda;return `<div class="ag-card"><div class="ag-d ${cls||''}"><b>${g.data.slice(8,10)}</b><span>${mes(g.data)}</span></div>
     <div class="ag-i"><b>${esc(cliNome(o))}${g.inicio&&!g.fim&&o.status!=='concluido'?' <span class="os-fase" style="font-size:11px">Em andamento</span>':''}</b><span>${esc(cap(diaTxt(g.data,true).split(',')[0]))}${g.hora?` às ${esc(g.hora)}`:''} · Nº ${nOrc(o.numero)}${o.titulo?` · ${esc(o.titulo)}`:''}</span>${g.endereco?`<span>${esc(g.endereco)}</span>`:''}</div>
-    <div class="ag-b"><button class="btn sm" data-ag-os="${o.id}">OS</button><button class="btn sm" data-ag-wa="${o.id}">WhatsApp</button>${o.status==='concluido'?'':`<button class="btn sm primary" data-ag-ok="${o.id}">Concluir</button>`}</div></div>`};
+    <div class="ag-b">${g.endereco?`<a class="btn sm" href="${esc(rotaURL([g.endereco,(S.clientes.find(x=>x.id===o.clienteId)||{}).cep].filter(Boolean).join(', ')))}" target="_blank" rel="noopener">Rota</a>`:''}<button class="btn sm" data-ag-os="${o.id}">OS</button><button class="btn sm" data-ag-wa="${o.id}">WhatsApp</button>${o.status==='concluido'?'':`<button class="btn sm primary" data-ag-ok="${o.id}">Concluir</button>`}</div></div>`};
   const esperaCard=({o,l})=>`<div class="ag-card"><div class="ag-d wait"><b>—</b><span>sem data</span></div>
     <div class="ag-i"><b>${esc(cliNome(o))}</b><span>Nº ${nOrc(o.numero)}${o.titulo?` · ${esc(o.titulo)}`:''}</span><span>${l?(l.iso<hoje?`<b style="color:var(--bad)">Prazo da proposta venceu em ${diaTxt(l.iso)}</b>`:`Agendar até ${esc(diaTxt(l.iso,true))}`):'Sem prazo na proposta'}</span></div>
     <div class="ag-b"><button class="btn sm primary" data-ag-novo="${o.id}">Agendar</button></div></div>`;

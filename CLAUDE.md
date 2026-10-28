@@ -28,7 +28,7 @@ Para rodar, sirva a pasta com qualquer servidor estático (ex.: `npx serve .`). 
 - Agenda: instalações atrasadas, de hoje, próximas, aguardando agendamento (com a data limite pelo prazo da proposta) e concluídas.
 - Catálogo de materiais: foto, datasheet, várias lojas por produto, importação de cotação.
 - Mão de obra.
-- Clientes.
+- Clientes: CEP com busca automática pelo ViaCEP (`buscaCEP()`, preenche endereço, bairro e "Cidade - UF"; o cliente guarda `cep`) e botões de rota no Google Maps e no Waze (`rotaURL()`). A Agenda e a OS também têm botão de rota.
 - Empresa: preços e impostos, Pix, cartão, WhatsApp, assinatura e backup (exportar e restaurar).
 
 ## Regras de negócio importantes
