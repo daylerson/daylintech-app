@@ -72,7 +72,10 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   if (req.method !== "POST") return responder(405, { erro: "metodo" });
 
-  const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, {
+  // Chave pública do projeto: a que o app manda no cabeçalho "apikey" (projetos novos não têm
+  // mais a SUPABASE_ANON_KEY); a checagem de verdade é o login do usuário, logo abaixo.
+  const chavePublica = req.headers.get("apikey") || Deno.env.get("SUPABASE_ANON_KEY") || "";
+  const sb = createClient(Deno.env.get("SUPABASE_URL")!, chavePublica, {
     global: { headers: { Authorization: req.headers.get("Authorization") ?? "" } },
   });
   const { data: membro, error: erroMembro } = await sb.rpc("e_membro");
