@@ -29,7 +29,7 @@ Para rodar, sirva a pasta com qualquer servidor estático (ex.: `npx serve .`). 
 - Catálogo de materiais: foto, datasheet, várias lojas por produto, importação de cotação.
 - Mão de obra.
 - Clientes: CEP com busca automática pelo ViaCEP (`buscaCEP()`, preenche endereço, bairro e "Cidade - UF"; o cliente guarda `cep`) e botões de rota no Google Maps e no Waze (`rotaURL()`). A Agenda e a OS também têm botão de rota.
-- Empresa: preços e impostos, Pix, cartão, WhatsApp, assinatura e backup (exportar e restaurar).
+- Empresa: preços e impostos, Pix, cartão, WhatsApp, redes sociais e avaliações, assinatura e backup (exportar e restaurar).
 
 ## Regras de negócio importantes
 
@@ -44,6 +44,7 @@ Para rodar, sirva a pasta com qualquer servidor estático (ex.: `npx serve .`). 
 - Texto de pagamento: cada orçamento guarda o seu (`o.pagamento`), copiado de `empresa.pagamento`. `atualizarTextos()` troca, ao carregar e depois de importar backup, os textos padrão antigos (`PAG_ANTIGOS`) pelo atual de `DEF_EMPRESA`. Texto personalizado não é mexido. Ao mudar o padrão, colocar o anterior em `PAG_ANTIGOS`.
 - A proposta não tem linha de assinatura do cliente (o aceite é pelo link ou WhatsApp). O Pix aparece numa caixa compacta: QR Code pequeno, valor e botão "Copiar código Pix".
 - Agendamento / OS: `o.agenda` = `{data, hora, endereco, tecnico, duracao, obs, concluidoEm}`. `prazoLimite()` lê o prazo da proposta ("N dias [úteis]") e conta a partir de `aceite.data`, pulando sábado e domingo se forem úteis (feriados não). `osHTML()` é a ordem de serviço (serviços e materiais sem preço, assinaturas do técnico e do cliente) e sai em PDF por `htmlPDF()`, o mesmo do recibo. "Confirmar no WhatsApp" usa `textoAgenda()` e `enviarComPDF()` (celular: Compartilhar com a OS anexada; computador: conversa com o texto). Agendar não muda o status; "Concluir" muda para concluido. Execução da OS em `o.agenda`: `inicio`, `fim`, `relatorio`, `assTec`, `assCli`, `assCliNome`, `assCliEm` (assinaturas em PNG data URL, desenhadas em `padAssinatura()`), `fotos: {antes:[], depois:[]}`. Cada foto é `{p}` (caminho no Storage `os-fotos/<id do orçamento>/...`, com nuvem) ou `{d}` (data URL, sem nuvem). As fotos ficam em `fotoCache` na memória; `cortar43()` recorta para o PDF porque o html2canvas não faz `object-fit`. Sem assinatura do técnico, a OS usa `empresa.assinatura` se o técnico for o responsável. `htmlPDF()` quebra em várias páginas A4, cortando entre blocos. Excluir o orçamento apaga as fotos; Duplicar não copia o agendamento.
+- Redes e avaliação: `empresa.linkAvaliacao` (link "Pedir avaliações" do Perfil da Empresa no Google), `googlePerfil`, `instagram`, `site`. O recibo e a OS finalizada mostram `avaliacaoHTML()` (estrelas, link e QR em PNG por `qrPNG()`, preparado com `prepAval()` antes de gerar o PDF, porque o PDF é imagem e o link não é clicável); as mensagens do recibo e da OS finalizada terminam com `textoAval()`. A proposta mostra Instagram, site e "Veja nossas avaliações no Google" no rodapé. O pedido é igual para todos os clientes (regra do Google: sem incentivo e sem filtrar quem avalia).
 - Status dos orçamentos: rascunho, enviado, revisao, aprovado, recusado, execucao, concluido. Pagamento em `o.pgto` e aceite em `o.aceite`.
 
 ## O que dependia do Claude (artefato) e precisa ser trocado
