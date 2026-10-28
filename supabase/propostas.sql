@@ -87,6 +87,8 @@ begin
     end if;
     v_valor := (parc ->> 'tN')::numeric;
     v_parcelas := (parc ->> 'n')::int;
+  elsif p_forma = 'metade' then
+    v_valor := (r.dados ->> 'totalN')::numeric;  -- 50% na aprovação e 50% na conclusão
   else
     p_forma := 'combinar';
     v_valor := (r.dados ->> 'totalN')::numeric;

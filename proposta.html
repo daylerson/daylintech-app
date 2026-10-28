@@ -48,8 +48,12 @@ body{margin:0;background:#EEF2F7;color:#0B1A33;font:15px/1.5 Barlow,system-ui,-a
   function fmt(iso){var d=new Date(iso);return d.toLocaleDateString('pt-BR')+' às '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')}
   function pagtoTxt(a){if(a.forma==='pix')return 'Pix'+(D.dp?' com '+D.dp+' de desconto':'')+': '+D.vp;
     if(a.forma==='cartao')return 'Cartão de crédito';
+    if(a.forma==='metade')return '50% na aprovação ('+D.metade+') e 50% na conclusão';
     return 'A combinar'}
-  function concluido(a,agora){
+  function concluido(a,agora,escolha){
+    if(escolha==='metade'&&a.forma==='combinar')a.forma='metade'; // banco ainda sem a opção 50%: mostra do mesmo jeito
+    if(a.forma==='metade'&&D.pixMetade&&$('acc_ent')){var en=$('acc_ent');en.innerHTML='<b>Entrada de 50%: '+D.metade+'</b><br>Pague a entrada com o Pix abaixo. O restante fica para a conclusão do serviço.';
+      var bt=document.createElement('button');bt.type='button';bt.className='pay-copy';bt.setAttribute('data-copy',D.pixMetade);bt.textContent='Copiar código Pix da entrada';bt.style.marginTop='8px';en.appendChild(document.createElement('br'));en.appendChild(bt);en.hidden=false}
     $('acc_btns').hidden=true;f.hidden=true;$('acc_done').hidden=false;
     if(!agora){$('acc_done_t').textContent='Proposta aceita em '+fmt(a.data)+'.';$('acc_done_s').textContent='Aceite de '+a.nome+'. Pagamento: '+pagtoTxt(a)+'.'}
     if(a.forma==='pix'){$('acc_pix').hidden=false;var px=$('pay_pix');if(px)px.classList.add('hl')}
@@ -71,7 +75,7 @@ body{margin:0;background:#EEF2F7;color:#0B1A33;font:15px/1.5 Barlow,system-ui,-a
     // Banco ainda sem o campo WhatsApp (propostas.sql antigo): aceita sem ele.
     if(res.error&&res.error.code==='PGRST202'){delete args.p_whats;try{res=await sb.rpc('aceitar_proposta',args)}catch(x){res={error:x}}}
     if(res.error||!res.data){b.disabled=false;b.textContent='Confirmar aceite';err.textContent='Não foi possível registrar o aceite. Confira a internet e tente de novo.';err.hidden=false;return}
-    concluido(res.data,res.data.nome===nome);
+    concluido(res.data,res.data.nome===nome,fp());
   });
 })();
 </script>

@@ -237,6 +237,7 @@ body.apresentacao .internal{display:none!important}
 .pp-tot .g{border-left:6px solid var(--paper-accent)}
 .pp-tot .g span:last-child{font-family:var(--f-display);font-size:25px;font-weight:800;color:var(--paper-blue)}
 .pp-cond{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;background:var(--paper-soft);border-radius:6px;padding:14px 16px;font-size:13.5px}
+.pp-cond>div{white-space:pre-line;line-height:1.5}.pp-cond .cond-full{grid-column:1/-1}
 .pp-foot{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;align-items:flex-end;font-size:12.5px;color:var(--paper-muted);border-top:1px solid var(--paper-line);padding-top:16px}
 .sign{width:220px;border-top:1px solid var(--paper-ink);padding-top:6px;text-align:center;color:var(--paper-ink)}
 .actions{position:sticky;bottom:0;display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
@@ -586,7 +587,7 @@ const normNome=t=>String(t||'').trim().toLowerCase().normalize('NFD').replace(/[
 function fornEf(p){const fs=((p&&p.fornecedores)||[]).filter(f=>num(f.preco)>0);if(!fs.length)return null;const fx=p.fornecedorFixo&&fs.find(f=>f.id===p.fornecedorFixo);const min=fs.reduce((a,b)=>num(b.preco)<num(a.preco)?b:a);return {f:fx||min,min,fixo:!!fx,n:fs.length,lista:fs}}
 function idadePill(d){return d==null?'':`<span class="pill ${d>30?'conf-baixa':'st-rascunho'}">${d===0?'atualizado hoje':d>30?`há ${d} dias · pedir cotação`:`há ${d} dia${d===1?'':'s'}`}</span>`}
 
-const DEF_EMPRESA={nome:'DaylinTech',slogan:'Tecnologia que protege',cnpj:'',telefone:'',email:'',endereco:'',margem:30,imposto:6,despesas:0,arredondar:1,descontoPix:5,cartaoMax:12,cartaoSemJuros:3,cartaoJuros:2.99,pixTipo:'cpf',pixChave:'',pixNome:'',cidade:'',whatsapp:'',linkPagamento:'',responsavel:'',assinatura:'',validade:15,pagamento:'50% na aprovação e 50% na conclusão. Pix, transferência ou cartão de crédito parcelado em até 3x sem juros ou em até 12x com juros da operadora.',garantia:'Garantia de 12 meses nos equipamentos (fabricante) e 90 dias na instalação.',garantiaEquipMeses:12,garantiaServDias:90,prazo:'Instalação em até 5 dias úteis após a aprovação.'};
+const DEF_EMPRESA={nome:'DaylinTech',slogan:'Tecnologia que protege',cnpj:'',telefone:'',email:'',endereco:'',margem:30,imposto:6,despesas:0,arredondar:1,descontoPix:5,cartaoMax:12,cartaoSemJuros:3,cartaoJuros:2.99,pixTipo:'cpf',pixChave:'',pixNome:'',cidade:'',whatsapp:'',linkPagamento:'',responsavel:'',assinatura:'',validade:15,pagamento:'Oferecemos 3 formas de pagamento:\n1) 50% na aprovação e 50% na conclusão do serviço (Pix ou transferência).\n2) Pix à vista com 5% de desconto.\n3) Cartão de crédito em até 3x sem juros ou em até 12x com juros da operadora.',garantia:'Equipamentos: 12 meses de garantia do fabricante (verificar com o fabricante). Nos primeiros 30 dias, qualquer defeito tem troca expressa. Após os 30 dias, o equipamento com defeito é retirado e enviado para a análise de garantia do fabricante; durante esse período, o cliente pode ficar sem o equipamento.\nInstalação: 90 dias (3 meses) de garantia total com a DaylinTech: qualquer problema na instalação é resolvido sem custo. Após os 90 dias, é cobrada visita técnica de R$ 130,00 para diagnóstico.',garantiaEquipMeses:12,garantiaServDias:90,prazo:'Início da instalação em até 5 dias úteis após a aprovação.'};
 
 const S={produtos:[],clientes:[],orcamentos:[],empresa:{...DEF_EMPRESA},ready:{produtos:false,clientes:false,orcamentos:false,empresa:false}};
 let view={name:'home'};
@@ -627,12 +628,15 @@ async function initStore(){
   atualizarTextos();
 }
 // Troca textos padrão antigos pelo atual, só onde ninguém personalizou.
-const PAG_ANTIGOS=['50% na aprovação e 50% na conclusão. Pix, transferência ou cartão.','50% na aprovação e 50% na conclusão. Pix, transferência ou cartão de crédito em 3x sem juros ou em até 12x com juros da operadora.'];
+const PAG_ANTIGOS=['50% na aprovação e 50% na conclusão. Pix, transferência ou cartão de crédito parcelado em até 3x sem juros ou em até 12x com juros da operadora.','50% na aprovação e 50% na conclusão. Pix, transferência ou cartão.','50% na aprovação e 50% na conclusão. Pix, transferência ou cartão de crédito em 3x sem juros ou em até 12x com juros da operadora.'];
+const TEXTOS_ANTIGOS={pagamento:PAG_ANTIGOS,prazo:['Instalação em até 5 dias úteis após a aprovação.'],garantia:['Garantia de 12 meses nos equipamentos (fabricante) e 90 dias na instalação.']};
+// Troca textos padrão antigos pelo atual, só onde ninguém personalizou. Em orçamentos, só nos que o cliente ainda não aceitou.
 async function atualizarTextos(){
   if(!allReady())return;
+  const troca=x=>{const m={};for(const [k,l] of Object.entries(TEXTOS_ANTIGOS))if(l.includes(x[k]))m[k]=DEF_EMPRESA[k];return m};
   try{
-    if(PAG_ANTIGOS.includes(S.empresa.pagamento))await store.saveEmpresa({...S.empresa,pagamento:DEF_EMPRESA.pagamento});
-    for(const o of S.orcamentos.filter(o=>PAG_ANTIGOS.includes(o.pagamento)))await store.save('orcamentos',{...o,pagamento:DEF_EMPRESA.pagamento});
+    const me=troca(S.empresa);if(Object.keys(me).length)await store.saveEmpresa({...S.empresa,...me});
+    for(const o of S.orcamentos){if(o.tipo==='os'||o.aceite||!['rascunho','enviado','revisao'].includes(o.status))continue;const m=troca(o);if(Object.keys(m).length)await store.save('orcamentos',{...o,...m})}
   }catch(e){}
 }
 
@@ -1844,10 +1848,11 @@ function propostaHTML(o){
       <div class="ln g"><span>Total</span><span>${money(t.total)}</span></div>
     </div>
     <div class="pp-cond">
-      ${o.pagamento?`<div><div class="pp-k">Pagamento</div>${esc(o.pagamento)}</div>`:''}
       ${o.prazo?`<div><div class="pp-k">Prazo</div>${esc(o.prazo)}</div>`:''}
-      ${o.garantia?`<div><div class="pp-k">Garantia</div>${esc(o.garantia)}</div>`:''}
-      ${o.obs?`<div><div class="pp-k">Observações</div>${esc(o.obs)}</div>`:''}
+      ${t.tempo>0?`<div><div class="pp-k">Tempo estimado de execução</div>${t.tempo>8?`Cerca de ${Math.ceil(t.tempo/8)} dias de trabalho`:`Cerca de ${fmtH(t.tempo)}`}</div>`:''}
+      ${o.pagamento?`<div class="cond-full"><div class="pp-k">Formas de pagamento</div>${esc(o.pagamento)}</div>`:''}
+      ${o.garantia?`<div class="cond-full"><div class="pp-k">Garantia</div>${esc(o.garantia)}</div>`:''}
+      ${o.obs?`<div class="cond-full"><div class="pp-k">Observações</div>${esc(o.obs)}</div>`:''}
     </div>
     <div class="pp-foot"><div><b style="color:var(--paper-ink)">${esc(e.nome)}</b>${e.cnpj?` · CNPJ ${esc(e.cnpj)}`:''}<br>${esc(contato)}${e.endereco?`<br>${esc(e.endereco)}`:''}</div>${(()=>{const r=[instaURL(e.instagram)&&`<a href="${esc(instaURL(e.instagram))}" target="_blank" rel="noopener">Instagram ${esc(instaNome(e.instagram))}</a>`,safeUrl(e.site)&&`<a href="${esc(safeUrl(e.site))}" target="_blank" rel="noopener">${esc(urlCurta(e.site))}</a>`,safeUrl(e.googlePerfil)&&`<a href="${esc(safeUrl(e.googlePerfil))}" target="_blank" rel="noopener">★ Veja nossas avaliações no Google</a>`].filter(Boolean);return r.length?`<div class="pp-redes">${r.join('')}</div>`:''})()}</div>
    </div></div>`;
@@ -1911,7 +1916,7 @@ function propostaTexto(o){
 /* ---------- Fechamento: Pix, cartão, aceite, pagamento e recibo ---------- */
 const soDig=v=>String(v||'').replace(/\D/g,'');
 const semAcento=t=>String(t||'').normalize('NFD').replace(/[̀-ͯ]/g,'');
-const FORMAS={pix:'Pix',cartao:'Cartão de crédito',transferencia:'Transferência',dinheiro:'Dinheiro',combinar:'A combinar'};
+const FORMAS={metade:'50% + 50%',pix:'Pix',cartao:'Cartão de crédito',transferencia:'Transferência',dinheiro:'Dinheiro',combinar:'A combinar'};
 const formaTxt=x=>x?(x.forma==='cartao'&&num(x.parcelas)>1?`cartão em ${num(x.parcelas)}x`:(FORMAS[x.forma]||'outro').toLowerCase()):'';
 const fmtDT=iso=>{if(!iso)return '';const d=new Date(iso);return d.toLocaleDateString('pt-BR')+' às '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})};
 const localDT=d=>{const z=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}T${z(d.getHours())}:${z(d.getMinutes())}`};
@@ -1993,6 +1998,7 @@ function aceiteHTML(o,link){
       <label>CPF ou CNPJ<input id="acc_doc" value="${esc(c.documento||'')}" inputmode="numeric"></label>
       <label>Seu WhatsApp<input id="acc_tel" value="${esc(c.telefone||'')}" inputmode="tel" autocomplete="tel" placeholder="(21) 90000-0000"></label>
       <fieldset><legend>Como prefere pagar?</legend>
+        <label class="acc-r"><input type="radio" name="fp" value="metade"> <span style="flex:1;min-width:0">50% na aprovação (<b>${money(Math.round(t.total*50)/100)}</b>) e 50% na conclusão</span></label>
         ${pl?`<label class="acc-r"><input type="radio" name="fp" value="pix" checked> Pix${dp?` com ${fmtPct(dp)} de desconto`:''}: <b>${money(valorPix(t.total))}</b></label>`:''}
         <label class="acc-r"><input type="radio" name="fp" value="cartao" ${pl?'':'checked'}> <span style="flex:1;min-width:0">Cartão de crédito: ${esc(cartaoTxt())}</span></label>
         <label class="acc-r"><input type="radio" name="fp" value="combinar"> Prefiro combinar depois</label>
@@ -2001,7 +2007,7 @@ function aceiteHTML(o,link){
       <p class="acc-err" id="acc_err" hidden>Preencha seu nome e marque que leu e aceita a proposta.</p>
       <div class="acc-btns"><button type="submit" class="acc-b ok" id="acc_send">${link?'Confirmar aceite':'Confirmar aceite pelo WhatsApp'}</button><button type="button" class="acc-b" id="acc_cancel">Voltar</button></div>
     </form>
-    ${link?`<div id="acc_done" class="acc-done" hidden><b id="acc_done_t">Obrigado! Seu aceite foi registrado.</b><span id="acc_done_s">A ${esc(emp)} já recebeu e vai entrar em contato.</span><span id="acc_pix" hidden>Para pagar com Pix, use o QR Code ou o código copia e cola acima.</span><span id="acc_wa_w" hidden><a id="acc_wa" href="#" target="_blank" rel="noopener">Avisar também pelo WhatsApp</a></span></div>`
+    ${link?`<div id="acc_done" class="acc-done" hidden><b id="acc_done_t">Obrigado! Seu aceite foi registrado.</b><span id="acc_done_s">A ${esc(emp)} já recebeu e vai entrar em contato.</span><span id="acc_pix" hidden>Para pagar com Pix, use o QR Code ou o código copia e cola acima.</span><span id="acc_ent" hidden></span><span id="acc_wa_w" hidden><a id="acc_wa" href="#" target="_blank" rel="noopener">Avisar também pelo WhatsApp</a></span></div>`
     :`<div id="acc_done" class="acc-done" hidden><b>Obrigado! Seu aceite foi preparado no WhatsApp.</b><span>Se o WhatsApp não abriu, <a id="acc_wa" href="#">toque aqui para enviar</a>.</span><span id="acc_pix" hidden>Para pagar com Pix, use o QR Code ou o código copia e cola acima.</span></div>`}
   </section>`}
 const CLIENT_JS=`(function(){var D=JSON.parse(document.getElementById('dados').textContent);function $(i){return document.getElementById(i)}
@@ -2014,12 +2020,12 @@ function fp(){var r=f.querySelector('input[name=fp]:checked');return r?r.value:'
 f.addEventListener('change',function(){var pc=$('acc_parc');if(pc)pc.disabled=fp()!=='cartao'});
 f.addEventListener('submit',function(e){e.preventDefault();var nome=$('acc_nome').value.trim(),doc=$('acc_doc').value.trim();
 if(!nome||!$('acc_ok2').checked){$('acc_err').hidden=false;return}$('acc_err').hidden=true;
-var x=fp(),pg='A combinar';if(x==='pix')pg='Pix'+(D.dp?' com '+D.dp+' de desconto':'')+': '+D.vp;else if(x==='cartao')pg='Cartão de crédito';
+var x=fp(),pg='A combinar';if(x==='metade')pg='50% na aprovação ('+D.metade+') e 50% na conclusão';else if(x==='pix')pg='Pix'+(D.dp?' com '+D.dp+' de desconto':'')+': '+D.vp;else if(x==='cartao')pg='Cartão de crédito';
 var d=new Date(),dt=d.toLocaleDateString('pt-BR')+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
 var msg=['*ACEITE DE PROPOSTA*','Proposta: Nº '+D.num+' — '+D.emp,'Cliente: '+nome,'CPF/CNPJ: '+(doc||'não informado'),'WhatsApp: '+(($('acc_tel')&&$('acc_tel').value.trim())||'não informado'),'Valor da proposta: '+D.total,'Pagamento: '+pg,'Data: '+dt,'','Li e aceito a proposta e as condições.'].join('\\n');
 var url='https://wa.me/'+D.wa+'?text='+encodeURIComponent(msg);$('acc_wa').href=url;f.hidden=true;$('acc_done').hidden=false;
 if(x==='pix'){$('acc_pix').hidden=false;var px=$('pay_pix');if(px){px.classList.add('hl');}}window.location.href=url});})();`;
-function dadosCliente(o){const t=calc(o),e=S.empresa,r2=v=>Math.round(num(v)*100)/100;return {num:nOrc(o.numero),emp:e.nome||'DaylinTech',total:money(t.total),totalN:r2(t.total),vp:money(valorPix(t.total)),...(pixChave()?{vpN:r2(valorPix(t.total))}:{}),dp:num(e.descontoPix)?fmtPct(e.descontoPix):'',wa:waNum(),parc:parcelas(t.total).map(x=>({n:x.n,p:money(x.p),t:money(x.total),tN:r2(x.total),j:x.juros}))}}
+function dadosCliente(o){const t=calc(o),e=S.empresa,r2=v=>Math.round(num(v)*100)/100,ent=r2(t.total/2),pe=pixPayload(ent,'DT'+nOrc(o.numero)+'E');return {metade:money(ent),metadeN:ent,...(pe?{pixMetade:pe}:{}),num:nOrc(o.numero),emp:e.nome||'DaylinTech',total:money(t.total),totalN:r2(t.total),vp:money(valorPix(t.total)),...(pixChave()?{vpN:r2(valorPix(t.total))}:{}),dp:num(e.descontoPix)?fmtPct(e.descontoPix):'',wa:waNum(),parc:parcelas(t.total).map(x=>({n:x.n,p:money(x.p),t:money(x.total),tN:r2(x.total),j:x.juros}))}}
 function docHTML(title,body,script){
   const css=[...document.querySelectorAll('style')].map(s=>s.textContent).join('\n');
   return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)}</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Barlow:wght@400;500;600;700&display=swap"><style>${css}\nbody{background:#EEF2F7;padding:20px 12px;color-scheme:light}.paper{margin-bottom:16px}@media print{body{background:#fff;padding:0}.paper{box-shadow:none}.acc{display:none}}</style></head><body>${body}${script||''}</body></html>`}
@@ -2055,7 +2061,8 @@ function lerAceiteMsg(txt){const g=re=>{const m=txt.match(re);return m?m[1].trim
   r.nome=g(/Cliente:\s*(.+)/i);r.doc=g(/CPF\/CNPJ:\s*(.+)/i);if(/não informado/i.test(r.doc))r.doc='';
   r.whats=g(/WhatsApp:\s*(.+)/i);if(/não informado/i.test(r.whats))r.whats='';
   const pg=g(/Pagamento:\s*(.+)/i);
-  if(/pix/i.test(pg)){r.forma='pix';const v=pg.match(/R\$\s*([\d.,]+)/);if(v)r.valor=num(v[1])}
+  if(/50\s*%/.test(pg)){r.forma='metade';const v=pg.match(/R\$\s*([\d.,]+)/);if(v)r.valor=num(v[1])*2}
+  else if(/pix/i.test(pg)){r.forma='pix';const v=pg.match(/R\$\s*([\d.,]+)/);if(v)r.valor=num(v[1])}
   else if(/cart/i.test(pg)){r.forma='cartao';const n=pg.match(/(\d+)x/);r.parcelas=n?+n[1]:1;const tot=pg.match(/total\s*R\$\s*([\d.,]+)/i),par=pg.match(/de\s*R\$\s*([\d.,]+)/i);r.valor=tot?num(tot[1]):(par?num(par[1])*r.parcelas:0)}
   else if(pg)r.forma='combinar';
   const dt=g(/Data:\s*(.+)/i).match(/(\d{2})\/(\d{2})\/(\d{4})\s*(\d{2}):(\d{2})/);if(dt)r.data=new Date(+dt[3],dt[2]-1,+dt[1],+dt[4],+dt[5]).toISOString();
@@ -2068,7 +2075,8 @@ function textoCliente(o){
   const prop=o.linkToken?(()=>{const u=new URL('proposta.html',location.href);u.hash=o.linkToken;return u.href})():'',lk=safeUrl(o.linkPagamento)||safeUrl(e.linkPagamento);
   const L=[`Olá${nome?', '+nome:''}! Recebemos o seu aceite da proposta Nº ${nOrc(o.numero)} da ${emp}. Obrigado pela confiança!`];
   if(!o.pgto){
-    if(a.forma==='pix')L.push(`Vimos que você prefere pagar no Pix${num(e.descontoPix)?`, com ${fmtPct(e.descontoPix)} de desconto`:''}: ${money(a.valor||valorPix(t.total))}.${prop?` Se ainda não pagou, o QR Code e o código copia e cola estão na proposta:\n${prop}`:''}`);
+    if(a.forma==='metade'){const ent=Math.round(t.total*50)/100;L.push(`Vimos que você prefere pagar 50% na aprovação e 50% na conclusão. A entrada é de ${money(ent)}${prop?` e o código Pix da entrada está na proposta:\n${prop}`:'.'}\nOs outros ${money(t.total-ent)} ficam para a conclusão do serviço.`)}
+    else if(a.forma==='pix')L.push(`Vimos que você prefere pagar no Pix${num(e.descontoPix)?`, com ${fmtPct(e.descontoPix)} de desconto`:''}: ${money(a.valor||valorPix(t.total))}.${prop?` Se ainda não pagou, o QR Code e o código copia e cola estão na proposta:\n${prop}`:''}`);
     else if(a.forma==='cartao')L.push(`Vimos que você prefere pagar no cartão de crédito (${cartaoTxt()}).${lk?` Para pagar, é só usar este link:\n${lk}`:' Vamos te enviar o link de pagamento.'}`);
     else L.push('Vamos combinar com você a melhor forma de pagamento.');
   }
