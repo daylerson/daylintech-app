@@ -283,6 +283,8 @@ body.apresentacao .internal{display:none!important}
 .pay-s{font-size:12.5px;color:var(--paper-muted)}
 .qr-w{width:176px;max-width:100%;align-self:center;margin:4px 0}
 .pix-box{flex-direction:row;align-items:center;gap:16px;padding:12px}
+.card-box{padding:12px;justify-content:center}.card-t{font-weight:600;color:var(--paper-ink);font-size:14px;line-height:1.4}
+.card-box .pay-link{width:auto;padding:7px 12px;font-size:13px;margin-top:6px}
 .pix-qr{width:108px;flex:none;line-height:0}.pix-qr svg{width:100%;height:auto;display:block}
 .pix-info{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1}
 .pix-v{font-family:var(--f-display);font-size:20px;font-weight:800;color:var(--paper-blue);font-variant-numeric:tabular-nums}
@@ -1452,6 +1454,7 @@ function vEditor(app){
           <div class="field"><label for="o_val">Validade (dias)</label><input id="o_val" inputmode="numeric" value="${esc(draft.validadeDias)}"></div>
           <div class="field"><label for="o_prazo">Prazo de instalação</label><input id="o_prazo" value="${esc(draft.prazo)}"></div>
           <div class="field full"><label for="o_pag">Pagamento</label><textarea id="o_pag">${esc(draft.pagamento)}</textarea></div>
+          <div class="field full"><label for="o_link">Link de pagamento do cartão</label><input id="o_link" inputmode="url" value="${esc(draft.linkPagamento)}" placeholder="https://…"><span class="hint">Gere na maquininha ou no app de pagamento com o valor deste orçamento e cole aqui. Na proposta aparece o botão “Pagar com cartão”.</span></div>
           <div class="field full"><label for="o_gar">Garantia</label><textarea id="o_gar">${esc(draft.garantia)}</textarea></div>
           <div class="field full"><label for="o_obs">Observações para o cliente</label><textarea id="o_obs" placeholder="Ex.: Infraestrutura de tubulação por conta do cliente.">${esc(draft.obs)}</textarea></div>
         </div>
@@ -1461,7 +1464,7 @@ function vEditor(app){
   </div>`;
   const $=id=>app.querySelector('#'+id);
   const bind=(id,key,fn=v=>v)=>{$(id).addEventListener('input',e=>{draft[key]=fn(e.target.value);draft._dirty=true;if(key==='descontoPct')renderEditorParts(true)})};
-  bind('o_tit','titulo');bind('o_val','validadeDias',v=>Math.round(num(v)));bind('o_prazo','prazo');bind('o_pag','pagamento');bind('o_gar','garantia');bind('o_obs','obs');
+  bind('o_tit','titulo');bind('o_val','validadeDias',v=>Math.round(num(v)));bind('o_prazo','prazo');bind('o_pag','pagamento');bind('o_link','linkPagamento',v=>String(v).trim());bind('o_gar','garantia');bind('o_obs','obs');
   $('o_cli').onchange=e=>{draft.clienteId=e.target.value;draft._dirty=true};
   $('o_cli_new').onclick=()=>formCli(null,c=>{draft.clienteId=c.id;draft._dirty=true;vEditor(app)});
   $('o_add').onclick=()=>openPicker('mat');$('o_add_mo').onclick=()=>openPicker('mo');
@@ -1652,7 +1655,7 @@ function parcelas(total){const e=S.empresa,max=Math.max(1,Math.min(24,Math.round
   for(let n=1;n<=max;n++){const jur=n>sj&&i>0;let p=jur?total*i/(1-Math.pow(1+i,-n)):total/n;p=Math.ceil(p*100-1e-6)/100;out.push({n,p,total:Math.round(p*n*100)/100,juros:jur})}
   return out}
 function waNum(){const d=soDig(S.empresa.whatsapp||S.empresa.telefone);return d?(d.length<=11?'55'+d:d):''}
-const cartaoTxt=()=>{const e=S.empresa,max=Math.max(1,Math.round(num(e.cartaoMax)||1)),sj=Math.min(max,Math.max(1,Math.round(num(e.cartaoSemJuros)||1)));return max<=1?'à vista':sj>=max?`em até ${max}x sem juros`:`${sj>1?`em ${sj}x sem juros ou `:''}em até ${max}x com juros da operadora`};
+const cartaoTxt=()=>{const e=S.empresa,max=Math.max(1,Math.round(num(e.cartaoMax)||1)),sj=Math.min(max,Math.max(1,Math.round(num(e.cartaoSemJuros)||1)));return max<=1?'à vista':sj>=max?`em até ${max}x sem juros`:`${sj>1?`até ${sj}x sem juros ou `:''}em até ${max}x com juros da operadora`};
 const waLink=t=>`https://wa.me/${waNum()}?text=${encodeURIComponent(t)}`;
 const QR_SRC='https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js';
 async function qrSVG(txt){try{await loadScript(QR_SRC);const q=window.qrcode(0,'M');q.addData(txt);q.make();const n=q.getModuleCount();let d='';
@@ -1669,15 +1672,16 @@ function extenso(v){v=Math.round(num(v)*100)/100;const re=Math.floor(v),ce=Math.
   const reais=re?inteiro(re)+(re%1e6===0?' de':'')+(re===1?' real':' reais'):'',cents=ce?a999(ce)+(ce===1?' centavo':' centavos'):'';
   return reais&&cents?reais+' e '+cents:(reais||cents||'zero real')}
 async function pagamentoHTML(o){
-  const t=calc(o),e=S.empresa,dp=num(e.descontoPix),vp=valorPix(t.total),pl=pixPayload(vp,'DT'+nOrc(o.numero)),qr=pl?await qrSVG(pl):'',lk=safeUrl(e.linkPagamento);
-  if(!pl&&!lk)return '';
-  return `<div class="pay"><div class="pp-cat">${pl?'Pagar com Pix':'Pagamento com cartão'}</div><div class="pay-g">
+  const t=calc(o),e=S.empresa,dp=num(e.descontoPix),vp=valorPix(t.total),pl=pixPayload(vp,'DT'+nOrc(o.numero)),qr=pl?await qrSVG(pl):'',lk=safeUrl(o.linkPagamento)||safeUrl(e.linkPagamento),ct=cartaoTxt();
+  return `<div class="pay"><div class="pp-cat">Formas de pagamento</div><div class="pay-g">
     ${pl?`<div class="pay-c pix-box" id="pay_pix">${qr?`<div class="pix-qr">${qr}</div>`:''}
-      <div class="pix-info"><div class="pay-h"><b class="pix-v">${money(vp)}</b>${dp?`<span class="pay-tag">${fmtPct(dp)} de desconto</span>`:''}</div>
+      <div class="pix-info"><b style="color:var(--paper-ink)">Pix</b><div class="pay-h"><b class="pix-v">${money(vp)}</b>${dp?`<span class="pay-tag">${fmtPct(dp)} de desconto</span>`:''}</div>
         ${dp?`<div class="pay-s">em vez de <s>${money(t.total)}</s></div>`:''}
         <div class="pay-s">Recebedor: ${esc(e.pixNome||e.nome)}</div>
         <button type="button" class="pay-copy" data-copy="${esc(pl)}">Copiar código Pix</button></div></div>`:''}
-    ${lk?`<div class="pay-c"><div class="pay-h"><b>Cartão de crédito</b></div><div class="pay-s">${esc(cartaoTxt())}</div><a class="pay-link" href="${esc(lk)}" target="_blank" rel="noopener">Pagar com cartão ↗</a></div>`:''}
+    <div class="pay-c card-box"><div class="pay-h"><b>Cartão de crédito</b></div>
+      <div class="card-t">${esc(ct.charAt(0).toUpperCase()+ct.slice(1))}.</div>
+      ${lk?`<div class="pay-s">Clique no botão abaixo para ver os juros e pagar pelo link de pagamento.</div><a class="pay-link" href="${esc(lk)}" target="_blank" rel="noopener">Pagar com cartão ↗</a>`:''}</div>
   </div></div>`}
 function aceiteHTML(o,link){
   const t=calc(o),e=S.empresa,dp=num(e.descontoPix),pl=!!pixChave(),c=S.clientes.find(x=>x.id===o.clienteId)||{};
@@ -1742,6 +1746,7 @@ async function linkProposta(o){
   openSheet('Link da proposta',`<p style="margin-top:0">Mande este link para o cliente. Ele vê a proposta, as formas de pagamento e aceita por ali. O aceite aparece aqui na hora.</p>
     <div class="field"><label for="lk_url">Link</label><input id="lk_url" readonly value="${esc(url.href)}"></div>
     <p class="hint">${esc(situ)}</p>
+    ${safeUrl(cur.linkPagamento)||safeUrl(S.empresa.linkPagamento)?'':`<p class="note">Este orçamento não tem link de pagamento do cartão. Para o cliente pagar no cartão pelo link, cole o link em Editar → Condições e toque de novo em "Link da proposta".</p>`}
     <p class="note">Editou o orçamento? Toque de novo em "Link da proposta" para atualizar a página do cliente. O link continua o mesmo.</p>`,
     `<a class="btn" href="${esc(url.href)}" target="_blank" rel="noopener">Abrir</a><button class="btn" id="lk_copy">Copiar link</button><a class="btn primary" href="${esc(waCli)}" target="_blank" rel="noopener">Enviar no WhatsApp</a>`,
     L=>{L.querySelector('#lk_copy').onclick=async()=>{try{await navigator.clipboard.writeText(url.href);toast('Link copiado')}catch(e){const i=L.querySelector('#lk_url');i.focus();i.select()}}});
@@ -1870,7 +1875,7 @@ function vProposta(app){
   $('pp_copy').onclick=()=>copyText(propostaTexto(o));
   $('pp_buy').onclick=()=>listaCompras(o.id);
   $('pp_edit').onclick=()=>editarOrc(o);
-  $('pp_dup').onclick=()=>{const c=JSON.parse(JSON.stringify(o));delete c.aceite;delete c.pgto;delete c.comprados;delete c.linkToken;draft={...c,id:uid(),numero:null,status:'rascunho',criadoEm:new Date().toISOString(),_dirty:true,_new:true};go('editor',{force:true})};
+  $('pp_dup').onclick=()=>{const c=JSON.parse(JSON.stringify(o));delete c.aceite;delete c.pgto;delete c.comprados;delete c.linkToken;delete c.linkPagamento;draft={...c,id:uid(),numero:null,status:'rascunho',criadoEm:new Date().toISOString(),_dirty:true,_new:true};go('editor',{force:true})};
   $('pp_del').onclick=()=>confirmSheet('Excluir orçamento?',`O orçamento Nº ${nOrc(o.numero)} de ${esc(cliNome(o))} será apagado.`,'Excluir',async()=>{if(sb){try{await sb.from('propostas').delete().eq('orcamento_id',o.id)}catch(e){}}await store.remove('orcamentos',o.id);toast('Orçamento excluído');go('inicio',{force:true})});
   $('pp_dl').onclick=async()=>{
     const b=$('pp_dl');b.disabled=true;
