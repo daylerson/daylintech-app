@@ -10,6 +10,7 @@ App da DaylinTech, empresa de instalação de câmeras, alarmes, interfones, fec
 - `config.js`: URL e chave pública (anon/publishable) do Supabase. Vazio = modo local, só no navegador. Nunca colocar a chave `service_role`/secret.
 - `supabase/schema.sql`: tabelas `docs` e `membros`, regras de acesso (RLS) e realtime. Rodar uma vez no SQL Editor do Supabase.
 - `supabase/propostas.sql`: tabela `propostas` e funções `ver_proposta` / `aceitar_proposta` (proposta com link). Rodar depois do schema.sql.
+- `supabase/fotos.sql`: pasta privada `os-fotos` no Storage para as fotos das OS, só para membros. Rodar depois do schema.sql.
 - `proposta.html`: página pública que o cliente abre (`proposta.html#<token>`), sem login.
 - `vendor/html2canvas-1.4.1.min.js` e `vendor/jspdf-4.2.1.umd.min.js`: geram o recibo em PDF (`reciboPDF()`), carregados só quando o recibo abre.
 - `vendor/supabase-2.117.3.js`: biblioteca do Supabase servida pelo próprio site (funciona offline pelo service worker). Para atualizar, trocar o arquivo e `SUPABASE_SRC` no index.html e a lista em `sw.js`.
@@ -22,6 +23,7 @@ Para rodar, sirva a pasta com qualquer servidor estático (ex.: `npx serve .`). 
 - Início: frase do dia, financeiro do mês, meta e avisos.
 - Orçamentos e editor: materiais e mão de obra separados.
 - Proposta, com fechamento (aceite, pagamento, recibo e agendamento).
+- Ordem de serviço (`view os`, `vOS()`): andamento (iniciar/finalizar serviço, corrigir horários), fotos antes e depois, relatório do serviço, assinaturas do técnico e do cliente, PDF, envio ao cliente e concluir.
 - Agenda: instalações atrasadas, de hoje, próximas, aguardando agendamento (com a data limite pelo prazo da proposta) e concluídas.
 - Catálogo de materiais: foto, datasheet, várias lojas por produto, importação de cotação.
 - Mão de obra.
@@ -40,7 +42,7 @@ Para rodar, sirva a pasta com qualquer servidor estático (ex.: `npx serve .`). 
 - A proposta baixada é um HTML autônomo para o cliente. Ela mostra o Pix, o cartão e o aceite, que gera mensagem no WhatsApp (`wa.me`). No app, "Registrar aceite" lê essa mensagem.
 - Texto de pagamento: cada orçamento guarda o seu (`o.pagamento`), copiado de `empresa.pagamento`. `atualizarTextos()` troca, ao carregar e depois de importar backup, os textos padrão antigos (`PAG_ANTIGOS`) pelo atual de `DEF_EMPRESA`. Texto personalizado não é mexido. Ao mudar o padrão, colocar o anterior em `PAG_ANTIGOS`.
 - A proposta não tem linha de assinatura do cliente (o aceite é pelo link ou WhatsApp). O Pix aparece numa caixa compacta: QR Code pequeno, valor e botão "Copiar código Pix".
-- Agendamento / OS: `o.agenda` = `{data, hora, endereco, tecnico, duracao, obs, concluidoEm}`. `prazoLimite()` lê o prazo da proposta ("N dias [úteis]") e conta a partir de `aceite.data`, pulando sábado e domingo se forem úteis (feriados não). `osHTML()` é a ordem de serviço (serviços e materiais sem preço, assinaturas do técnico e do cliente) e sai em PDF por `htmlPDF()`, o mesmo do recibo. "Confirmar no WhatsApp" usa `textoAgenda()` e `enviarComPDF()` (celular: Compartilhar com a OS anexada; computador: conversa com o texto). Agendar não muda o status; "Concluir" muda para concluido.
+- Agendamento / OS: `o.agenda` = `{data, hora, endereco, tecnico, duracao, obs, concluidoEm}`. `prazoLimite()` lê o prazo da proposta ("N dias [úteis]") e conta a partir de `aceite.data`, pulando sábado e domingo se forem úteis (feriados não). `osHTML()` é a ordem de serviço (serviços e materiais sem preço, assinaturas do técnico e do cliente) e sai em PDF por `htmlPDF()`, o mesmo do recibo. "Confirmar no WhatsApp" usa `textoAgenda()` e `enviarComPDF()` (celular: Compartilhar com a OS anexada; computador: conversa com o texto). Agendar não muda o status; "Concluir" muda para concluido. Execução da OS em `o.agenda`: `inicio`, `fim`, `relatorio`, `assTec`, `assCli`, `assCliNome`, `assCliEm` (assinaturas em PNG data URL, desenhadas em `padAssinatura()`), `fotos: {antes:[], depois:[]}`. Cada foto é `{p}` (caminho no Storage `os-fotos/<id do orçamento>/...`, com nuvem) ou `{d}` (data URL, sem nuvem). As fotos ficam em `fotoCache` na memória; `cortar43()` recorta para o PDF porque o html2canvas não faz `object-fit`. Sem assinatura do técnico, a OS usa `empresa.assinatura` se o técnico for o responsável. `htmlPDF()` quebra em várias páginas A4, cortando entre blocos. Excluir o orçamento apaga as fotos; Duplicar não copia o agendamento.
 - Status dos orçamentos: rascunho, enviado, revisao, aprovado, recusado, execucao, concluido. Pagamento em `o.pgto` e aceite em `o.aceite`.
 
 ## O que dependia do Claude (artefato) e precisa ser trocado

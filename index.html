@@ -296,7 +296,19 @@ body.apresentacao .internal{display:none!important}
 .os-quando>div{display:flex;flex-direction:column;min-width:110px}.os-quando b{font-size:16px;color:var(--paper-ink)}
 .os-t td{padding:8px 0;border-bottom:1px solid var(--paper-line);vertical-align:top}.os-t td.v{text-align:right;white-space:nowrap;padding-left:12px;color:var(--paper-ink);font-weight:600}
 .os-obs{white-space:pre-line;color:var(--paper-ink)}
-.os-sign{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:44px}
+.os-sign{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:44px;align-items:end}
+.os-sign-c{display:flex;flex-direction:column;align-items:center}.os-sign-c img{height:64px;max-width:100%;object-fit:contain;margin-bottom:-4px}
+.osf{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}.osf img{width:100%;height:auto;display:block;border-radius:6px}
+.os-fase{display:inline-block;background:var(--brand-soft);color:var(--brand);font-weight:700;font-size:12.5px;border-radius:999px;padding:3px 10px}
+.os-tempo{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.os-tempo>div{display:flex;flex-direction:column;background:var(--surface-2);border-radius:10px;padding:10px 12px}.os-tempo b{font-size:18px;font-family:var(--f-display)}
+.os-fotos{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}
+.os-th{position:relative;padding-top:100%;border-radius:10px;overflow:hidden;background:var(--surface-2)}.os-th img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.os-x{position:absolute;top:4px;right:4px;background:rgba(11,26,51,.65);color:#fff;width:28px;height:28px;border-radius:999px}
+.os-add{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border:1.5px dashed var(--line);border-radius:10px;min-height:96px;color:var(--brand);font-weight:600;font-size:13px;cursor:pointer;aspect-ratio:1}
+.os-add svg{width:22px;height:22px}
+.os-ass{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media (max-width:520px){.os-ass{grid-template-columns:1fr}}
+.os-ass-c{display:flex;flex-direction:column;align-items:center;gap:6px;border:1px solid var(--line);border-radius:10px;padding:12px;text-align:center}
+.os-ass-c img{height:70px;max-width:100%;object-fit:contain;background:#fff;border-radius:6px}.os-ass-v{height:70px;display:flex;align-items:center;color:var(--muted);font-size:13px}
 .card-box{padding:12px;justify-content:center}.card-t{font-weight:600;color:var(--paper-ink);font-size:14px;line-height:1.4}
 .card-box .pay-link{width:auto;padding:7px 12px;font-size:13px;margin-top:6px}
 .pix-qr{width:108px;flex:none;line-height:0}.pix-qr svg{width:100%;height:auto;display:block}
@@ -460,6 +472,7 @@ body.apresentacao .internal{display:none!important}
 .loading{padding:40px;text-align:center;color:var(--muted)}
 body.bloqueado .gear,body.bloqueado .present{display:none}
 a.btn{text-decoration:none}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .acesso{max-width:420px;margin:24px auto 0;display:flex;flex-direction:column;gap:14px;width:100%}
 .note{font-size:12.5px;color:var(--muted);background:var(--surface-2);border-radius:8px;padding:10px 12px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
@@ -567,7 +580,7 @@ const lsSet=o=>{try{localStorage.setItem(LS,JSON.stringify(o));return true}catch
 const store={
   async save(col,obj){
     if(db){await db.collection(col).doc(obj.id).set(obj);S[col]=S[col].filter(x=>x.id!==obj.id).concat([obj]);return}
-    const all=lsGet();all[col]=(all[col]||[]).filter(x=>x.id!==obj.id).concat([obj]);lsSet(all);S[col]=all[col];render();
+    const all=lsGet();all[col]=(all[col]||[]).filter(x=>x.id!==obj.id).concat([obj]);if(!lsSet(all))throw new Error('Sem espaço no navegador');S[col]=all[col];render();
   },
   async remove(col,id){
     if(db){await db.collection(col).doc(id).delete();return}
@@ -744,7 +757,7 @@ function confirmSheet(title,msg,okLabel,onOk){
 /* ---------- Navegação ---------- */
 const TABS=[['home','Início'],['inicio','Orçamentos'],['agenda','Agenda'],['catalogo','Catálogo'],['maodeobra','Mão de obra'],['clientes','Clientes']];
 function renderNav(){
-  const cur=['editor','proposta'].includes(view.name)?'inicio':view.name;
+  const cur=['editor','proposta'].includes(view.name)?'inicio':view.name==='os'?'agenda':view.name;
   document.getElementById('toptabs').innerHTML=TABS.map(([k,l])=>`<button data-nav="${k}" ${cur===k?'aria-current="page"':''}>${l}</button>`).join('');
   document.getElementById('bottomnav').innerHTML=TABS.map(([k,l])=>`<button data-nav="${k}" ${cur===k?'aria-current="page"':''}>${svg(NAVI[k])}${l}</button>`).join('');
 }
@@ -765,7 +778,7 @@ function render(fromSnap){
   if(fromSnap&&view.name==='editor'){renderEditorParts();return}
   const active=document.activeElement&&document.activeElement.id;
   const pos=document.activeElement&&document.activeElement.selectionStart;
-  ({home:vHome,inicio:vInicio,catalogo:vCatalogo,maodeobra:vMaoDeObra,clientes:vClientes,ajustes:vAjustes,editor:vEditor,proposta:vProposta,agenda:vAgenda}[view.name]||vHome)(app);
+  ({home:vHome,inicio:vInicio,catalogo:vCatalogo,maodeobra:vMaoDeObra,clientes:vClientes,ajustes:vAjustes,editor:vEditor,proposta:vProposta,agenda:vAgenda,os:vOS}[view.name]||vHome)(app);
   if(active){const el=document.getElementById(active);if(el&&el.tagName==='INPUT'&&el.type==='search'){el.focus();try{el.setSelectionRange(pos,pos)}catch(e){}}}
 }
 
@@ -1885,11 +1898,16 @@ async function htmlPDF(html){
   try{
     const el=box.firstElementChild;el.style.boxShadow='none';el.style.margin='0';el.style.maxWidth='none';
     try{await document.fonts.ready}catch(e){}
-    await Promise.all([...box.querySelectorAll('img')].map(i=>i.complete?0:new Promise(r=>{i.onload=i.onerror=r})));
+    await Promise.all([...box.querySelectorAll('img')].map(i=>(i.decode?i.decode():new Promise(r=>{i.onload=i.onerror=r})).catch(()=>{})));
+    const top0=el.getBoundingClientRect().top,cortes=[...el.querySelectorAll('.pp-body > *, .pp-table tr')].map(x=>Math.round((x.getBoundingClientRect().top-top0)*2)).sort((a,b)=>a-b);
     const cv=await window.html2canvas(el,{scale:2,backgroundColor:'#ffffff',logging:false});
-    const pdf=new window.jspdf.jsPDF({unit:'mm',format:'a4'});
-    let w=190,h=cv.height*w/cv.width;if(h>277){w=w*277/h;h=277}
-    pdf.addImage(cv.toDataURL('image/jpeg',0.92),'JPEG',(210-w)/2,10,w,h);
+    const pdf=new window.jspdf.jsPDF({unit:'mm',format:'a4'}),pw=190,pxMm=cv.width/pw,pag=Math.floor(277*pxMm);
+    for(let y=0,n=0,hp;y<cv.height;y+=hp,n++){hp=Math.min(pag,cv.height-y);
+      // Quebra a página antes do último bloco que não cabe inteiro, se houver um bom ponto de corte.
+      if(y+hp<cv.height){const c=cortes.filter(v=>v>y+pag*0.4&&v<=y+pag).pop();if(c)hp=c-y}
+      const c2=document.createElement('canvas');c2.width=cv.width;c2.height=hp;
+      const x=c2.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c2.width,hp);x.drawImage(cv,0,y,cv.width,hp,0,0,cv.width,hp);
+      if(n)pdf.addPage();pdf.addImage(c2.toDataURL('image/jpeg',0.9),'JPEG',10,10,pw,hp/pxMm)}
     return pdf.output('blob');
   }finally{box.remove()}
 }
@@ -1967,10 +1985,13 @@ function osHTML(o){
   const its=o.itens||[],mos=its.filter(isMO),mats=its.filter(i=>!isMO(i));
   const linha=i=>`<tr><td><div style="font-weight:600">${esc(i.nome)}</div>${i.descricao?`<div class="desc">${esc(i.descricao)}</div>`:''}</td><td class="v">${String(num(i.qtd)).replace('.',',')} ${esc(i.unidade||'un')}</td></tr>`;
   const tab=(tit,l)=>l.length?`<div><div class="pp-cat">${tit}</div><table class="pp-table os-t"><tbody>${l.map(linha).join('')}</tbody></table></div>`:'';
-  const obs=[g.obs,o.obs].filter(Boolean).join('\n');
+  const obs=[g.obs,o.obs].filter(Boolean).join('\n'),hm=iso=>new Date(iso).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  const dur=g.inicio&&g.fim?fmtH((new Date(g.fim)-new Date(g.inicio))/36e5):'',fo={antes:[],depois:[],...(g.fotos||{})};
+  const fotos=(tit,l)=>{const v=l.map(fotoSync).filter(Boolean).map(u=>fotoCorte.get(u)||u);return v.length?`<div><div class="pp-cat">${tit}</div><div class="osf">${v.map(u=>`<img src="${u}" alt="">`).join('')}</div></div>`:''};
+  const assTec=g.assTec||(mesmoTecnico(g)?e.assinatura:'');
   return `<div class="paper os"><div class="pp-band"><div class="pp-id"><img class="pp-logo2" src="${LOGO}" alt="${esc(e.nome)}"></div><div class="pp-num"><div class="k">Ordem de serviço</div><div class="n">Nº ${nOrc(o.numero)}</div></div></div><div class="pp-stripe"></div>
     <div class="pp-body">
-      <div class="os-quando"><div><span class="pp-k">Data</span><b>${esc(cap(diaTxt(g.data,true)))}</b></div><div><span class="pp-k">Horário</span><b>${esc(g.hora||'A combinar')}</b></div>${g.duracao?`<div><span class="pp-k">Duração estimada</span><b>${esc(g.duracao)}</b></div>`:''}</div>
+      <div class="os-quando"><div><span class="pp-k">Data</span><b>${esc(cap(diaTxt(g.data,true)))}</b></div><div><span class="pp-k">Horário</span><b>${esc(g.hora||'A combinar')}</b></div>${g.inicio?`<div><span class="pp-k">Início</span><b>${hm(g.inicio)}</b></div>`:''}${g.fim?`<div><span class="pp-k">Término</span><b>${hm(g.fim)}</b></div>`:''}${dur?`<div><span class="pp-k">Duração</span><b>${dur}</b></div>`:g.duracao?`<div><span class="pp-k">Duração aproximada</span><b>${esc(g.duracao)}</b></div>`:''}</div>
       <div class="pp-meta">
         <div><div class="pp-k">Cliente</div><div class="pp-cli">${esc(c.nome)}</div>${c.telefone?`<div class="pp-small">${esc(c.telefone)}</div>`:''}
           <div style="margin-top:10px"><div class="pp-k">Endereço da instalação</div><div style="font-weight:600">${esc(g.endereco||endCliente(c)||'A confirmar')}</div></div></div>
@@ -1979,9 +2000,17 @@ function osHTML(o){
       ${o.titulo?`<div><div class="pp-k">Projeto</div><div style="font-weight:600">${esc(o.titulo)}</div></div>`:''}
       ${tab('Serviços',mos)}${tab('Materiais',mats)}
       ${obs?`<div><div class="pp-k">Observações</div><div class="os-obs">${esc(obs)}</div></div>`:''}
-      <div class="os-sign"><div class="rc-line"><b>${esc(g.tecnico||e.responsavel||e.nome)}</b><span>Técnico · ${esc(e.nome)}</span></div><div class="rc-line"><b>${esc(c.nome||'Cliente')}</b><span>Serviço executado conforme esta OS</span></div></div>
+      ${fotos('Fotos antes do serviço',fo.antes)}${fotos('Fotos depois do serviço',fo.depois)}
+      ${g.relatorio?`<div><div class="pp-cat">Serviço executado</div><div class="os-obs" style="margin-top:8px">${esc(g.relatorio)}</div></div>`:''}
+      <div class="os-sign"><div class="os-sign-c">${assTec?`<img src="${assTec}" alt="">`:''}<div class="rc-line"><b>${esc(g.tecnico||e.responsavel||e.nome)}</b><span>Técnico · ${esc(e.nome)}</span></div></div>
+        <div class="os-sign-c">${g.assCli?`<img src="${g.assCli}" alt="">`:''}<div class="rc-line"><b>${esc(g.assCliNome||c.nome||'Cliente')}</b><span>Serviço executado conforme esta OS</span></div></div></div>
       <div class="pp-foot"><div><b style="color:var(--paper-ink)">${esc(e.nome)}</b>${e.cnpj?` · CNPJ ${esc(e.cnpj)}`:''}<br>${esc([e.telefone,e.email].filter(Boolean).join(' · '))}</div></div>
     </div></div>`;
+}
+function textoOS(o){
+  const g=o.agenda||{};if(!(g.fim||o.status==='concluido'))return textoAgenda(o);
+  const e=S.empresa,c=S.clientes.find(x=>x.id===o.clienteId)||{},nome=String(g.assCliNome||c.nome||'').trim().split(' ')[0],d=g.fim||g.concluidoEm;
+  return `Olá${nome?', '+nome:''}! A instalação referente à proposta Nº ${nOrc(o.numero)} foi concluída${d?` em ${new Date(d).toLocaleDateString('pt-BR')}`:''}.\n\nSegue a ordem de serviço com as fotos e o relatório do que foi feito.\n\nQualquer dúvida, é só chamar. Obrigado pela confiança!\n${e.nome||'DaylinTech'}`;
 }
 function textoAgenda(o){
   const g=o.agenda||{},e=S.empresa,c=S.clientes.find(x=>x.id===o.clienteId)||{},nome=String(c.nome||(o.aceite&&o.aceite.nome)||'').trim().split(' ')[0];
@@ -1996,23 +2025,128 @@ async function enviarComPDF(o,arquivo,texto,titulo){
   }
   closeSheet();mensagemCliente(o,titulo,texto);
 }
-function verOS(o,recem){
-  const cur=S.orcamentos.find(x=>x.id===o.id)||o,nomeArq=`OS-${nOrc(cur.numero)}-${arqNome(cliNome(cur))}.pdf`;
+async function verOS(o,recem){
+  let cur=S.orcamentos.find(x=>x.id===o.id)||o;const nomeArq=`OS-${nOrc(cur.numero)}-${arqNome(cliNome(cur))}.pdf`;
+  const nf=((cur.agenda||{}).fotos||{});if([...(nf.antes||[]),...(nf.depois||[])].length){if([...(nf.antes||[]),...(nf.depois||[])].some(f=>!fotoSync(f)))toast('Carregando fotos…');await carregarFotos(cur);cur=S.orcamentos.find(x=>x.id===o.id)||cur}
+  const fim=!!((cur.agenda||{}).fim||cur.status==='concluido');
   let pdf=null;const pronto=htmlPDF(osHTML(cur)).then(b=>pdf=new File([b],nomeArq,{type:'application/pdf'}),()=>null);
   openSheet('Ordem de serviço',`${recem?`<p class="note" style="margin-top:0"><b>Instalação agendada.</b> Agora confirme com o cliente pelo WhatsApp.</p>`:''}<div class="paper-wrap">${osHTML(cur)}</div>`,
-    `<button class="btn left" id="os_ed">Editar</button><button class="btn" id="os_dl">${svg(UI.dl)}Baixar PDF</button><button class="btn primary" id="os_wa">Confirmar no WhatsApp</button>`,
+    `<button class="btn left" id="os_ed">Editar</button><button class="btn" id="os_dl">${svg(UI.dl)}Baixar PDF</button><button class="btn primary" id="os_wa">${fim?'Enviar no WhatsApp':'Confirmar no WhatsApp'}</button>`,
     L=>{L.querySelector('.sheet').style.maxWidth='860px';
       L.querySelector('#os_ed').onclick=()=>{closeSheet();agendar(cur)};
       L.querySelector('#os_dl').onclick=async()=>{const b=L.querySelector('#os_dl');b.disabled=true;await pronto;b.disabled=false;if(!pdf){toast('Não foi possível gerar o PDF.');return}
         const url=URL.createObjectURL(pdf),a=document.createElement('a');a.href=url;a.download=nomeArq;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),4000);toast('OS em PDF salva.')};
       L.querySelector('#os_wa').onclick=async()=>{const b=L.querySelector('#os_wa');if(!pdf){b.disabled=true;await pronto;b.disabled=false}
-        enviarComPDF(cur,pdf,textoAgenda(cur),'Confirmar instalação')};
+        enviarComPDF(cur,pdf,textoOS(cur),fim?'Ordem de serviço':'Confirmar instalação')};
     });
+}
+// Fotos da OS: na nuvem ficam no Storage (pasta privada por orçamento); sem nuvem, dentro do próprio orçamento.
+const FOTOS_BUCKET='os-fotos',fotoCache={};
+const blobDataURL=b=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(b)});
+const fotoSync=f=>f&&(f.d||fotoCache[f.p])||'',fotoCorte=new Map();
+// Recorte 4:3 no centro: o gerador de PDF não sabe recortar imagem sozinho.
+const cortar43=src=>fotoCorte.get(src)||new Promise(res=>{const im=new Image();im.onload=()=>{const W=800,H=600,k=Math.max(W/im.width,H/im.height),c=document.createElement('canvas');c.width=W;c.height=H;
+  c.getContext('2d').drawImage(im,(W-im.width*k)/2,(H-im.height*k)/2,im.width*k,im.height*k);const u=c.toDataURL('image/jpeg',0.85);fotoCorte.set(src,u);res(u)};im.onerror=()=>res(src);im.src=src});
+async function fotoSrc(f){if(fotoSync(f))return fotoSync(f);const {data,error}=await sb.storage.from(FOTOS_BUCKET).download(f.p);if(error)throw error;return fotoCache[f.p]=await blobDataURL(data)}
+async function carregarFotos(o){const fo=(o.agenda||{}).fotos||{};await Promise.all([...(fo.antes||[]),...(fo.depois||[])].map(f=>fotoSrc(f).then(cortar43).catch(()=>null)))}
+const mesmoTecnico=g=>!g.tecnico||normNome(g.tecnico)===normNome(S.empresa.responsavel||'');
+async function salvarAgenda(o,patch){const cur=S.orcamentos.find(x=>x.id===o.id)||o;await store.save('orcamentos',{...cur,agenda:{...(cur.agenda||{}),...patch},atualizadoEm:new Date().toISOString()})}
+async function addFotos(o,tipo,files){
+  const novas=[];
+  for(const file of files){const b=await paraJpeg(file,sb?1280:900);
+    if(sb){const p=`${o.id}/${tipo}-${uid()}.jpg`;const {error}=await sb.storage.from(FOTOS_BUCKET).upload(p,b,{contentType:'image/jpeg'});if(error)throw error;fotoCache[p]=await blobDataURL(b);novas.push({p,em:new Date().toISOString()})}
+    else novas.push({d:await blobDataURL(b),em:new Date().toISOString()});
+  }
+  const cur=S.orcamentos.find(x=>x.id===o.id)||o,fo={antes:[],depois:[],...((cur.agenda||{}).fotos||{})};fo[tipo]=[...fo[tipo],...novas];
+  await salvarAgenda(cur,{fotos:fo});
+}
+async function removerFoto(o,tipo,i){
+  const cur=S.orcamentos.find(x=>x.id===o.id)||o,fo={antes:[],depois:[],...((cur.agenda||{}).fotos||{})};fo[tipo]=[...fo[tipo]];const [f]=fo[tipo].splice(i,1);
+  await salvarAgenda(cur,{fotos:fo});if(f&&f.p&&sb)sb.storage.from(FOTOS_BUCKET).remove([f.p]).catch(()=>{});
+}
+// Área de assinatura com o dedo (celular) ou o mouse (computador).
+function padAssinatura(cv,aoComecar){
+  const ctx=cv.getContext('2d');let desenhando=false,ult=null,sujo=false;
+  const k=window.devicePixelRatio||1;cv.width=Math.round(cv.offsetWidth*k);cv.height=Math.round(cv.offsetHeight*k);
+  ctx.setTransform(k,0,0,k,0,0);ctx.lineWidth=2.4;ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle='#0B1A33';
+  const pt=ev=>{const r=cv.getBoundingClientRect();return {x:(ev.clientX-r.left)*cv.offsetWidth/r.width,y:(ev.clientY-r.top)*cv.offsetHeight/r.height}};
+  cv.addEventListener('pointerdown',ev=>{ev.preventDefault();cv.setPointerCapture(ev.pointerId);desenhando=true;ult=pt(ev);aoComecar&&aoComecar()});
+  cv.addEventListener('pointermove',ev=>{if(!desenhando)return;const p=pt(ev);ctx.beginPath();ctx.moveTo(ult.x,ult.y);ctx.lineTo(p.x,p.y);ctx.stroke();ult=p;sujo=true});
+  const fim=()=>{desenhando=false};cv.addEventListener('pointerup',fim);cv.addEventListener('pointercancel',fim);
+  return {limpar(){ctx.clearRect(0,0,cv.width,cv.height);sujo=false},vazio:()=>!sujo,
+    png(){const w=cv.width,h=cv.height,d=ctx.getImageData(0,0,w,h).data;let x0=w,y0=h,x1=-1,y1=-1;
+      for(let y=0;y<h;y++)for(let x=0;x<w;x++)if(d[(y*w+x)*4+3]>20){if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y}
+      if(x1<0)return '';const pd=6;x0=Math.max(0,x0-pd);y0=Math.max(0,y0-pd);x1=Math.min(w-1,x1+pd);y1=Math.min(h-1,y1+pd);
+      const cw=x1-x0+1,ch=y1-y0+1,z=Math.min(1,140/ch,520/cw),o=document.createElement('canvas');o.width=Math.round(cw*z);o.height=Math.round(ch*z);
+      o.getContext('2d').drawImage(cv,x0,y0,cw,ch,0,0,o.width,o.height);return o.toDataURL('image/png')}};
+}
+function assinarSheet(titulo,rotuloNome,nomeIni,salvar){
+  openSheet(titulo,`${rotuloNome?`<div class="field"><label for="as_nome">${rotuloNome}</label><input id="as_nome" value="${esc(nomeIni||'')}" autocomplete="off"></div>`:''}
+    <div class="sig-box" style="margin-top:12px"><canvas id="as_cv" class="sig" style="height:210px" aria-label="Área para assinar"></canvas><span class="sig-hint" id="as_h">Assine aqui com o dedo ou o mouse</span></div>`,
+    `<button class="btn left" id="as_clr" type="button">Limpar</button><button class="btn" data-act="close">Cancelar</button><button class="btn primary" id="as_ok">Salvar assinatura</button>`,
+    L=>{const h=L.querySelector('#as_h');const pad=padAssinatura(L.querySelector('#as_cv'),()=>h.hidden=true);
+      L.querySelector('#as_clr').onclick=()=>{pad.limpar();h.hidden=false};
+      L.querySelector('#as_ok').onclick=async()=>{if(pad.vazio()){toast('Faça a assinatura antes de salvar.');return}
+        const nome=rotuloNome?L.querySelector('#as_nome').value.trim():'';if(rotuloNome&&!nome){toast('Informe o nome de quem está assinando.');return}
+        try{await salvar(pad.png(),nome);closeSheet();toast('Assinatura salva')}catch(e){toast('Não foi possível salvar a assinatura.')}};
+    });
+}
+function horariosSheet(o){
+  const g=o.agenda||{};
+  openSheet('Corrigir horários',`<div class="form"><div class="field"><label for="hr_ini">Início</label><input id="hr_ini" type="datetime-local" value="${g.inicio?localDT(new Date(g.inicio)):''}"></div>
+    <div class="field"><label for="hr_fim">Término</label><input id="hr_fim" type="datetime-local" value="${g.fim?localDT(new Date(g.fim)):''}"></div></div>`,
+    `<button class="btn" data-act="close">Cancelar</button><button class="btn primary" id="hr_ok">Salvar</button>`,
+    L=>{L.querySelector('#hr_ok').onclick=async()=>{const i=L.querySelector('#hr_ini').value,f=L.querySelector('#hr_fim').value;
+      if(i&&f&&f<i){toast('O término precisa ser depois do início.');return}
+      try{await salvarAgenda(o,{inicio:i?new Date(i).toISOString():'',fim:f?new Date(f).toISOString():''});closeSheet();render()}catch(e){toast('Não foi possível salvar.')}}});
+}
+function vOS(app){
+  const o=S.orcamentos.find(x=>x.id===view.id);
+  if(!o||!o.agenda){app.innerHTML=`<div class="empty"><b>Ordem de serviço não encontrada</b><button class="btn" data-nav="agenda">Voltar</button></div>`;return}
+  const g=o.agenda,e=S.empresa,c=S.clientes.find(x=>x.id===o.clienteId)||{nome:o.clienteNome||''},fo={antes:[],depois:[],...(g.fotos||{})};
+  const hm=iso=>new Date(iso).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),dur=g.inicio&&g.fim?fmtH((new Date(g.fim)-new Date(g.inicio))/36e5):'';
+  const fase=o.status==='concluido'?'Concluída':g.fim?'Serviço finalizado':g.inicio?'Em andamento':'Agendada';
+  const assTec=g.assTec||(mesmoTecnico(g)?e.assinatura:'');
+  const grade=t=>`<div class="os-fotos">${fo[t].map((f,i)=>`<div class="os-th"><img data-foto="${t}:${i}" alt="Foto ${t==='antes'?'antes':'depois'} ${i+1}"><button class="iconbtn os-x" data-rm="${t}:${i}" aria-label="Remover foto">${svg(UI.x)}</button></div>`).join('')}
+    <label class="os-add">${svg(UI.plus)}<span>Adicionar fotos</span><input type="file" accept="image/*" multiple hidden data-add="${t}"></label></div>`;
+  app.innerHTML=`
+  <div class="row" style="justify-content:space-between"><button class="btn ghost" data-nav="agenda">${svg(UI.back)}Agenda</button><span class="os-fase">${fase}</span></div>
+  <div><div class="eyebrow">Ordem de serviço Nº ${nOrc(o.numero)}</div><h1 class="h1">${esc(c.nome)}</h1>
+    <p class="muted" style="margin:6px 0 0">${esc(cap(diaTxt(g.data,true)))}${g.hora?` às ${esc(g.hora)}`:''}${g.endereco?` · ${esc(g.endereco)}`:''}</p></div>
+  <section class="panel"><div class="spread" style="align-items:center"><h2 class="h2">Andamento</h2><button class="btn sm" id="ox_ed">Editar agendamento</button></div>
+    <div class="os-tempo"><div><span class="hint">Início</span><b>${g.inicio?hm(g.inicio):'—'}</b></div><div><span class="hint">Término</span><b>${g.fim?hm(g.fim):'—'}</b></div><div><span class="hint">${dur?'Duração':'Duração aproximada'}</span><b>${dur||esc(g.duracao||'—')}</b></div></div>
+    <div class="row">${!g.inicio?`<button class="btn primary" id="os_ini">Iniciar serviço</button>`:!g.fim?`<button class="btn primary" id="os_fim">Finalizar serviço</button>`:''}${g.inicio?`<button class="btn ghost sm" id="os_hr">Corrigir horários</button>`:''}</div>
+  </section>
+  <section class="panel"><h2 class="h2">Fotos antes do serviço</h2>${grade('antes')}</section>
+  <section class="panel"><h2 class="h2">Fotos depois do serviço</h2>${grade('depois')}</section>
+  <section class="panel"><h2 class="h2">Relatório do serviço</h2><div class="field"><label for="os_rel" class="sr-only">Relatório</label><textarea id="os_rel" placeholder="O que foi feito, testes, pendências e orientações ao cliente…">${esc(g.relatorio||'')}</textarea><span class="hint">Salva sozinho quando você sai do campo. Aparece na OS.</span></div></section>
+  <section class="panel"><h2 class="h2">Assinaturas</h2>
+    <div class="os-ass">
+      <div class="os-ass-c"><span class="hint">Técnico</span>${assTec?`<img src="${assTec}" alt="Assinatura do técnico">`:'<div class="os-ass-v">Sem assinatura</div>'}<b>${esc(g.tecnico||e.responsavel||e.nome)}</b><button class="btn sm" id="os_atec">${g.assTec?'Assinar de novo':'Assinar'}</button></div>
+      <div class="os-ass-c"><span class="hint">Cliente</span>${g.assCli?`<img src="${g.assCli}" alt="Assinatura do cliente">`:'<div class="os-ass-v">Sem assinatura</div>'}<b>${esc(g.assCliNome||c.nome||'Cliente')}</b><button class="btn sm ${g.assCli?'':'primary'}" id="os_acli">${g.assCli?'Assinar de novo':'Cliente assina'}</button></div>
+    </div></section>
+  <div class="actions"><button class="btn" id="ox_ver">${svg(UI.dl)}Ver OS em PDF</button><button class="btn" id="ox_wa">Enviar ao cliente</button>${o.status==='concluido'?'':`<button class="btn primary" id="os_ok">Concluir instalação</button>`}</div>`;
+  const $=id=>app.querySelector('#'+id),erro=()=>toast('Não foi possível salvar. Confira a internet e tente de novo.');
+  app.querySelectorAll('img[data-foto]').forEach(im=>{const [t,i]=im.dataset.foto.split(':');const f=fo[t][+i];const v=fotoSync(f);if(v)im.src=v;else if(sb&&f.p)fotoSrc(f).then(u=>{im.src=u}).catch(()=>{im.alt='Foto não carregou'})});
+  app.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{const [t,i]=b.dataset.rm.split(':');confirmSheet('Remover foto?','A foto sai desta ordem de serviço.','Remover',()=>removerFoto(o,t,+i).catch(erro))});
+  app.querySelectorAll('[data-add]').forEach(inp=>inp.onchange=async()=>{const fs=[...inp.files];inp.value='';if(!fs.length)return;toast(fs.length>1?`Enviando ${fs.length} fotos…`:'Enviando foto…');
+    try{await addFotos(o,inp.dataset.add,fs);toast(fs.length>1?'Fotos salvas':'Foto salva')}catch(err){toast(/espaço/i.test(err&&err.message||'')?'Sem espaço no navegador para mais fotos.':'Não foi possível salvar a foto. Tente de novo.')}});
+  $('ox_ed').onclick=()=>agendar(o);
+  if($('os_ini'))$('os_ini').onclick=()=>salvarAgenda(o,{inicio:new Date().toISOString()}).then(()=>toast('Serviço iniciado'),erro);
+  if($('os_fim'))$('os_fim').onclick=()=>salvarAgenda(o,{fim:new Date().toISOString()}).then(()=>toast('Serviço finalizado'),erro);
+  if($('os_hr'))$('os_hr').onclick=()=>horariosSheet(o);
+  $('os_rel').addEventListener('change',e=>salvarAgenda(o,{relatorio:e.target.value.trim()}).then(()=>toast('Relatório salvo'),erro));
+  $('os_atec').onclick=()=>assinarSheet('Assinatura do técnico','',null,png=>salvarAgenda(o,{assTec:png}));
+  $('os_acli').onclick=()=>assinarSheet('Assinatura do cliente','Nome de quem está assinando',g.assCliNome||c.nome,(png,nome)=>salvarAgenda(o,{assCli:png,assCliNome:nome,assCliEm:new Date().toISOString()}));
+  $('ox_ver').onclick=()=>verOS(o);
+  $('ox_wa').onclick=()=>verOS(o);
+  if($('os_ok'))$('os_ok').onclick=()=>concluirOS(o);
 }
 function concluirOS(o){
   confirmSheet('Concluir instalação?',`A instalação de ${esc(cliNome(o))} (proposta Nº ${nOrc(o.numero)}) será marcada como concluída.`,'Concluir',async()=>{
     const cur=S.orcamentos.find(x=>x.id===o.id)||o;
-    try{await store.save('orcamentos',{...cur,status:'concluido',agenda:{...(cur.agenda||{}),concluidoEm:new Date().toISOString()},atualizadoEm:new Date().toISOString()});render();toast('Instalação concluída')}catch(e){toast('Não foi possível salvar.')}});
+    const ag={...(cur.agenda||{}),concluidoEm:new Date().toISOString()};if(ag.inicio&&!ag.fim)ag.fim=ag.concluidoEm;
+    try{await store.save('orcamentos',{...cur,status:'concluido',agenda:ag,atualizadoEm:new Date().toISOString()});render();toast('Instalação concluída')}catch(e){toast('Não foi possível salvar.')}});
 }
 function vAgenda(app){
   const hoje=hojeISO(),os=S.orcamentos,ordem=(a,b)=>(a.agenda.data+(a.agenda.hora||'')).localeCompare(b.agenda.data+(b.agenda.hora||''));
@@ -2022,7 +2156,7 @@ function vAgenda(app){
   const feitos=os.filter(o=>o.status==='concluido'&&o.agenda&&o.agenda.data).sort((a,b)=>-ordem(a,b)).slice(0,8);
   const mes=iso=>new Date(iso+'T12:00:00').toLocaleDateString('pt-BR',{month:'short'}).replace('.','');
   const card=(o,cls)=>{const g=o.agenda;return `<div class="ag-card"><div class="ag-d ${cls||''}"><b>${g.data.slice(8,10)}</b><span>${mes(g.data)}</span></div>
-    <div class="ag-i"><b>${esc(cliNome(o))}</b><span>${esc(cap(diaTxt(g.data,true).split(',')[0]))}${g.hora?` às ${esc(g.hora)}`:''} · Nº ${nOrc(o.numero)}${o.titulo?` · ${esc(o.titulo)}`:''}</span>${g.endereco?`<span>${esc(g.endereco)}</span>`:''}</div>
+    <div class="ag-i"><b>${esc(cliNome(o))}${g.inicio&&!g.fim&&o.status!=='concluido'?' <span class="os-fase" style="font-size:11px">Em andamento</span>':''}</b><span>${esc(cap(diaTxt(g.data,true).split(',')[0]))}${g.hora?` às ${esc(g.hora)}`:''} · Nº ${nOrc(o.numero)}${o.titulo?` · ${esc(o.titulo)}`:''}</span>${g.endereco?`<span>${esc(g.endereco)}</span>`:''}</div>
     <div class="ag-b"><button class="btn sm" data-ag-os="${o.id}">OS</button><button class="btn sm" data-ag-wa="${o.id}">WhatsApp</button>${o.status==='concluido'?'':`<button class="btn sm primary" data-ag-ok="${o.id}">Concluir</button>`}</div></div>`};
   const esperaCard=({o,l})=>`<div class="ag-card"><div class="ag-d wait"><b>—</b><span>sem data</span></div>
     <div class="ag-i"><b>${esc(cliNome(o))}</b><span>Nº ${nOrc(o.numero)}${o.titulo?` · ${esc(o.titulo)}`:''}</span><span>${l?(l.iso<hoje?`<b style="color:var(--bad)">Prazo da proposta venceu em ${diaTxt(l.iso)}</b>`:`Agendar até ${esc(diaTxt(l.iso,true))}`):'Sem prazo na proposta'}</span></div>
@@ -2038,7 +2172,7 @@ function vAgenda(app){
   ${sec('Aguardando agendamento',espera.map(esperaCard).join(''))}
   ${sec('Concluídas',feitos.map(o=>card(o,'wait')).join(''))}`;
   const pega=id=>S.orcamentos.find(x=>x.id===id);
-  app.querySelectorAll('[data-ag-os]').forEach(b=>b.onclick=()=>verOS(pega(b.dataset.agOs)));
+  app.querySelectorAll('[data-ag-os]').forEach(b=>b.onclick=()=>go('os',{id:b.dataset.agOs}));
   app.querySelectorAll('[data-ag-wa]').forEach(b=>b.onclick=()=>{const o=pega(b.dataset.agWa);mensagemCliente(o,'Confirmar instalação',textoAgenda(o))});
   app.querySelectorAll('[data-ag-ok]').forEach(b=>b.onclick=()=>concluirOS(pega(b.dataset.agOk)));
   app.querySelectorAll('[data-ag-novo]').forEach(b=>b.onclick=()=>agendar(pega(b.dataset.agNovo)));
@@ -2085,15 +2219,15 @@ function vProposta(app){
   $('st_sel').onchange=async e=>{try{await store.save('orcamentos',{...o,status:e.target.value,atualizadoEm:new Date().toISOString()});toast(e.target.value==='aprovado'?'Aprovado! Veja a lista de compras.':'Status: '+STATUS[e.target.value])}catch(err){toast('Não foi possível alterar o status.')}};
   $('fx_ac').onclick=()=>registrarAceite(o);
   if(a)$('fx_msg').onclick=()=>mensagemCliente(o);
-  $('fx_ag').onclick=()=>agendar(o);if(o.agenda)$('fx_os').onclick=()=>verOS(o);
+  $('fx_ag').onclick=()=>agendar(o);if(o.agenda)$('fx_os').onclick=()=>go('os',{id:o.id});
   if(sb)$('pp_link').onclick=async()=>{const b=$('pp_link');b.disabled=true;try{await linkProposta(o)}catch(e){toast('Não foi possível criar o link. Confira a internet e tente de novo.')}finally{b.disabled=false}};
   $('fx_pg').onclick=()=>registrarPagamento(o);
   $('fx_rc').onclick=()=>verRecibo(o.id);
   $('pp_copy').onclick=()=>copyText(propostaTexto(o));
   $('pp_buy').onclick=()=>listaCompras(o.id);
   $('pp_edit').onclick=()=>editarOrc(o);
-  $('pp_dup').onclick=()=>{const c=JSON.parse(JSON.stringify(o));delete c.aceite;delete c.pgto;delete c.comprados;delete c.linkToken;delete c.linkPagamento;draft={...c,id:uid(),numero:null,status:'rascunho',criadoEm:new Date().toISOString(),_dirty:true,_new:true};go('editor',{force:true})};
-  $('pp_del').onclick=()=>confirmSheet('Excluir orçamento?',`O orçamento Nº ${nOrc(o.numero)} de ${esc(cliNome(o))} será apagado.`,'Excluir',async()=>{if(sb){try{await sb.from('propostas').delete().eq('orcamento_id',o.id)}catch(e){}}await store.remove('orcamentos',o.id);toast('Orçamento excluído');go('inicio',{force:true})});
+  $('pp_dup').onclick=()=>{const c=JSON.parse(JSON.stringify(o));delete c.aceite;delete c.pgto;delete c.comprados;delete c.linkToken;delete c.linkPagamento;delete c.agenda;draft={...c,id:uid(),numero:null,status:'rascunho',criadoEm:new Date().toISOString(),_dirty:true,_new:true};go('editor',{force:true})};
+  $('pp_del').onclick=()=>confirmSheet('Excluir orçamento?',`O orçamento Nº ${nOrc(o.numero)} de ${esc(cliNome(o))} será apagado.`,'Excluir',async()=>{if(sb){try{await sb.from('propostas').delete().eq('orcamento_id',o.id)}catch(e){}try{const {data}=await sb.storage.from(FOTOS_BUCKET).list(o.id);if(data&&data.length)await sb.storage.from(FOTOS_BUCKET).remove(data.map(f=>o.id+'/'+f.name))}catch(e){}}await store.remove('orcamentos',o.id);toast('Orçamento excluído');go('inicio',{force:true})});
   $('pp_dl').onclick=async()=>{
     const b=$('pp_dl');b.disabled=true;
     try{const pay=await pagamentoHTML(o);
