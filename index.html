@@ -1087,11 +1087,15 @@ async function importarCotacao(erro){
   const sample=await getSample();
   let lim=null;if(sample){try{lim=await sample.limits()}catch(e){}}
   const maxImg=lim&&lim.images?lim.images.maxCount:0;
+  let modo='gratis';try{if(sample&&localStorage.getItem('dt:leitura')==='ia')modo='ia'}catch(e){}
   let files=impPrev.files.slice();
   openSheet('Importar cotação',`
     ${erro?`<p class="errbox">${esc(erro)}</p>`:''}
     <p class="muted" style="margin:0">Envie a cotação que a distribuidora mandou. O app lê cada equipamento, encontra no seu catálogo e calcula o novo preço de venda com imposto e lucro. Você confere tudo antes de aplicar.</p>
-    ${sample?'':`<p class="note">A leitura automática precisa da nuvem ligada (login no Supabase).</p>`}
+    ${sample?`<div class="field"><span class="lbl" style="font-weight:600;font-size:13px">Como ler</span><div class="row" style="gap:16px">
+      <label class="acc-r" style="font-weight:500"><input type="radio" name="im_modo" value="gratis" ${modo==='gratis'?'checked':''}> Grátis, no aparelho</label>
+      <label class="acc-r" style="font-weight:500"><input type="radio" name="im_modo" value="ia" ${modo==='ia'?'checked':''}> Com IA (mais precisa, paga)</label></div>
+      <span class="hint">A leitura grátis tira o texto do PDF ou da foto e procura quantidade e preço em cada linha. Confira os itens na próxima tela.</span></div>`:''}
     <div class="drop" id="im_drop">
       <div class="row" style="gap:8px">
         <span class="btn filebtn">${svg(UI.img)}Tirar foto<input id="im_cam" type="file" accept="image/*" capture="environment" aria-label="Tirar foto da cotação"></span>
@@ -1099,11 +1103,10 @@ async function importarCotacao(erro){
         <span class="btn filebtn">${svg(UI.up)}PDF ou planilha<input id="im_doc" type="file" multiple accept=".pdf,application/pdf,.xlsx,.xls,.csv,.txt,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv,text/plain" aria-label="Escolher PDF ou planilha da cotação"></span>
       </div>
       <span class="hint">Print do WhatsApp, foto da cotação, PDF ou planilha do Excel. No computador, também dá para arrastar ou colar.</span>
-      <span class="hint"><b>Os botões não abrem no celular?</b> O aplicativo do Claude pode bloquear câmera e arquivos. Abra este app pelo navegador do celular (Safari ou Chrome, em claude.ai), cole o texto da cotação aqui embaixo ou mande o arquivo para o Claude no chat.</span>
       <div id="im_files" class="row" style="gap:6px"></div></div>
     <div class="field"><label for="im_txt">Ou cole o texto da cotação</label><textarea id="im_txt" placeholder="Ex.: 10x Câmera bullet 2MP — R$ 189,90" style="min-height:110px">${esc(impPrev.txt)}</textarea></div>
     <div class="field"><label for="im_dist">Loja ou distribuidora</label><input id="im_dist" value="${esc(impPrev.dist)}" placeholder="Ex.: Loja A"><span class="hint">O preço fica guardado com esse nome, para comparar com as outras lojas.</span></div>`,
-    `<button class="btn" data-act="close">Cancelar</button><button class="btn primary" id="im_go" ${sample?'':'disabled'}>Ler cotação</button>`,
+    `<button class="btn" data-act="close">Cancelar</button><button class="btn primary" id="im_go">Ler cotação</button>`,
     L=>{
       const $=id=>L.querySelector('#'+id);
       const showFiles=()=>{$('im_files').innerHTML=files.map((f,i)=>`<span class="fchip">${esc(f.name)}<button type="button" data-rmf="${i}" aria-label="Remover ${esc(f.name)}">×</button></span>`).join('')};
@@ -1115,10 +1118,75 @@ async function importarCotacao(erro){
       drop.addEventListener('dragover',ev=>{ev.preventDefault();drop.classList.add('over')});
       drop.addEventListener('dragleave',()=>drop.classList.remove('over'));
       drop.addEventListener('drop',ev=>{ev.preventDefault();drop.classList.remove('over');add(ev.dataTransfer.files)});
-      L.querySelector('.sheet').addEventListener('paste',ev=>{const im=[...((ev.clipboardData&&ev.clipboardData.items)||[])].filter(i=>i.type.startsWith('image/')).map(i=>i.getAsFile()).filter(Boolean);if(im.length&&maxImg){ev.preventDefault();add(im.map((f,i)=>new File([f],`print-${files.length+i+1}.png`,{type:f.type})))}});
-      $('im_go').onclick=()=>{impPrev={files:files.slice(),txt:$('im_txt').value,dist:$('im_dist').value.trim()};lerCotacao(sample,maxImg)};
+      L.querySelector('.sheet').addEventListener('paste',ev=>{const im=[...((ev.clipboardData&&ev.clipboardData.items)||[])].filter(i=>i.type.startsWith('image/')).map(i=>i.getAsFile()).filter(Boolean);if(im.length){ev.preventDefault();add(im.map((f,i)=>new File([f],`print-${files.length+i+1}.png`,{type:f.type})))}});
+      $('im_go').onclick=()=>{impPrev={files:files.slice(),txt:$('im_txt').value,dist:$('im_dist').value.trim()};
+        const r=L.querySelector('input[name=im_modo]:checked'),m=r?r.value:'gratis';try{localStorage.setItem('dt:leitura',m)}catch(e){}
+        m==='ia'?lerCotacao(sample,maxImg):lerCotacao(LEITOR_GRATIS,10)};
     });
 }
+/* leitor-gratis:inicio */
+// Leitura grátis, sem IA: texto do PDF/planilha ou da foto (OCR no aparelho) e regras para achar
+// quantidade, preço e o produto do catálogo. Menos esperta que a IA; a tela de revisão corrige.
+const TESS_SRC='https://cdn.jsdelivr.net/npm/tesseract.js@7.0.0/dist/tesseract.min.js';
+const TESS_OPTS={workerPath:'https://cdn.jsdelivr.net/npm/tesseract.js@7.0.0/dist/worker.min.js',corePath:'https://cdn.jsdelivr.net/npm/tesseract.js-core@7.0.0',langPath:'https://cdn.jsdelivr.net/npm/@tesseract.js-data/por@1.0.0/4.0.0_best_int'};
+const LEITOR_GRATIS={gratis:true};
+async function ocrImagens(imgs,aviso){
+  await loadScript(TESS_SRC);const w=await window.Tesseract.createWorker('por',1,TESS_OPTS);let t='';
+  try{for(let i=0;i<imgs.length;i++){aviso(imgs.length>1?`Lendo a foto ${i+1} de ${imgs.length}…`:'Lendo a foto…');const {data}=await w.recognize(imgs[i]);t+='\n'+data.text}}
+  finally{await w.terminate()}
+  return t;
+}
+function catGratis(t){t=normNome(t);
+  return /camera|dvr|nvr|bullet|dome|lente|hdcvi/.test(t)?'cameras':/alarme|sensor|sirene|central de alarme|teclado|controle remoto/.test(t)?'alarmes':
+    /interfone|porteiro|videoporteiro|monofone/.test(t)?'interfones':/fechadura|leitor biom|controle de acesso|\btag\b|cartao rfid/.test(t)?'fechaduras':
+    /disjuntor|tomada|interruptor|eletroduto|quadro de distrib|fio flex/.test(t)?'eletrica':/instala|mao de obra|servico|visita/.test(t)?'servicos':'acessorios'}
+function lerTextoCotacao(txt,produtos){
+  const RS=/(?:R\$\s*)?(\d{1,3}(?:\.\d{3})+,\d{2}|\d+,\d{2})(?![\d,])/g;
+  const pula=/\b(sub-?total|total|desconto|impostos?|icms|ipi total|base de c[aá]lculo|troco|pagamento|parcelas?|vencimento|validade|cnpj|cpf|telefone|fone|whatsapp|e-?mail|endere[cç]o|cep|or[cç]amento n|pedido n|data)\b/i;
+  const so=t=>normNome(t).replace(/[^a-z0-9]/g,'');
+  const palavras=t=>normNome(t).split(/[^a-z0-9]+/).filter(w=>w.length>=3&&!/^(com|para|sem|und|unid|pcs|cxa)$/.test(w));
+  const cat=(produtos||[]).filter(p=>p&&p.nome).map(p=>({p,chaves:[p.codigo,p.modelo].filter(k=>k&&so(k).length>=4).map(so),pal:palavras(p.nome+' '+(p.marca||'')+' '+(p.modelo||''))}));
+  const itens=[];let frete=null,pend='';
+  for(let l of String(txt||'').split(/\r?\n/)){
+    l=l.replace(/\s+/g,' ').trim();if(!l)continue;
+    const ms=[...l.matchAll(RS)];
+    if(!ms.length){if(/[a-zA-ZÀ-ú]{3}/.test(l)&&!pula.test(l))pend=l;continue}
+    if(/\bfrete\b/i.test(l)){frete=num(ms[ms.length-1][1]);pend='';continue}
+    if(pula.test(l)){pend='';continue}
+    const vals=ms.map(m=>num(m[1])).filter(v=>v>0);if(!vals.length)continue;
+    let resto=l.replace(RS,' ').replace(/R\$/g,' ');
+    // Código: a primeira palavra se for número longo ou letras+números (ex.: 778899, FT1210); senão, a primeira com letras e números.
+    const pri=(resto.match(/^\s*(\S+)/)||[])[1]||'';
+    let cod=/^\d{5,13}$/.test(pri)||(/^[A-Za-z0-9][A-Za-z0-9.\/-]{3,}$/.test(pri)&&/\d/.test(pri)&&/[A-Za-z]/.test(pri))?pri:'';
+    if(!cod){const c=resto.match(/\b(?=[A-Za-z0-9.\/-]*\d)(?=[A-Za-z0-9.\/-]*[A-Za-z])[A-Za-z0-9][A-Za-z0-9.\/-]{3,}\b/);if(c)cod=c[0]}
+    // Candidatos a quantidade: números soltos ou com unidade (10x, 2 un, 50 pç, 100m).
+    const cands=[];const QR=/(?:^|[\s(])(?:qtd?e?\.?\s*:?\s*)?(\d{1,4})(\s*(?:x|un|und|unid|p[cç]s?|cx|mts?|m|kits?|rolos?)\.?)?(?![\w%,.\/-]|[cç])/gi;
+    for(const m of resto.matchAll(QR)){const n=+m[1];if(n>0&&m[1]!==cod)cands.push({n,txt:m[0],un:!!m[2],i:m.index})}
+    let qtd=null,unit,usado=null;
+    if(vals.length>=2){const a=vals[vals.length-2],b=vals[vals.length-1],fecha=n=>Math.abs(a*n-b)<=Math.max(0.05,b*0.005);
+      usado=cands.find(x=>fecha(x.n));unit=a;
+      if(usado)qtd=usado.n;else if(a>0&&b>=a&&Math.abs(b/a-Math.round(b/a))<0.005)qtd=Math.round(b/a);
+      else{usado=cands.find(x=>x.un)||null;qtd=usado?usado.n:1}}
+    else{unit=vals[0];usado=cands.find(x=>x.un&&/x|un|und|unid|p[cç]|cx|kit/i.test(x.txt))||cands.find(x=>/^\s*\d/.test(x.txt)&&resto.trim().startsWith(String(x.n)))||null;qtd=usado?usado.n:1}
+    if(usado)resto=resto.slice(0,usado.i)+' '+resto.slice(usado.i+usado.txt.length);
+    if(cod&&resto.trim().startsWith(cod))resto=resto.trim().slice(cod.length);
+    qtd=qtd||1;
+    let desc=resto.replace(/\(\s*\)/g,' ');if(!desc.includes('('))desc=desc.replace(/\)/g,' ');if(!desc.includes(')'))desc=desc.replace(/\(/g,' ');
+    desc=desc.replace(/^[\s\-–|:;.,*•#]+|[\s\-–|:;.,*•#]+$/g,'').replace(/\s*[|;]\s*/g,' ').replace(/\s{2,}/g,' ').trim();
+    if(!/[a-zA-ZÀ-ú]{3}/.test(desc.replace(cod,''))&&pend)desc=(pend+' '+desc).trim();
+    pend='';
+    if(!/[a-zA-ZÀ-ú]{3}/.test(desc))continue;
+    const linha=so(l+' '+desc);let melhor=null,conf='baixa';
+    for(const x of cat){if(x.chaves.some(k=>linha.includes(k))){melhor=x.p;conf='alta';break}}
+    if(!melhor){const pd=palavras(desc);let best=0;
+      for(const x of cat){if(x.pal.length<2)continue;const hits=x.pal.filter(w=>pd.includes(w)).length,sc=hits/x.pal.length;if(hits>=2&&sc>best){best=sc;melhor=x.p}}
+      if(melhor&&best>=0.6)conf='media';else melhor=null}
+    itens.push({descricao:desc.slice(0,160),codigo:cod||null,qtd,custoUnitario:unit,produtoId:melhor?melhor.id:null,confianca:conf,
+      novo:melhor?null:{nome:desc.slice(0,80),categoria:catGratis(desc),marca:'',modelo:cod||'',unidade:/\bmts?\b|\bmetros?\b/i.test(l)?'m':'un'}});
+  }
+  return {distribuidora:null,frete,itens};
+}
+/* leitor-gratis:fim */
 async function lerCotacao(sample,maxImg){
   const body=document.querySelector('#layer .sheet-b'),foot=document.querySelector('#layer .sheet-f');if(!body||!foot)return;
   const ctl=new AbortController();
@@ -1140,6 +1208,14 @@ async function lerCotacao(sample,maxImg){
   if(imgs.length&&!maxImg){importarCotacao(MSG_SAMPLE.images_unavailable);return}
   if(imgs.length>maxImg){importarCotacao(`Envie no máximo ${maxImg} imagens por vez.`);return}
   texto=texto.slice(0,120000);
+  if(sample&&sample.gratis){
+    let t=texto;
+    if(imgs.length){try{t+=await ocrImagens(imgs,status)}catch(e){importarCotacao('Não consegui ler a foto. Na primeira vez o leitor é baixado da internet: confira a conexão e tente de novo, ou cole o texto da cotação.');return}}
+    if(ctl.signal.aborted){importarCotacao();return}
+    const lido=lerTextoCotacao(t,S.produtos),its=lido.itens.filter(i=>num(i.custoUnitario)>0);
+    if(!its.length){importarCotacao('Não encontrei itens com preço nessa cotação. Tente uma foto mais nítida e reta, o PDF original ou cole o texto.');return}
+    revisarImport({distribuidora:impPrev.dist||'',frete:num(lido.frete),itens:its});return;
+  }
   status('Lendo a cotação e comparando com o seu catálogo…');
   const cat=S.produtos.map(p=>[p.id,p.nome,p.marca,p.modelo,p.codigo].map(x=>String(x||'-').replace(/\|/g,'/')).join(' | ')).join('\n')||'(catálogo vazio)';
   const prompt=['Você ajuda a DaylinTech, empresa brasileira de instalação de câmeras, alarmes, interfones, fechaduras e elétrica, a atualizar o custo dos produtos.',

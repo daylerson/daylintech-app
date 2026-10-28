@@ -52,6 +52,7 @@ O app foi feito como artefato do claude.ai e usa `window.claude.use(...)`. Fora 
 
 - `db`: já trocado. Com `config.js` preenchido, o app usa o Supabase com login (e-mail e senha); sem ele, cai para o `localStorage`.
 - `downloads`: já trocado. `baixar()` agora faz download comum (Blob + `<a download>`).
+- Leitura grátis de cotação (padrão): `LEITOR_GRATIS` em `lerCotacao()`. Texto do PDF (pdf.js) ou planilha, e foto por OCR no aparelho (Tesseract.js 7.0.0 em português, baixado do jsDelivr na primeira vez, `ocrImagens()`). `lerTextoCotacao()` acha em cada linha código, quantidade (escolhida pela conta qtd × unitário = total), preço e frete, e associa ao catálogo por código/modelo ("mesmo modelo") ou por palavras do nome ("parecido"). Fica entre os marcadores `leitor-gratis:inicio/fim`. Com nuvem, a janela de importar deixa escolher "Grátis, no aparelho" ou "Com IA" (lembrado em `localStorage` `dt:leitura`).
 - `sample`: já trocado. Com a nuvem ligada, `getSample()` devolve `nuvemLeitor`, que chama a função `ler-cotacao` do Supabase com o mesmo formato (`limits()`, `json()`); os códigos de erro dela viram mensagens em `MSG_SAMPLE`. A chave da Anthropic fica só nos segredos do Supabase, nunca no site.
 
 ## Banco na nuvem (Supabase)
