@@ -1783,11 +1783,11 @@ function textoCliente(o){
   L.push('Em breve entraremos em contato para mais detalhes.');
   return L.join('\n\n');
 }
-function mensagemCliente(o){
+function mensagemCliente(o,titulo='Mensagem ao cliente',texto){
   const cur=S.orcamentos.find(x=>x.id===o.id)||o,a=cur.aceite||{},c=S.clientes.find(x=>x.id===cur.clienteId)||{};
-  openSheet('Mensagem ao cliente',`<div class="form">
-      <div class="field full"><label for="mc_tel">WhatsApp do cliente</label><input id="mc_tel" inputmode="tel" value="${esc(a.whats||c.telefone||'')}" placeholder="(21) 90000-0000"><span class="hint">Sem número, o WhatsApp abre para você escolher o contato.</span></div>
-      <div class="field full"><label for="mc_txt">Mensagem</label><textarea id="mc_txt" style="min-height:230px">${esc(textoCliente(cur))}</textarea><span class="hint">Pode editar antes de enviar. Abre o seu WhatsApp com a mensagem pronta.</span></div></div>`,
+  openSheet(titulo,`<div class="form">
+      <div class="field full"><label for="mc_tel">WhatsApp do cliente</label><input id="mc_tel" inputmode="tel" value="${esc(c.telefone||a.whats||'')}" placeholder="(21) 90000-0000"><span class="hint">Sem número, o WhatsApp abre para você escolher o contato.</span></div>
+      <div class="field full"><label for="mc_txt">Mensagem</label><textarea id="mc_txt" style="min-height:230px">${esc(texto||textoCliente(cur))}</textarea><span class="hint">Pode editar antes de enviar. Abre o seu WhatsApp com a mensagem pronta.</span></div></div>`,
     `<button class="btn" data-act="close">Fechar</button><button class="btn primary" id="mc_ok">Abrir no WhatsApp</button>`,
     L=>{L.querySelector('#mc_ok').onclick=()=>{const d=soDig(L.querySelector('#mc_tel').value),fone=d?(d.length<=11?'55'+d:d):'';
       window.open(`https://wa.me/${fone}?text=${encodeURIComponent(L.querySelector('#mc_txt').value)}`,'_blank','noopener');closeSheet()}});
@@ -1861,11 +1861,13 @@ function reciboHTML(o){const p=o.pgto,e=S.empresa,d=new Date((p.data||'').slice(
       <div class="rc-sign">${e.assinatura?`<img src="${e.assinatura}" alt="Assinatura">`:'<div class="rc-blank"></div>'}<div class="rc-line"><b>${esc(e.responsavel||e.nome)}</b><span>${esc(e.nome)}${e.cnpj?` · CNPJ ${esc(e.cnpj)}`:''}</span>${e.telefone?`<span>${esc(e.telefone)}</span>`:''}</div></div>
     </div></div>`}
 function verRecibo(id){const o=S.orcamentos.find(x=>x.id===id);if(!o||!o.pgto)return;const p=o.pgto,e=S.empresa;
-  const txt=[`*Recibo Nº ${nOrc(o.numero)} — ${e.nome}*`,`Recebi de ${p.nome}${p.doc?`, CPF/CNPJ ${p.doc}`:''} o valor de ${money(p.valor)} (${extenso(p.valor)}), referente à proposta Nº ${nOrc(o.numero)}, pago via ${(FORMAS[p.forma]||'').toLowerCase()} em ${fmtDate(p.data+'T12:00:00')}.`,``,`${e.responsavel||e.nome}`].join('\n');
+  const txt=[`*Recibo Nº ${nOrc(o.numero)} — ${e.nome}*`,`Recebi de ${p.nome}${p.doc?`, CPF/CNPJ ${p.doc}`:''} o valor de ${money(p.valor)} (${extenso(p.valor)}), referente à proposta Nº ${nOrc(o.numero)}, pago via ${p.forma==='pix'?'Pix':(FORMAS[p.forma]||'').toLowerCase()} em ${fmtDate(p.data+'T12:00:00')}.`,``,`${e.responsavel||e.nome}`].join('\n');
   openSheet('Recibo',`${e.assinatura?'':`<p class="note">Sua assinatura ainda não está cadastrada. Desenhe uma vez na aba Empresa e ela aparece em todos os recibos.</p>`}<div class="paper-wrap">${reciboHTML(o)}</div>`,
-    `<button class="btn left" id="rc_copy">${svg(UI.copy)}Copiar texto</button><button class="btn primary" id="rc_dl">${svg(UI.dl)}Baixar recibo</button>`,
+    `<button class="btn left" id="rc_copy">${svg(UI.copy)}Copiar texto</button><button class="btn" id="rc_wa">Enviar no WhatsApp</button><button class="btn primary" id="rc_dl">${svg(UI.dl)}Baixar recibo</button>`,
     L=>{L.querySelector('.sheet').style.maxWidth='860px';
       L.querySelector('#rc_copy').onclick=()=>copyText(txt);
+      L.querySelector('#rc_wa').onclick=()=>{const nome=String(p.nome||'').trim().split(' ')[0];closeSheet();
+        mensagemCliente(o,'Enviar recibo',`Olá${nome?', '+nome:''}! Segue o recibo do seu pagamento:\n\n${txt}\n\nObrigado pela confiança!`)};
       L.querySelector('#rc_dl').onclick=async()=>{if(await baixar(`Recibo-${nOrc(o.numero)}-${arqNome(p.nome)}.html`,docHTML(`Recibo ${nOrc(o.numero)} — ${p.nome}`,reciboHTML(o))))toast('Recibo salvo. Mande pelo WhatsApp ou salve como PDF.')}});
 }
 function vProposta(app){
