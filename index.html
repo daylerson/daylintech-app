@@ -530,7 +530,7 @@ const normNome=t=>String(t||'').trim().toLowerCase().normalize('NFD').replace(/[
 function fornEf(p){const fs=((p&&p.fornecedores)||[]).filter(f=>num(f.preco)>0);if(!fs.length)return null;const fx=p.fornecedorFixo&&fs.find(f=>f.id===p.fornecedorFixo);const min=fs.reduce((a,b)=>num(b.preco)<num(a.preco)?b:a);return {f:fx||min,min,fixo:!!fx,n:fs.length,lista:fs}}
 function idadePill(d){return d==null?'':`<span class="pill ${d>30?'conf-baixa':'st-rascunho'}">${d===0?'atualizado hoje':d>30?`há ${d} dias · pedir cotação`:`há ${d} dia${d===1?'':'s'}`}</span>`}
 
-const DEF_EMPRESA={nome:'DaylinTech',slogan:'Tecnologia que protege',cnpj:'',telefone:'',email:'',endereco:'',margem:30,imposto:6,despesas:0,arredondar:1,descontoPix:5,cartaoMax:12,cartaoSemJuros:3,cartaoJuros:2.99,pixTipo:'cpf',pixChave:'',pixNome:'',cidade:'',whatsapp:'',linkPagamento:'',responsavel:'',assinatura:'',validade:15,pagamento:'50% na aprovação e 50% na conclusão. Pix, transferência ou cartão.',garantia:'Garantia de 12 meses nos equipamentos (fabricante) e 90 dias na instalação.',prazo:'Instalação em até 5 dias úteis após a aprovação.'};
+const DEF_EMPRESA={nome:'DaylinTech',slogan:'Tecnologia que protege',cnpj:'',telefone:'',email:'',endereco:'',margem:30,imposto:6,despesas:0,arredondar:1,descontoPix:5,cartaoMax:12,cartaoSemJuros:3,cartaoJuros:2.99,pixTipo:'cpf',pixChave:'',pixNome:'',cidade:'',whatsapp:'',linkPagamento:'',responsavel:'',assinatura:'',validade:15,pagamento:'50% na aprovação e 50% na conclusão. Pix, transferência ou cartão de crédito em 3x sem juros ou em até 12x com juros da operadora.',garantia:'Garantia de 12 meses nos equipamentos (fabricante) e 90 dias na instalação.',prazo:'Instalação em até 5 dias úteis após a aprovação.'};
 
 const S={produtos:[],clientes:[],orcamentos:[],empresa:{...DEF_EMPRESA},ready:{produtos:false,clientes:false,orcamentos:false,empresa:false}};
 let view={name:'home'};
@@ -1636,6 +1636,7 @@ function parcelas(total){const e=S.empresa,max=Math.max(1,Math.min(24,Math.round
   for(let n=1;n<=max;n++){const jur=n>sj&&i>0;let p=jur?total*i/(1-Math.pow(1+i,-n)):total/n;p=Math.ceil(p*100-1e-6)/100;out.push({n,p,total:Math.round(p*n*100)/100,juros:jur})}
   return out}
 function waNum(){const d=soDig(S.empresa.whatsapp||S.empresa.telefone);return d?(d.length<=11?'55'+d:d):''}
+const cartaoTxt=()=>{const e=S.empresa,max=Math.max(1,Math.round(num(e.cartaoMax)||1)),sj=Math.min(max,Math.max(1,Math.round(num(e.cartaoSemJuros)||1)));return max<=1?'à vista':sj>=max?`em até ${max}x sem juros`:`${sj>1?`em ${sj}x sem juros ou `:''}em até ${max}x com juros da operadora`};
 const waLink=t=>`https://wa.me/${waNum()}?text=${encodeURIComponent(t)}`;
 const QR_SRC='https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js';
 async function qrSVG(txt){try{await loadScript(QR_SRC);const q=window.qrcode(0,'M');q.addData(txt);q.make();const n=q.getModuleCount();let d='';
@@ -1652,20 +1653,19 @@ function extenso(v){v=Math.round(num(v)*100)/100;const re=Math.floor(v),ce=Math.
   const reais=re?inteiro(re)+(re%1e6===0?' de':'')+(re===1?' real':' reais'):'',cents=ce?a999(ce)+(ce===1?' centavo':' centavos'):'';
   return reais&&cents?reais+' e '+cents:(reais||cents||'zero real')}
 async function pagamentoHTML(o){
-  const t=calc(o),e=S.empresa,dp=num(e.descontoPix),vp=valorPix(t.total),pl=pixPayload(vp,'DT'+nOrc(o.numero)),qr=pl?await qrSVG(pl):'',ps=parcelas(t.total),lk=safeUrl(e.linkPagamento);
-  return `<div class="pay"><div class="pp-cat">Formas de pagamento</div><div class="pay-g">
+  const t=calc(o),e=S.empresa,dp=num(e.descontoPix),vp=valorPix(t.total),pl=pixPayload(vp,'DT'+nOrc(o.numero)),qr=pl?await qrSVG(pl):'',lk=safeUrl(e.linkPagamento);
+  if(!pl&&!lk)return '';
+  return `<div class="pay"><div class="pp-cat">${pl?'Pagar com Pix':'Pagamento com cartão'}</div><div class="pay-g">
     ${pl?`<div class="pay-c" id="pay_pix"><div class="pay-h"><b>Pix</b>${dp?`<span class="pay-tag">${fmtPct(dp)} de desconto</span>`:''}</div>
       <div class="pay-v">${money(vp)}</div>${dp?`<div class="pay-s">em vez de <s>${money(t.total)}</s></div>`:''}
       ${qr?`<div class="qr-w">${qr}</div>`:''}
       <div class="pay-s">Pix copia e cola</div><div class="pix-code">${esc(pl)}</div>
       <button type="button" class="pay-copy" data-copy="${esc(pl)}">Copiar código Pix</button>
       <div class="pay-s">Recebedor: ${esc(e.pixNome||e.nome)}</div></div>`:''}
-    <div class="pay-c"><div class="pay-h"><b>Cartão de crédito</b></div><div class="pay-v">${ps.length>1?`até ${ps.length}x`:money(t.total)}</div>
-      ${ps.length>1?`<table class="parc"><tbody>${ps.map(x=>`<tr><td>${x.n}x</td><td>${money(x.p)}</td><td>${x.juros?`total ${money(x.total)}`:'sem juros'}</td></tr>`).join('')}</tbody></table>`:''}
-      ${lk?`<a class="pay-link" href="${esc(lk)}" target="_blank" rel="noopener">Pagar com cartão ↗</a>`:`<div class="pay-s">Pagamento na maquininha, no dia da instalação.</div>`}</div>
+    ${lk?`<div class="pay-c"><div class="pay-h"><b>Cartão de crédito</b></div><div class="pay-s">${esc(cartaoTxt())}</div><a class="pay-link" href="${esc(lk)}" target="_blank" rel="noopener">Pagar com cartão ↗</a></div>`:''}
   </div></div>`}
 function aceiteHTML(o,link){
-  const t=calc(o),e=S.empresa,dp=num(e.descontoPix),pl=!!pixChave(),ps=parcelas(t.total),c=S.clientes.find(x=>x.id===o.clienteId)||{};
+  const t=calc(o),e=S.empresa,dp=num(e.descontoPix),pl=!!pixChave(),c=S.clientes.find(x=>x.id===o.clienteId)||{};
   const n=nOrc(o.numero),emp=e.nome||'DaylinTech';
   const simples=`*ACEITE DE PROPOSTA*\nProposta: Nº ${n} — ${emp}\nCliente: ${cliNome(o)}\nValor da proposta: ${money(t.total)}\n\nLi e aceito a proposta e as condições.`;
   const ajuste=`Olá! Sobre a proposta Nº ${n} da ${emp}, gostaria de ajustar: `;
@@ -1682,8 +1682,7 @@ function aceiteHTML(o,link){
       <label>CPF ou CNPJ<input id="acc_doc" value="${esc(c.documento||'')}" inputmode="numeric"></label>
       <fieldset><legend>Como prefere pagar?</legend>
         ${pl?`<label class="acc-r"><input type="radio" name="fp" value="pix" checked> Pix${dp?` com ${fmtPct(dp)} de desconto`:''}: <b>${money(valorPix(t.total))}</b></label>`:''}
-        <label class="acc-r"><input type="radio" name="fp" value="cartao" ${pl?'':'checked'}> Cartão de crédito
-          <select id="acc_parc" ${pl?'disabled':''}>${ps.map((x,i)=>`<option value="${i}">${x.n}x de ${money(x.p)}${x.juros?` (total ${money(x.total)})`:' sem juros'}</option>`).join('')}</select></label>
+        <label class="acc-r"><input type="radio" name="fp" value="cartao" ${pl?'':'checked'}> <span style="flex:1;min-width:0">Cartão de crédito: ${esc(cartaoTxt())}</span></label>
         <label class="acc-r"><input type="radio" name="fp" value="combinar"> Prefiro combinar depois</label>
       </fieldset>
       <label class="acc-r"><input type="checkbox" id="acc_ok2" required> Li e aceito a proposta e as condições.</label>
@@ -1700,10 +1699,10 @@ var ok=$('acc_ok'),f=$('acc_form');if(!ok||!f)return;
 ok.addEventListener('click',function(e){e.preventDefault();f.hidden=false;$('acc_btns').hidden=true;$('acc_nome').focus()});
 $('acc_cancel').onclick=function(){f.hidden=true;$('acc_btns').hidden=false};
 function fp(){var r=f.querySelector('input[name=fp]:checked');return r?r.value:'combinar'}
-f.addEventListener('change',function(){$('acc_parc').disabled=fp()!=='cartao'});
+f.addEventListener('change',function(){var pc=$('acc_parc');if(pc)pc.disabled=fp()!=='cartao'});
 f.addEventListener('submit',function(e){e.preventDefault();var nome=$('acc_nome').value.trim(),doc=$('acc_doc').value.trim();
 if(!nome||!$('acc_ok2').checked){$('acc_err').hidden=false;return}$('acc_err').hidden=true;
-var x=fp(),pg='A combinar';if(x==='pix')pg='Pix'+(D.dp?' com '+D.dp+' de desconto':'')+': '+D.vp;else if(x==='cartao'){var p=D.parc[$('acc_parc').value];pg='Cartão de crédito em '+p.n+'x de '+p.p+(p.j?' (total '+p.t+')':' sem juros')}
+var x=fp(),pg='A combinar';if(x==='pix')pg='Pix'+(D.dp?' com '+D.dp+' de desconto':'')+': '+D.vp;else if(x==='cartao')pg='Cartão de crédito';
 var d=new Date(),dt=d.toLocaleDateString('pt-BR')+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
 var msg=['*ACEITE DE PROPOSTA*','Proposta: Nº '+D.num+' — '+D.emp,'Cliente: '+nome,'CPF/CNPJ: '+(doc||'não informado'),'Valor da proposta: '+D.total,'Pagamento: '+pg,'Data: '+dt,'','Li e aceito a proposta e as condições.'].join('\\n');
 var url='https://wa.me/'+D.wa+'?text='+encodeURIComponent(msg);$('acc_wa').href=url;f.hidden=true;$('acc_done').hidden=false;
