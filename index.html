@@ -1851,7 +1851,7 @@ function registrarPagamento(o){
     });
 }
 function reciboHTML(o){const p=o.pgto,e=S.empresa,d=new Date((p.data||'').slice(0,10)+'T12:00:00');
-  const via=p.forma==='cartao'?`cartão de crédito${num(p.parcelas)>1?` em ${num(p.parcelas)}x`:''}`:(FORMAS[p.forma]||'').toLowerCase();
+  const via=p.forma==='cartao'?`cartão de crédito${num(p.parcelas)>1?` em ${num(p.parcelas)}x`:''}`:p.forma==='pix'?'Pix':(FORMAS[p.forma]||'').toLowerCase();
   return `<div class="paper recibo"><div class="pp-band"><div class="pp-id"><img class="pp-logo2" src="${LOGO}" alt="${esc(e.nome)}"></div><div class="pp-num"><div class="k">Recibo</div><div class="n">Nº ${nOrc(o.numero)}</div></div></div><div class="pp-stripe"></div>
     <div class="pp-body">
       <div class="rc-valor"><span class="pp-k">Valor recebido</span><b>${money(p.valor)}</b></div>
@@ -1860,15 +1860,50 @@ function reciboHTML(o){const p=o.pgto,e=S.empresa,d=new Date((p.data||'').slice(
       <p class="rc-local">${esc(e.cidade||'')}${e.cidade?', ':''}${d.toLocaleDateString('pt-BR',{day:'numeric',month:'long',year:'numeric'})}.</p>
       <div class="rc-sign">${e.assinatura?`<img src="${e.assinatura}" alt="Assinatura">`:'<div class="rc-blank"></div>'}<div class="rc-line"><b>${esc(e.responsavel||e.nome)}</b><span>${esc(e.nome)}${e.cnpj?` · CNPJ ${esc(e.cnpj)}`:''}</span>${e.telefone?`<span>${esc(e.telefone)}</span>`:''}</div></div>
     </div></div>`}
+// Recibo em PDF: desenha o recibo (com logo e assinatura) numa imagem e põe numa folha A4.
+const H2C_SRC='vendor/html2canvas-1.4.1.min.js',JSPDF_SRC='vendor/jspdf-4.2.1.umd.min.js';
+async function reciboPDF(o){
+  await loadScript(H2C_SRC);await loadScript(JSPDF_SRC);
+  const box=document.createElement('div');box.style.cssText='position:fixed;left:-10000px;top:0;width:720px;background:#fff;color-scheme:light';
+  box.innerHTML=reciboHTML(o);document.body.appendChild(box);
+  try{
+    const el=box.firstElementChild;el.style.boxShadow='none';el.style.margin='0';el.style.maxWidth='none';
+    try{await document.fonts.ready}catch(e){}
+    await Promise.all([...box.querySelectorAll('img')].map(i=>i.complete?0:new Promise(r=>{i.onload=i.onerror=r})));
+    const cv=await window.html2canvas(el,{scale:2,backgroundColor:'#ffffff',logging:false});
+    const pdf=new window.jspdf.jsPDF({unit:'mm',format:'a4'});
+    let w=190,h=cv.height*w/cv.width;if(h>277){w=w*277/h;h=277}
+    pdf.addImage(cv.toDataURL('image/jpeg',0.92),'JPEG',(210-w)/2,10,w,h);
+    return pdf.output('blob');
+  }finally{box.remove()}
+}
 function verRecibo(id){const o=S.orcamentos.find(x=>x.id===id);if(!o||!o.pgto)return;const p=o.pgto,e=S.empresa;
   const txt=[`*Recibo Nº ${nOrc(o.numero)} — ${e.nome}*`,`Recebi de ${p.nome}${p.doc?`, CPF/CNPJ ${p.doc}`:''} o valor de ${money(p.valor)} (${extenso(p.valor)}), referente à proposta Nº ${nOrc(o.numero)}, pago via ${p.forma==='pix'?'Pix':(FORMAS[p.forma]||'').toLowerCase()} em ${fmtDate(p.data+'T12:00:00')}.`,``,`${e.responsavel||e.nome}`].join('\n');
+  const nomeArq=`Recibo-${nOrc(o.numero)}-${arqNome(p.nome)}.pdf`,primeiro=String(p.nome||'').trim().split(' ')[0];
+  const legenda=`Olá${primeiro?', '+primeiro:''}! Segue o recibo do seu pagamento referente à proposta Nº ${nOrc(o.numero)} da ${e.nome||'DaylinTech'}. Obrigado pela confiança!`;
+  // Já começa a gerar o PDF, para o "Compartilhar" do celular abrir na hora do toque.
+  let pdf=null;const pronto=reciboPDF(o).then(b=>pdf=new File([b],nomeArq,{type:'application/pdf'}),()=>null);
+  const salvarPDF=f=>{const url=URL.createObjectURL(f),a=document.createElement('a');a.href=url;a.download=nomeArq;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),4000)};
   openSheet('Recibo',`${e.assinatura?'':`<p class="note">Sua assinatura ainda não está cadastrada. Desenhe uma vez na aba Empresa e ela aparece em todos os recibos.</p>`}<div class="paper-wrap">${reciboHTML(o)}</div>`,
-    `<button class="btn left" id="rc_copy">${svg(UI.copy)}Copiar texto</button><button class="btn" id="rc_wa">Enviar no WhatsApp</button><button class="btn primary" id="rc_dl">${svg(UI.dl)}Baixar recibo</button>`,
+    `<button class="btn left" id="rc_copy">${svg(UI.copy)}Copiar texto</button><button class="btn" id="rc_wa">Enviar no WhatsApp</button><button class="btn primary" id="rc_dl">${svg(UI.dl)}Baixar PDF</button>`,
     L=>{L.querySelector('.sheet').style.maxWidth='860px';
       L.querySelector('#rc_copy').onclick=()=>copyText(txt);
-      L.querySelector('#rc_wa').onclick=()=>{const nome=String(p.nome||'').trim().split(' ')[0];closeSheet();
-        mensagemCliente(o,'Enviar recibo',`Olá${nome?', '+nome:''}! Segue o recibo do seu pagamento:\n\n${txt}\n\nObrigado pela confiança!`)};
-      L.querySelector('#rc_dl').onclick=async()=>{if(await baixar(`Recibo-${nOrc(o.numero)}-${arqNome(p.nome)}.html`,docHTML(`Recibo ${nOrc(o.numero)} — ${p.nome}`,reciboHTML(o))))toast('Recibo salvo. Mande pelo WhatsApp ou salve como PDF.')}});
+      L.querySelector('#rc_dl').onclick=async()=>{const b=L.querySelector('#rc_dl');b.disabled=true;await pronto;b.disabled=false;
+        if(!pdf){toast('Não foi possível gerar o PDF. Confira a internet e tente de novo.');return}salvarPDF(pdf);toast('Recibo em PDF salvo.')};
+      L.querySelector('#rc_wa').onclick=async()=>{const b=L.querySelector('#rc_wa');
+        if(!pdf){b.disabled=true;b.textContent='Preparando PDF…';await pronto;b.disabled=false;b.textContent='Enviar no WhatsApp'}
+        if(!pdf){toast('Não foi possível gerar o PDF. Confira a internet e tente de novo.');return}
+        // Celular: abre o Compartilhar com o PDF anexado (escolha o WhatsApp e o cliente).
+        if(navigator.canShare&&navigator.canShare({files:[pdf]})){
+          try{await navigator.share({files:[pdf],title:`Recibo Nº ${nOrc(o.numero)}`,text:legenda});return}
+          catch(err){if(err&&err.name==='AbortError')return;if(err&&err.name==='NotAllowedError'){toast('PDF pronto. Toque de novo em "Enviar no WhatsApp".');return}}
+        }
+        // Computador: baixa o PDF e abre a conversa do cliente para anexar.
+        salvarPDF(pdf);closeSheet();
+        mensagemCliente(o,'Enviar recibo',legenda);
+        const n=document.querySelector('#layer .sheet-b');if(n)n.insertAdjacentHTML('afterbegin',`<p class="note" style="margin-top:0">O PDF <b>${esc(nomeArq)}</b> foi baixado. Depois de abrir a conversa, arraste o arquivo para o WhatsApp ou use o clipe para anexar.</p>`);
+      };
+    });
 }
 function vProposta(app){
   const o=S.orcamentos.find(x=>x.id===view.id);
