@@ -21,7 +21,8 @@ Para rodar, sirva a pasta com qualquer servidor estático (ex.: `npx serve .`). 
 
 - Início: frase do dia, financeiro do mês, meta e avisos.
 - Orçamentos e editor: materiais e mão de obra separados.
-- Proposta, com fechamento (aceite, pagamento e recibo).
+- Proposta, com fechamento (aceite, pagamento, recibo e agendamento).
+- Agenda: instalações atrasadas, de hoje, próximas, aguardando agendamento (com a data limite pelo prazo da proposta) e concluídas.
 - Catálogo de materiais: foto, datasheet, várias lojas por produto, importação de cotação.
 - Mão de obra.
 - Clientes.
@@ -39,6 +40,7 @@ Para rodar, sirva a pasta com qualquer servidor estático (ex.: `npx serve .`). 
 - A proposta baixada é um HTML autônomo para o cliente. Ela mostra o Pix, o cartão e o aceite, que gera mensagem no WhatsApp (`wa.me`). No app, "Registrar aceite" lê essa mensagem.
 - Texto de pagamento: cada orçamento guarda o seu (`o.pagamento`), copiado de `empresa.pagamento`. `atualizarTextos()` troca, ao carregar e depois de importar backup, os textos padrão antigos (`PAG_ANTIGOS`) pelo atual de `DEF_EMPRESA`. Texto personalizado não é mexido. Ao mudar o padrão, colocar o anterior em `PAG_ANTIGOS`.
 - A proposta não tem linha de assinatura do cliente (o aceite é pelo link ou WhatsApp). O Pix aparece numa caixa compacta: QR Code pequeno, valor e botão "Copiar código Pix".
+- Agendamento / OS: `o.agenda` = `{data, hora, endereco, tecnico, duracao, obs, concluidoEm}`. `prazoLimite()` lê o prazo da proposta ("N dias [úteis]") e conta a partir de `aceite.data`, pulando sábado e domingo se forem úteis (feriados não). `osHTML()` é a ordem de serviço (serviços e materiais sem preço, assinaturas do técnico e do cliente) e sai em PDF por `htmlPDF()`, o mesmo do recibo. "Confirmar no WhatsApp" usa `textoAgenda()` e `enviarComPDF()` (celular: Compartilhar com a OS anexada; computador: conversa com o texto). Agendar não muda o status; "Concluir" muda para concluido.
 - Status dos orçamentos: rascunho, enviado, revisao, aprovado, recusado, execucao, concluido. Pagamento em `o.pgto` e aceite em `o.aceite`.
 
 ## O que dependia do Claude (artefato) e precisa ser trocado

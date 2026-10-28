@@ -68,12 +68,12 @@ button,input,select,textarea{font:inherit;color:inherit}
 .bottomnav{display:none}
 @media (max-width:760px){
   .toptabs{display:none}
-  .bottomnav{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surface);border-top:1px solid var(--line);
+  .bottomnav{display:grid;grid-template-columns:repeat(6,1fr);position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surface);border-top:1px solid var(--line);
     padding-left:max(8px,env(safe-area-inset-left,0px));padding-right:max(8px,env(safe-area-inset-right,0px));padding-bottom:env(safe-area-inset-bottom,0px)}
   .bottomnav button{background:none;border:0;padding:9px 4px 8px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11.5px;font-weight:600;color:var(--muted);cursor:pointer}
   .bottomnav button[aria-current="page"]{color:var(--accent)}
   .bottomnav svg{width:22px;height:22px}
-  .bottomnav button{white-space:nowrap;font-size:11px;letter-spacing:-.01em}
+  .bottomnav button{white-space:nowrap;font-size:10.5px;letter-spacing:-.02em;padding-left:2px;padding-right:2px}
   .qty{justify-self:start}
   main{padding-bottom:84px!important}
 }
@@ -272,7 +272,7 @@ body.apresentacao .internal{display:none!important}
 .st-n{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:13px;background:var(--neutral-soft);color:var(--muted)}
 .step.done .st-n{background:var(--ok);color:#fff}
 .st-t{display:flex;flex-direction:column;gap:2px;min-width:0}
-@media (max-width:480px){.step{grid-template-columns:auto minmax(0,1fr)}.step .btn{grid-column:2;justify-self:start}}
+@media (max-width:480px){.step{grid-template-columns:auto minmax(0,1fr)}.step .btn{grid-column:2;justify-self:start}.step .st-b{grid-column:2;justify-content:flex-start}}
 .pp-extra .pp-body{gap:26px}
 .pay-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:12px}
 .pay-c{border:1px solid var(--paper-line);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:6px;align-items:flex-start;min-width:0}
@@ -283,6 +283,20 @@ body.apresentacao .internal{display:none!important}
 .pay-s{font-size:12.5px;color:var(--paper-muted)}
 .qr-w{width:176px;max-width:100%;align-self:center;margin:4px 0}
 .pix-box{flex-direction:row;align-items:center;gap:16px;padding:12px}
+.st-b{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.ag-list{display:flex;flex-direction:column;gap:10px}
+.ag-card{display:flex;gap:12px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px;box-shadow:var(--shadow)}
+.ag-d{width:54px;flex:none;text-align:center;border-radius:10px;background:var(--brand-soft);color:var(--brand);padding:6px 0;display:flex;flex-direction:column;line-height:1.15}
+.ag-d b{font-size:20px;font-family:var(--f-display)}.ag-d span{font-size:10.5px;text-transform:uppercase;font-weight:700;letter-spacing:.04em}
+.ag-d.hoje{background:var(--accent);color:#fff}.ag-d.late{background:var(--bad-soft);color:var(--bad)}.ag-d.wait{background:var(--neutral-soft);color:var(--muted)}
+.ag-i{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.ag-i b{font-size:15px}.ag-i span{font-size:13px;color:var(--muted)}
+.ag-b{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+@media (max-width:560px){.ag-card{flex-wrap:wrap}.ag-b{width:100%;justify-content:flex-start;padding-left:66px}}
+.os-quando{display:flex;gap:10px 18px;flex-wrap:wrap;background:var(--paper-soft);border-left:6px solid var(--paper-accent);border-radius:6px;padding:12px 14px}
+.os-quando>div{display:flex;flex-direction:column;min-width:110px}.os-quando b{font-size:16px;color:var(--paper-ink)}
+.os-t td{padding:8px 0;border-bottom:1px solid var(--paper-line);vertical-align:top}.os-t td.v{text-align:right;white-space:nowrap;padding-left:12px;color:var(--paper-ink);font-weight:600}
+.os-obs{white-space:pre-line;color:var(--paper-ink)}
+.os-sign{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:44px}
 .card-box{padding:12px;justify-content:center}.card-t{font-weight:600;color:var(--paper-ink);font-size:14px;line-height:1.4}
 .card-box .pay-link{width:auto;padding:7px 12px;font-size:13px;margin-top:6px}
 .pix-qr{width:108px;flex:none;line-height:0}.pix-qr svg{width:100%;height:auto;display:block}
@@ -489,6 +503,7 @@ const ICON={
 };
 const NAVI={
   home:'<path d="M3 11l9-7 9 7"/><path d="M5 10v10h5v-6h4v6h5V10"/>',
+  agenda:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M8 14h3v3H8z"/>',
   maodeobra:'<path d="M14.5 5.5a4 4 0 0 0 4.9 4.9L11 18.8a2.1 2.1 0 0 1-3-3l8.4-8.4"/><path d="M14.5 5.5l2-2"/>',
   inicio:'<path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/><path d="M10 12h5M10 15h5M10 18h3"/>',
   catalogo:'<rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/>',
@@ -727,7 +742,7 @@ function confirmSheet(title,msg,okLabel,onOk){
 }
 
 /* ---------- Navegação ---------- */
-const TABS=[['home','Início'],['inicio','Orçamentos'],['catalogo','Catálogo'],['maodeobra','Mão de obra'],['clientes','Clientes']];
+const TABS=[['home','Início'],['inicio','Orçamentos'],['agenda','Agenda'],['catalogo','Catálogo'],['maodeobra','Mão de obra'],['clientes','Clientes']];
 function renderNav(){
   const cur=['editor','proposta'].includes(view.name)?'inicio':view.name;
   document.getElementById('toptabs').innerHTML=TABS.map(([k,l])=>`<button data-nav="${k}" ${cur===k?'aria-current="page"':''}>${l}</button>`).join('');
@@ -750,7 +765,7 @@ function render(fromSnap){
   if(fromSnap&&view.name==='editor'){renderEditorParts();return}
   const active=document.activeElement&&document.activeElement.id;
   const pos=document.activeElement&&document.activeElement.selectionStart;
-  ({home:vHome,inicio:vInicio,catalogo:vCatalogo,maodeobra:vMaoDeObra,clientes:vClientes,ajustes:vAjustes,editor:vEditor,proposta:vProposta}[view.name]||vHome)(app);
+  ({home:vHome,inicio:vInicio,catalogo:vCatalogo,maodeobra:vMaoDeObra,clientes:vClientes,ajustes:vAjustes,editor:vEditor,proposta:vProposta,agenda:vAgenda}[view.name]||vHome)(app);
   if(active){const el=document.getElementById(active);if(el&&el.tagName==='INPUT'&&el.type==='search'){el.focus();try{el.setSelectionRange(pos,pos)}catch(e){}}}
 }
 
@@ -1862,10 +1877,11 @@ function reciboHTML(o){const p=o.pgto,e=S.empresa,d=new Date((p.data||'').slice(
     </div></div>`}
 // Recibo em PDF: desenha o recibo (com logo e assinatura) numa imagem e põe numa folha A4.
 const H2C_SRC='vendor/html2canvas-1.4.1.min.js',JSPDF_SRC='vendor/jspdf-4.2.1.umd.min.js';
-async function reciboPDF(o){
+const reciboPDF=o=>htmlPDF(reciboHTML(o));
+async function htmlPDF(html){
   await loadScript(H2C_SRC);await loadScript(JSPDF_SRC);
   const box=document.createElement('div');box.style.cssText='position:fixed;left:-10000px;top:0;width:720px;background:#fff;color-scheme:light';
-  box.innerHTML=reciboHTML(o);document.body.appendChild(box);
+  box.innerHTML=html;document.body.appendChild(box);
   try{
     const el=box.firstElementChild;el.style.boxShadow='none';el.style.margin='0';el.style.maxWidth='none';
     try{await document.fonts.ready}catch(e){}
@@ -1905,6 +1921,128 @@ function verRecibo(id){const o=S.orcamentos.find(x=>x.id===id);if(!o||!o.pgto)re
       };
     });
 }
+/* ---------- Agenda e ordem de serviço ---------- */
+const DIAS_SEM=['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
+const cap=t=>{t=String(t||'');return t.charAt(0).toUpperCase()+t.slice(1)};
+const isoDia=d=>{const z=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}`};
+const hojeISO=()=>isoDia(new Date());
+const diaTxt=(iso,longo)=>{if(!iso)return '';const d=new Date(iso+'T12:00:00');return longo?`${DIAS_SEM[d.getDay()]}, ${d.toLocaleDateString('pt-BR')}`:d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})};
+const proxUtil=()=>{const d=new Date();d.setHours(12);do{d.setDate(d.getDate()+1)}while(d.getDay()===0||d.getDay()===6);return isoDia(d)};
+const endCliente=c=>[c.endereco,[c.bairro,c.cidade].filter(Boolean).join(', ')].filter(Boolean).join(' — ');
+// Prazo da proposta ("em até 5 dias úteis após a aprovação") contado a partir do aceite.
+function prazoLimite(o){
+  const m=String(o.prazo||'').match(/(\d+)\s*dias?(\s*(úteis|uteis))?/i);if(!m)return null;
+  const n=+m[1],uteis=!!m[3],b=new Date((o.aceite&&o.aceite.data)||o.atualizadoEm||Date.now());
+  const d=new Date(b.getFullYear(),b.getMonth(),b.getDate(),12);let k=0;
+  while(k<n){d.setDate(d.getDate()+1);if(!uteis||(d.getDay()!==0&&d.getDay()!==6))k++}
+  return {iso:isoDia(d),n,uteis};
+}
+function agendar(o){
+  const cur=S.orcamentos.find(x=>x.id===o.id)||o,g=cur.agenda||{},c=S.clientes.find(x=>x.id===cur.clienteId)||{},lim=prazoLimite(cur),t=calc(cur);
+  openSheet(cur.agenda?'Editar agendamento':'Agendar instalação',`
+    ${lim?`<p class="note" style="margin-top:0">Prazo da proposta: <b>até ${esc(diaTxt(lim.iso,true))}</b> (${lim.n} dia${lim.n>1?'s':''}${lim.uteis?' úteis':''} após a aprovação).</p>`:''}
+    <div class="form">
+      <div class="field"><label for="ag_data">Data</label><input id="ag_data" type="date" value="${esc(g.data||proxUtil())}"></div>
+      <div class="field"><label for="ag_hora">Horário</label><input id="ag_hora" type="time" value="${esc(g.hora||'08:00')}"></div>
+      <div class="field full"><label for="ag_end">Endereço da instalação</label><input id="ag_end" value="${esc(g.endereco||endCliente(c))}"></div>
+      <div class="field"><label for="ag_tec">Técnico responsável</label><input id="ag_tec" value="${esc(g.tecnico||S.empresa.responsavel||'')}"></div>
+      <div class="field"><label for="ag_dur">Duração estimada</label><input id="ag_dur" value="${esc(g.duracao||(t.tempo?fmtH(t.tempo):''))}" placeholder="Ex.: 4 h"></div>
+      <div class="field full"><label for="ag_obs">Observações para a equipe</label><textarea id="ag_obs" placeholder="Ex.: levar escada grande; portaria pede documento.">${esc(g.obs||'')}</textarea></div>
+      <p class="hint full" id="ag_aviso" style="margin:0"></p>
+    </div>`,
+    `${cur.agenda?'<button class="btn danger left" id="ag_del">Cancelar agendamento</button>':''}<button class="btn" data-act="close">Fechar</button><button class="btn primary" id="ag_ok">Salvar agendamento</button>`,
+    L=>{const $=id=>L.querySelector('#'+id);
+      const av=()=>{const d=$('ag_data').value;$('ag_aviso').innerHTML=!d?'':lim&&d>lim.iso?`<b style="color:var(--bad)">Fica depois do prazo da proposta (${diaTxt(lim.iso)}). Combine com o cliente.</b>`:d<hojeISO()?'<b style="color:var(--bad)">Essa data já passou.</b>':[0,6].includes(new Date(d+'T12:00:00').getDay())?'Cai num fim de semana.':''};
+      $('ag_data').addEventListener('input',av);av();
+      $('ag_ok').onclick=async()=>{const data=$('ag_data').value;if(!data){toast('Escolha a data.');return}
+        const ag={...g,data,hora:$('ag_hora').value,endereco:$('ag_end').value.trim(),tecnico:$('ag_tec').value.trim(),duracao:$('ag_dur').value.trim(),obs:$('ag_obs').value.trim(),atualizadoEm:new Date().toISOString()};
+        const mudou=!cur.agenda||cur.agenda.data!==ag.data||cur.agenda.hora!==ag.hora;
+        try{await store.save('orcamentos',{...cur,agenda:ag,atualizadoEm:new Date().toISOString()});closeSheet();render();toast('Instalação agendada');
+          if(mudou)verOS(S.orcamentos.find(x=>x.id===cur.id)||{...cur,agenda:ag},true)}catch(e){toast('Não foi possível salvar. Tente de novo.')}};
+      if(cur.agenda)$('ag_del').onclick=async()=>{const n={...cur};delete n.agenda;try{await store.save('orcamentos',n);closeSheet();render();toast('Agendamento cancelado')}catch(e){toast('Não foi possível salvar.')}};
+    });
+}
+function osHTML(o){
+  const e=S.empresa,c=S.clientes.find(x=>x.id===o.clienteId)||{nome:o.clienteNome||''},g=o.agenda||{};
+  const its=o.itens||[],mos=its.filter(isMO),mats=its.filter(i=>!isMO(i));
+  const linha=i=>`<tr><td><div style="font-weight:600">${esc(i.nome)}</div>${i.descricao?`<div class="desc">${esc(i.descricao)}</div>`:''}</td><td class="v">${String(num(i.qtd)).replace('.',',')} ${esc(i.unidade||'un')}</td></tr>`;
+  const tab=(tit,l)=>l.length?`<div><div class="pp-cat">${tit}</div><table class="pp-table os-t"><tbody>${l.map(linha).join('')}</tbody></table></div>`:'';
+  const obs=[g.obs,o.obs].filter(Boolean).join('\n');
+  return `<div class="paper os"><div class="pp-band"><div class="pp-id"><img class="pp-logo2" src="${LOGO}" alt="${esc(e.nome)}"></div><div class="pp-num"><div class="k">Ordem de serviço</div><div class="n">Nº ${nOrc(o.numero)}</div></div></div><div class="pp-stripe"></div>
+    <div class="pp-body">
+      <div class="os-quando"><div><span class="pp-k">Data</span><b>${esc(cap(diaTxt(g.data,true)))}</b></div><div><span class="pp-k">Horário</span><b>${esc(g.hora||'A combinar')}</b></div>${g.duracao?`<div><span class="pp-k">Duração estimada</span><b>${esc(g.duracao)}</b></div>`:''}</div>
+      <div class="pp-meta">
+        <div><div class="pp-k">Cliente</div><div class="pp-cli">${esc(c.nome)}</div>${c.telefone?`<div class="pp-small">${esc(c.telefone)}</div>`:''}
+          <div style="margin-top:10px"><div class="pp-k">Endereço da instalação</div><div style="font-weight:600">${esc(g.endereco||endCliente(c)||'A confirmar')}</div></div></div>
+        <div class="pp-dates"><div><div class="pp-k">Proposta</div><div>Nº ${nOrc(o.numero)}</div></div>${g.tecnico?`<div><div class="pp-k">Técnico</div><div>${esc(g.tecnico)}</div></div>`:''}</div>
+      </div>
+      ${o.titulo?`<div><div class="pp-k">Projeto</div><div style="font-weight:600">${esc(o.titulo)}</div></div>`:''}
+      ${tab('Serviços',mos)}${tab('Materiais',mats)}
+      ${obs?`<div><div class="pp-k">Observações</div><div class="os-obs">${esc(obs)}</div></div>`:''}
+      <div class="os-sign"><div class="rc-line"><b>${esc(g.tecnico||e.responsavel||e.nome)}</b><span>Técnico · ${esc(e.nome)}</span></div><div class="rc-line"><b>${esc(c.nome||'Cliente')}</b><span>Serviço executado conforme esta OS</span></div></div>
+      <div class="pp-foot"><div><b style="color:var(--paper-ink)">${esc(e.nome)}</b>${e.cnpj?` · CNPJ ${esc(e.cnpj)}`:''}<br>${esc([e.telefone,e.email].filter(Boolean).join(' · '))}</div></div>
+    </div></div>`;
+}
+function textoAgenda(o){
+  const g=o.agenda||{},e=S.empresa,c=S.clientes.find(x=>x.id===o.clienteId)||{},nome=String(c.nome||(o.aceite&&o.aceite.nome)||'').trim().split(' ')[0];
+  const det=[`📅 ${cap(diaTxt(g.data,true))}${g.hora?` às ${g.hora}`:''}`,g.endereco&&`📍 ${g.endereco}`,g.tecnico&&`👷 Técnico: ${g.tecnico}`,g.duracao&&`⏱️ Duração estimada: ${g.duracao}`].filter(Boolean);
+  return [`Olá${nome?', '+nome:''}! Aqui é da ${e.nome||'DaylinTech'}.`,'',`Confirmando a instalação referente à proposta Nº ${nOrc(o.numero)}:`,...det,'','Se precisar remarcar, é só responder esta mensagem. Até lá!'].join('\n');
+}
+// Celular: Compartilhar com o PDF anexado. Computador: abre a conversa do cliente com o texto.
+async function enviarComPDF(o,arquivo,texto,titulo){
+  if(arquivo&&navigator.canShare&&navigator.canShare({files:[arquivo]})){
+    try{await navigator.share({files:[arquivo],title:titulo,text:texto});return}
+    catch(err){if(err&&err.name==='AbortError')return;if(err&&err.name==='NotAllowedError'){toast('PDF pronto. Toque de novo para enviar.');return}}
+  }
+  closeSheet();mensagemCliente(o,titulo,texto);
+}
+function verOS(o,recem){
+  const cur=S.orcamentos.find(x=>x.id===o.id)||o,nomeArq=`OS-${nOrc(cur.numero)}-${arqNome(cliNome(cur))}.pdf`;
+  let pdf=null;const pronto=htmlPDF(osHTML(cur)).then(b=>pdf=new File([b],nomeArq,{type:'application/pdf'}),()=>null);
+  openSheet('Ordem de serviço',`${recem?`<p class="note" style="margin-top:0"><b>Instalação agendada.</b> Agora confirme com o cliente pelo WhatsApp.</p>`:''}<div class="paper-wrap">${osHTML(cur)}</div>`,
+    `<button class="btn left" id="os_ed">Editar</button><button class="btn" id="os_dl">${svg(UI.dl)}Baixar PDF</button><button class="btn primary" id="os_wa">Confirmar no WhatsApp</button>`,
+    L=>{L.querySelector('.sheet').style.maxWidth='860px';
+      L.querySelector('#os_ed').onclick=()=>{closeSheet();agendar(cur)};
+      L.querySelector('#os_dl').onclick=async()=>{const b=L.querySelector('#os_dl');b.disabled=true;await pronto;b.disabled=false;if(!pdf){toast('Não foi possível gerar o PDF.');return}
+        const url=URL.createObjectURL(pdf),a=document.createElement('a');a.href=url;a.download=nomeArq;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),4000);toast('OS em PDF salva.')};
+      L.querySelector('#os_wa').onclick=async()=>{const b=L.querySelector('#os_wa');if(!pdf){b.disabled=true;await pronto;b.disabled=false}
+        enviarComPDF(cur,pdf,textoAgenda(cur),'Confirmar instalação')};
+    });
+}
+function concluirOS(o){
+  confirmSheet('Concluir instalação?',`A instalação de ${esc(cliNome(o))} (proposta Nº ${nOrc(o.numero)}) será marcada como concluída.`,'Concluir',async()=>{
+    const cur=S.orcamentos.find(x=>x.id===o.id)||o;
+    try{await store.save('orcamentos',{...cur,status:'concluido',agenda:{...(cur.agenda||{}),concluidoEm:new Date().toISOString()},atualizadoEm:new Date().toISOString()});render();toast('Instalação concluída')}catch(e){toast('Não foi possível salvar.')}});
+}
+function vAgenda(app){
+  const hoje=hojeISO(),os=S.orcamentos,ordem=(a,b)=>(a.agenda.data+(a.agenda.hora||'')).localeCompare(b.agenda.data+(b.agenda.hora||''));
+  const ag=os.filter(o=>o.agenda&&o.agenda.data&&!['concluido','recusado'].includes(o.status)).sort(ordem);
+  const late=ag.filter(o=>o.agenda.data<hoje),hj=ag.filter(o=>o.agenda.data===hoje),prox=ag.filter(o=>o.agenda.data>hoje);
+  const espera=os.filter(o=>(vendido(o)||o.aceite)&&o.status!=='concluido'&&!o.agenda).map(o=>({o,l:prazoLimite(o)})).sort((a,b)=>((a.l&&a.l.iso)||'9').localeCompare((b.l&&b.l.iso)||'9'));
+  const feitos=os.filter(o=>o.status==='concluido'&&o.agenda&&o.agenda.data).sort((a,b)=>-ordem(a,b)).slice(0,8);
+  const mes=iso=>new Date(iso+'T12:00:00').toLocaleDateString('pt-BR',{month:'short'}).replace('.','');
+  const card=(o,cls)=>{const g=o.agenda;return `<div class="ag-card"><div class="ag-d ${cls||''}"><b>${g.data.slice(8,10)}</b><span>${mes(g.data)}</span></div>
+    <div class="ag-i"><b>${esc(cliNome(o))}</b><span>${esc(cap(diaTxt(g.data,true).split(',')[0]))}${g.hora?` às ${esc(g.hora)}`:''} · Nº ${nOrc(o.numero)}${o.titulo?` · ${esc(o.titulo)}`:''}</span>${g.endereco?`<span>${esc(g.endereco)}</span>`:''}</div>
+    <div class="ag-b"><button class="btn sm" data-ag-os="${o.id}">OS</button><button class="btn sm" data-ag-wa="${o.id}">WhatsApp</button>${o.status==='concluido'?'':`<button class="btn sm primary" data-ag-ok="${o.id}">Concluir</button>`}</div></div>`};
+  const esperaCard=({o,l})=>`<div class="ag-card"><div class="ag-d wait"><b>—</b><span>sem data</span></div>
+    <div class="ag-i"><b>${esc(cliNome(o))}</b><span>Nº ${nOrc(o.numero)}${o.titulo?` · ${esc(o.titulo)}`:''}</span><span>${l?(l.iso<hoje?`<b style="color:var(--bad)">Prazo da proposta venceu em ${diaTxt(l.iso)}</b>`:`Agendar até ${esc(diaTxt(l.iso,true))}`):'Sem prazo na proposta'}</span></div>
+    <div class="ag-b"><button class="btn sm primary" data-ag-novo="${o.id}">Agendar</button></div></div>`;
+  const sec=(tit,html)=>html?`<div><h2 class="h2" style="margin-bottom:10px">${tit}</h2><div class="ag-list">${html}</div></div>`:'';
+  const vazio=!ag.length&&!espera.length&&!feitos.length;
+  app.innerHTML=`
+  <div class="spread"><div><div class="eyebrow">${hj.length?`${hj.length} instalação${hj.length>1?'ões':''} hoje`:'Instalações'}</div><h1 class="h1">Agenda</h1></div></div>
+  ${vazio?`<div class="empty"><b>Nenhuma instalação por aqui ainda</b><span class="muted">Quando um cliente aceitar a proposta, ela aparece aqui para você agendar.</span></div>`:''}
+  ${sec('Atrasadas',late.map(o=>card(o,'late')).join(''))}
+  ${sec('Hoje',hj.map(o=>card(o,'hoje')).join(''))}
+  ${sec('Próximas',prox.map(o=>card(o)).join(''))}
+  ${sec('Aguardando agendamento',espera.map(esperaCard).join(''))}
+  ${sec('Concluídas',feitos.map(o=>card(o,'wait')).join(''))}`;
+  const pega=id=>S.orcamentos.find(x=>x.id===id);
+  app.querySelectorAll('[data-ag-os]').forEach(b=>b.onclick=()=>verOS(pega(b.dataset.agOs)));
+  app.querySelectorAll('[data-ag-wa]').forEach(b=>b.onclick=()=>{const o=pega(b.dataset.agWa);mensagemCliente(o,'Confirmar instalação',textoAgenda(o))});
+  app.querySelectorAll('[data-ag-ok]').forEach(b=>b.onclick=()=>concluirOS(pega(b.dataset.agOk)));
+  app.querySelectorAll('[data-ag-novo]').forEach(b=>b.onclick=()=>agendar(pega(b.dataset.agNovo)));
+}
 function vProposta(app){
   const o=S.orcamentos.find(x=>x.id===view.id);
   if(!o){app.innerHTML=`<div class="empty"><b>Orçamento não encontrado</b><button class="btn" data-nav="inicio">Voltar</button></div>`;return}
@@ -1924,9 +2062,11 @@ function vProposta(app){
   <section class="panel internal">
     <div class="spread" style="align-items:center"><h2 class="h2">Fechamento</h2><span class="hint">Aceite, pagamento e recibo</span></div>
     <div class="steps">
-      <div class="step ${a?'done':''}"><span class="st-n">${a?'✓':'1'}</span><div class="st-t"><b>Aceite do cliente</b><span class="hint">${a?`${esc(a.nome)} aceitou em ${fmtDT(a.data)} · ${esc(formaTxt(a))}${a.valor?` · ${money(a.valor)}`:''}`:(sb?'Mande o link da proposta: o aceite do cliente aparece aqui sozinho.':'Quando o cliente aceitar pelo WhatsApp, cole a mensagem aqui.')}</span></div>${a?`<button class="btn sm primary" id="fx_msg">Mensagem</button>`:''}<button class="btn sm ${a?'':'primary'}" id="fx_ac">${a?'Editar':'Registrar aceite'}</button></div>
+      <div class="step ${a?'done':''}"><span class="st-n">${a?'✓':'1'}</span><div class="st-t"><b>Aceite do cliente</b><span class="hint">${a?`${esc(a.nome)} aceitou em ${fmtDT(a.data)} · ${esc(formaTxt(a))}${a.valor?` · ${money(a.valor)}`:''}`:(sb?'Mande o link da proposta: o aceite do cliente aparece aqui sozinho.':'Quando o cliente aceitar pelo WhatsApp, cole a mensagem aqui.')}</span></div><div class="st-b">${a?`<button class="btn sm primary" id="fx_msg">Mensagem</button>`:''}<button class="btn sm ${a?'':'primary'}" id="fx_ac">${a?'Editar':'Registrar aceite'}</button></div></div>
       <div class="step ${p?'done':''}"><span class="st-n">${p?'✓':'2'}</span><div class="st-t"><b>Pagamento</b><span class="hint">${p?`${money(p.valor)} via ${esc(formaTxt(p))} em ${fmtDate(p.data+'T12:00:00')}${p.tipo==='parcial'?' · parcial':''}`:'Registre quando o dinheiro entrar.'}</span></div><button class="btn sm ${a&&!p?'primary':''}" id="fx_pg">${p?'Editar':'Registrar pagamento'}</button></div>
       <div class="step"><span class="st-n">3</span><div class="st-t"><b>Recibo</b><span class="hint">${p?'Pronto, com sua assinatura.':'Liberado depois do pagamento.'}</span></div><button class="btn sm ${p?'primary':''}" id="fx_rc" ${p?'':'disabled'}>Ver recibo</button></div>
+      <div class="step ${o.agenda?'done':''}"><span class="st-n">${o.agenda?'✓':'4'}</span><div class="st-t"><b>Agendamento</b><span class="hint">${o.agenda?`${esc(cap(diaTxt(o.agenda.data,true)))}${o.agenda.hora?` às ${esc(o.agenda.hora)}`:''}${o.status==='concluido'?' · concluído':''}`:(()=>{const l=prazoLimite(o);return a||vendido(o)?(l?`Prazo da proposta: até ${diaTxt(l.iso)}.`:'Marque a data da instalação.'):'Liberado depois do aceite.'})()}</span></div>
+        <div class="st-b">${o.agenda?`<button class="btn sm" id="fx_ag">Editar</button><button class="btn sm primary" id="fx_os">Ver OS</button>`:`<button class="btn sm ${a||vendido(o)?'primary':''}" id="fx_ag">Agendar</button>`}</div></div>
     </div>
     ${pixChave()?'':`<p class="note" style="margin:0">Cadastre sua chave Pix e seu WhatsApp na aba Empresa para a proposta mostrar o QR Code e o botão de aceite.</p>`}
   </section>
@@ -1945,6 +2085,7 @@ function vProposta(app){
   $('st_sel').onchange=async e=>{try{await store.save('orcamentos',{...o,status:e.target.value,atualizadoEm:new Date().toISOString()});toast(e.target.value==='aprovado'?'Aprovado! Veja a lista de compras.':'Status: '+STATUS[e.target.value])}catch(err){toast('Não foi possível alterar o status.')}};
   $('fx_ac').onclick=()=>registrarAceite(o);
   if(a)$('fx_msg').onclick=()=>mensagemCliente(o);
+  $('fx_ag').onclick=()=>agendar(o);if(o.agenda)$('fx_os').onclick=()=>verOS(o);
   if(sb)$('pp_link').onclick=async()=>{const b=$('pp_link');b.disabled=true;try{await linkProposta(o)}catch(e){toast('Não foi possível criar o link. Confira a internet e tente de novo.')}finally{b.disabled=false}};
   $('fx_pg').onclick=()=>registrarPagamento(o);
   $('fx_rc').onclick=()=>verRecibo(o.id);
