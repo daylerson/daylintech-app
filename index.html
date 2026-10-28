@@ -247,6 +247,8 @@ body.apresentacao .internal{display:none!important}
 .ds{font-size:12.5px;font-weight:600;color:var(--brand);text-decoration:none;white-space:nowrap}
 .ds:hover{text-decoration:underline}
 .fotobox{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 14px;align-items:center}
+.fotobox.dz{border:1.5px dashed var(--line);border-radius:12px;padding:10px;transition:border-color .15s,background .15s}
+.fotobox.dz.over{border-color:var(--brand);background:var(--brand-soft)}
 .fprev{grid-row:span 2;width:76px;height:76px;border-radius:12px;border:1px dashed var(--line);background:var(--surface);display:grid;place-items:center;overflow:hidden;color:var(--brand)}
 .fprev img{width:100%;height:100%;object-fit:cover}
 .fprev svg{width:30px;height:30px}
@@ -942,9 +944,9 @@ function formProd(p){
   let foto=p.foto||'',manual=!!p.precoManual,forns=(p.fornecedores||[]).map(f=>({...f})),fixo=p.fornecedorFixo||'';
   const e=S.empresa,v2=v=>v===''||v==null?'':String(v).replace('.',','),hist=p.historico||[];
   openSheet(isNew?'Novo produto':'Editar produto',`
-   <div class="fotobox"><div id="p_fprev" class="fprev"></div>
+   <div class="fotobox dz" id="p_drop"><div id="p_fprev" class="fprev"></div>
      <div class="row" style="gap:8px"><span class="btn sm filebtn">${svg(UI.img)}Escolher foto<input id="p_foto" type="file" accept="image/*" aria-label="Escolher foto do produto"></span><button class="btn sm ghost" type="button" id="p_frm">Remover</button></div>
-     <span class="hint">Aparece pequena na proposta. Também dá para colar uma imagem copiada.</span></div>
+     <span class="hint" id="p_dzh">Arraste uma imagem para cá, cole uma imagem copiada (Ctrl+V) ou escolha um arquivo. Aparece pequena na proposta.</span></div>
    <div class="form">
     <div class="field full"><label for="p_nome">Nome</label><input id="p_nome" value="${esc(p.nome)}" placeholder="Ex.: Câmera bullet Full HD 2MP"></div>
     <div class="field"><label for="p_cat">Categoria</label><select id="p_cat">${CATS_MAT.map(c=>`<option value="${c.id}" ${p.categoria===c.id?'selected':''}>${c.nome}</option>`).join('')}</select></div>
@@ -974,6 +976,21 @@ function formProd(p){
      const setFoto=async f=>{if(!f||!/^image\//.test(f.type))return;try{foto=await lerFoto(f);showFoto()}catch(err){toast('Não consegui ler essa imagem. Tente JPG ou PNG.')}};
      $('p_foto').onchange=ev=>setFoto(ev.target.files[0]);
      $('p_frm').onclick=()=>{foto='';showFoto()};
+     // Arrastar e soltar: arquivo do computador ou imagem de um site aberto em outra aba.
+     (()=>{const dz=$('p_drop');let n=0;const sai=()=>{n=0;dz.classList.remove('over');$('p_dzh').textContent='Arraste uma imagem para cá, cole uma imagem copiada (Ctrl+V) ou escolha um arquivo. Aparece pequena na proposta.'};
+       dz.addEventListener('dragenter',ev=>{ev.preventDefault();n++;dz.classList.add('over');$('p_dzh').textContent='Solte a imagem aqui.'});
+       dz.addEventListener('dragover',ev=>{ev.preventDefault();if(ev.dataTransfer)ev.dataTransfer.dropEffect='copy'});
+       dz.addEventListener('dragleave',()=>{if(--n<=0)sai()});
+       dz.addEventListener('drop',async ev=>{ev.preventDefault();sai();const dt=ev.dataTransfer;if(!dt)return;
+         const f=[...(dt.files||[])].find(x=>/^image\//.test(x.type));if(f){setFoto(f);return}
+         const lnk=(dt.getData('text/uri-list')||'').split(/\r?\n/).find(l=>/^(https?:|data:image)/i.test(l.trim())),img=(dt.getData('text/html').match(/<img[^>]+src="([^"]+)"/i)||[])[1];
+         const src=(img||lnk||'').trim().replace(/&amp;/g,'&');
+         if(!src){toast('Arraste um arquivo de imagem (JPG ou PNG).');return}
+         try{const r=await fetch(src);const b=await r.blob();if(!/^image\//.test(b.type))throw new Error('tipo');setFoto(new File([b],'foto',{type:b.type}))}
+         catch(err){toast('Esse site não deixa pegar a imagem direto. Salve a imagem no computador e arraste o arquivo.')}});
+       // Soltar fora da caixa não abre a imagem no lugar do app.
+       const sh=L.querySelector('.sheet');sh.addEventListener('dragover',ev=>ev.preventDefault());sh.addEventListener('drop',ev=>ev.preventDefault());
+     })();
      L.querySelector('.sheet').addEventListener('paste',ev=>{const it=[...((ev.clipboardData&&ev.clipboardData.items)||[])].find(i=>i.type.startsWith('image/'));if(it){ev.preventDefault();setFoto(it.getAsFile())}});
      const marg=()=>$('p_marg').value.trim()===''?num(e.margem):num($('p_marg').value);
      const upd=recalc=>{
