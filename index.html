@@ -68,12 +68,12 @@ button,input,select,textarea{font:inherit;color:inherit}
 .bottomnav{display:none}
 @media (max-width:760px){
   .toptabs{display:none}
-  .bottomnav{display:grid;grid-template-columns:repeat(6,1fr);position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surface);border-top:1px solid var(--line);
+  .bottomnav{display:grid;grid-template-columns:repeat(7,1fr);position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surface);border-top:1px solid var(--line);
     padding-left:max(8px,env(safe-area-inset-left,0px));padding-right:max(8px,env(safe-area-inset-right,0px));padding-bottom:env(safe-area-inset-bottom,0px)}
   .bottomnav button{background:none;border:0;padding:9px 4px 8px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11.5px;font-weight:600;color:var(--muted);cursor:pointer}
   .bottomnav button[aria-current="page"]{color:var(--accent)}
   .bottomnav svg{width:22px;height:22px}
-  .bottomnav button{white-space:nowrap;font-size:10.5px;letter-spacing:-.02em;padding-left:2px;padding-right:2px}
+  .bottomnav button{white-space:nowrap;font-size:9.5px;letter-spacing:-.03em;padding-left:1px;padding-right:1px;overflow:hidden;text-overflow:ellipsis}
   .qty{justify-self:start}
   main{padding-bottom:84px!important}
 }
@@ -169,6 +169,7 @@ body.apresentacao .internal{display:none!important}
 .sheet-h{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--line);background:var(--surface)}
 .sheet-h h3{font-family:var(--f-display);font-size:17px;font-weight:700;margin-right:auto}
 .sheet-b{overflow-y:auto;padding:16px max(18px,env(safe-area-inset-right,0px)) 18px max(18px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:14px}
+.sheet-b>*{flex-shrink:0}
 .sheet-f{display:flex;gap:10px;justify-content:flex-end;padding:12px 18px calc(12px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line);background:var(--surface);flex-wrap:wrap}
 .sheet-f .left{margin-right:auto}
 
@@ -298,8 +299,14 @@ body.apresentacao .internal{display:none!important}
 .os-quando>div{display:flex;flex-direction:column;min-width:110px}.os-quando b{font-size:16px;color:var(--paper-ink)}
 .os-t td{padding:8px 0;border-bottom:1px solid var(--paper-line);vertical-align:top}.os-t td.v{text-align:right;white-space:nowrap;padding-left:12px;color:var(--paper-ink);font-weight:600}
 .os-obs{white-space:pre-line;color:var(--paper-ink)}
+.os-tot{display:flex;justify-content:space-between;padding:6px 0;color:var(--paper-ink)}.os-tot.g{border-top:2px solid var(--paper-ink);margin-top:4px;font-size:17px}.os-pag{display:flex;flex-direction:column;gap:10px;margin-top:10px}
 .os-sign{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:44px;align-items:end}
 .os-sign-c{display:flex;flex-direction:column;align-items:center}.os-sign-c img{height:64px;max-width:100%;object-fit:contain;margin-bottom:-4px}
+.gar-lista{display:flex;flex-direction:column;gap:10px}.gar-l{border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.gar-n{display:flex;justify-content:space-between;gap:8px;align-items:baseline}.gar-f{display:grid;grid-template-columns:1fr 1fr 1.3fr;gap:8px}.gar-f label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted);font-weight:600}
+.gar-f input{min-width:0}@media (max-width:520px){.gar-f{grid-template-columns:1fr 1fr}.gar-f label:last-child{grid-column:1/-1}}
+.gar-todos{border:1px dashed var(--line);border-radius:10px;padding:10px 12px;margin-bottom:12px}.gar-todos summary{cursor:pointer;font-weight:600;color:var(--brand)}.gar-todos .gar-f{margin:10px 0}
+.gar-res .ln{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:6px 0;border-top:1px solid var(--line)}.gar-res .ln span:first-child{flex:1}
 .aval{display:flex;gap:16px;align-items:center;border:1px solid var(--paper-line);border-radius:10px;padding:14px 16px;background:var(--paper-soft);margin-top:6px}
 .aval-t{display:flex;flex-direction:column;gap:3px;flex:1;min-width:0;font-size:13px;color:var(--paper-muted);line-height:1.45}.aval-t b{font-size:15px;color:var(--paper-ink)}
 .aval-u{font-weight:700;color:var(--paper-blue);word-break:break-all}.aval-st{color:#F5A400;font-size:17px;letter-spacing:3px;line-height:1}
@@ -525,6 +532,7 @@ const ICON={
 const NAVI={
   home:'<path d="M3 11l9-7 9 7"/><path d="M5 10v10h5v-6h4v6h5V10"/>',
   agenda:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M8 14h3v3H8z"/>',
+  garantias:'<path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/>',
   maodeobra:'<path d="M14.5 5.5a4 4 0 0 0 4.9 4.9L11 18.8a2.1 2.1 0 0 1-3-3l8.4-8.4"/><path d="M14.5 5.5l2-2"/>',
   inicio:'<path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/><path d="M10 12h5M10 15h5M10 18h3"/>',
   catalogo:'<rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/>',
@@ -574,7 +582,7 @@ const normNome=t=>String(t||'').trim().toLowerCase().normalize('NFD').replace(/[
 function fornEf(p){const fs=((p&&p.fornecedores)||[]).filter(f=>num(f.preco)>0);if(!fs.length)return null;const fx=p.fornecedorFixo&&fs.find(f=>f.id===p.fornecedorFixo);const min=fs.reduce((a,b)=>num(b.preco)<num(a.preco)?b:a);return {f:fx||min,min,fixo:!!fx,n:fs.length,lista:fs}}
 function idadePill(d){return d==null?'':`<span class="pill ${d>30?'conf-baixa':'st-rascunho'}">${d===0?'atualizado hoje':d>30?`há ${d} dias · pedir cotação`:`há ${d} dia${d===1?'':'s'}`}</span>`}
 
-const DEF_EMPRESA={nome:'DaylinTech',slogan:'Tecnologia que protege',cnpj:'',telefone:'',email:'',endereco:'',margem:30,imposto:6,despesas:0,arredondar:1,descontoPix:5,cartaoMax:12,cartaoSemJuros:3,cartaoJuros:2.99,pixTipo:'cpf',pixChave:'',pixNome:'',cidade:'',whatsapp:'',linkPagamento:'',responsavel:'',assinatura:'',validade:15,pagamento:'50% na aprovação e 50% na conclusão. Pix, transferência ou cartão de crédito parcelado em até 3x sem juros ou em até 12x com juros da operadora.',garantia:'Garantia de 12 meses nos equipamentos (fabricante) e 90 dias na instalação.',prazo:'Instalação em até 5 dias úteis após a aprovação.'};
+const DEF_EMPRESA={nome:'DaylinTech',slogan:'Tecnologia que protege',cnpj:'',telefone:'',email:'',endereco:'',margem:30,imposto:6,despesas:0,arredondar:1,descontoPix:5,cartaoMax:12,cartaoSemJuros:3,cartaoJuros:2.99,pixTipo:'cpf',pixChave:'',pixNome:'',cidade:'',whatsapp:'',linkPagamento:'',responsavel:'',assinatura:'',validade:15,pagamento:'50% na aprovação e 50% na conclusão. Pix, transferência ou cartão de crédito parcelado em até 3x sem juros ou em até 12x com juros da operadora.',garantia:'Garantia de 12 meses nos equipamentos (fabricante) e 90 dias na instalação.',garantiaEquipMeses:12,garantiaServDias:90,prazo:'Instalação em até 5 dias úteis após a aprovação.'};
 
 const S={produtos:[],clientes:[],orcamentos:[],empresa:{...DEF_EMPRESA},ready:{produtos:false,clientes:false,orcamentos:false,empresa:false}};
 let view={name:'home'};
@@ -763,7 +771,7 @@ function confirmSheet(title,msg,okLabel,onOk){
 }
 
 /* ---------- Navegação ---------- */
-const TABS=[['home','Início'],['inicio','Orçamentos'],['agenda','Agenda'],['catalogo','Catálogo'],['maodeobra','Mão de obra'],['clientes','Clientes']];
+const TABS=[['home','Início'],['inicio','Orçamentos'],['agenda','Agenda'],['garantias','Garantias'],['catalogo','Catálogo'],['maodeobra','Mão de obra'],['clientes','Clientes']];
 function renderNav(){
   const cur=['editor','proposta'].includes(view.name)?'inicio':view.name==='os'?'agenda':view.name;
   document.getElementById('toptabs').innerHTML=TABS.map(([k,l])=>`<button data-nav="${k}" ${cur===k?'aria-current="page"':''}>${l}</button>`).join('');
@@ -786,7 +794,7 @@ function render(fromSnap){
   if(fromSnap&&view.name==='editor'){renderEditorParts();return}
   const active=document.activeElement&&document.activeElement.id;
   const pos=document.activeElement&&document.activeElement.selectionStart;
-  ({home:vHome,inicio:vInicio,catalogo:vCatalogo,maodeobra:vMaoDeObra,clientes:vClientes,ajustes:vAjustes,editor:vEditor,proposta:vProposta,agenda:vAgenda,os:vOS}[view.name]||vHome)(app);
+  ({home:vHome,inicio:vInicio,catalogo:vCatalogo,maodeobra:vMaoDeObra,clientes:vClientes,ajustes:vAjustes,editor:vEditor,proposta:vProposta,agenda:vAgenda,os:vOS,garantias:vGarantias}[view.name]||vHome)(app);
   if(active){const el=document.getElementById(active);if(el&&el.tagName==='INPUT'&&el.type==='search'){el.focus();try{el.setSelectionRange(pos,pos)}catch(e){}}}
 }
 
@@ -812,7 +820,7 @@ function vHome(app){
   const agora=new Date(),h=agora.getHours(),mes=agora.toISOString().slice(0,7);
   const ola=h<12?'Bom dia':h<18?'Boa tarde':'Boa noite';
   const doy=Math.floor((agora-new Date(agora.getFullYear(),0,0))/864e5);const frase=FRASES[doy%FRASES.length];
-  const os=S.orcamentos;
+  const os=S.orcamentos.filter(o=>o.tipo!=='os'||calc(o).total>0);
   const aprov=os.filter(o=>vendido(o)&&((o.aceite&&o.aceite.data)||o.atualizadoEm||o.criadoEm||'').slice(0,7)===mes);
   const recebido=os.filter(o=>o.pgto&&String(o.pgto.data).slice(0,7)===mes).reduce((t,o)=>t+num(o.pgto.valor),0);
   const ts=aprov.map(calc),vendMes=ts.reduce((t,x)=>t+x.total,0),custos=ts.reduce((t,x)=>t+x.custo+x.taxas,0),lucro=ts.reduce((t,x)=>t+x.lucro,0);
@@ -868,7 +876,7 @@ function vHome(app){
 
 /* ---------- Início / Orçamentos ---------- */
 function vInicio(app){
-  const os=[...S.orcamentos].sort((a,b)=>(b.criadoEm||'').localeCompare(a.criadoEm||''));
+  const os=S.orcamentos.filter(o=>o.tipo!=='os').sort((a,b)=>(b.criadoEm||'').localeCompare(a.criadoEm||''));
   const now=new Date();const mes=now.toISOString().slice(0,7);
   const abertos=os.filter(o=>['rascunho','enviado','revisao'].includes(o.status));
   const aprovMes=os.filter(o=>vendido(o)&&(o.atualizadoEm||o.criadoEm||'').slice(0,7)===mes);
@@ -1503,7 +1511,9 @@ function formCli(c,onSaved){
     <div class="row full" style="gap:8px"><a class="btn sm" id="c_gmaps" target="_blank" rel="noopener">Rota no Google Maps</a><a class="btn sm" id="c_waze" target="_blank" rel="noopener">Rota no Waze</a></div>
     <div class="field full"><label for="c_obs">Observações</label><textarea id="c_obs" placeholder="Ex.: portão de garagem, 3 andares, prefere visita à tarde">${esc(c.obs)}</textarea></div>
    </div>
-   ${os.length?`<div class="eyebrow">Orçamentos deste cliente</div><div class="list">${os.map(o=>`<div class="li" data-open-orc="${o.id}"><div><div class="t mono">Nº ${nOrc(o.numero)}</div><div class="d">${fmtDate(o.criadoEm)}</div></div><div class="r"><span class="num">${money(calc(o).total)}</span><span class="pill st-${o.status}">${STATUS[o.status]}</span></div></div>`).join('')}</div>`:''}`,
+   ${os.length?`<div class="eyebrow">Orçamentos e atendimentos deste cliente</div><div class="list">${os.map(o=>{const gi=o.tipo!=='os'&&vendido(o)?garantiaInfo(o):null;
+     return `<div class="li" data-open-orc="${o.id}"><div><div class="t">${o.tipo==='os'?`${esc(osTipoNome(o))} · OS `:''}<span class="mono">Nº ${nOrc(o.numero)}</span></div><div class="d">${fmtDate(o.criadoEm)}${gi&&gi.inst?` · ${gi.ativa?`em garantia até ${dataBR(gi.ate)}`:'garantia vencida'}`:''}</div></div>
+     <div class="r">${o.tipo==='os'&&!calc(o).total?'':`<span class="num">${money(calc(o).total)}</span>`}<span class="pill st-${o.status}">${o.tipo==='os'?(o.status==='concluido'?'Concluída':'Aberta'):STATUS[o.status]}</span>${gi?`<button class="btn sm" type="button" data-act="garantia" data-id="${o.id}">Compras e garantia</button>`:''}</div></div>`}).join('')}</div>`:''}`,
    `${isNew?'':`<button class="btn danger left" id="c_del">${svg(UI.trash)}Excluir</button><button class="btn" id="c_orc">Novo orçamento</button>`}<button class="btn" data-act="close">Cancelar</button><button class="btn primary" id="c_save">Salvar</button>`,
    L=>{
      const $=id=>L.querySelector('#'+id);
@@ -1600,6 +1610,8 @@ function vAjustes(app){
       <div class="field"><label for="e_val">Validade da proposta (dias)</label><input id="e_val" inputmode="numeric" value="${esc(e.validade)}"></div>
       <div class="field"><label for="e_prazo">Prazo de instalação</label><input id="e_prazo" value="${esc(e.prazo)}"></div>
       <div class="field full"><label for="e_pag">Condições de pagamento</label><textarea id="e_pag">${esc(e.pagamento)}</textarea></div>
+      <div class="field"><label for="e_gmes">Garantia dos equipamentos (meses)</label><input id="e_gmes" inputmode="numeric" value="${esc(e.garantiaEquipMeses)}"><span class="hint">Contada da data da nota fiscal (ou da instalação, se não tiver nota).</span></div>
+      <div class="field"><label for="e_gdias">Garantia da instalação (dias)</label><input id="e_gdias" inputmode="numeric" value="${esc(e.garantiaServDias)}"><span class="hint">Contada da data da instalação. Usadas na aba Garantias.</span></div>
       <div class="field full"><label for="e_gar">Garantia</label><textarea id="e_gar">${esc(e.garantia)}</textarea></div>
     </div>
     <div class="row" style="justify-content:flex-end"><button class="btn primary" id="e_save">Salvar dados</button></div>
@@ -1617,7 +1629,7 @@ function vAjustes(app){
   const $=id=>app.querySelector('#'+id);
   const ler=()=>({...S.empresa,nome:$('e_nome').value.trim()||'DaylinTech',cnpj:$('e_cnpj').value.trim(),slogan:$('e_slogan').value.trim(),telefone:$('e_tel').value.trim(),email:$('e_email').value.trim(),endereco:$('e_end').value.trim(),
     imposto:num($('e_imp').value),despesas:num($('e_desp').value),margem:num($('e_marg').value),arredondar:num($('e_arr').value),metaMensal:num($('e_meta').value),whatsapp:$('e_wa').value.trim(),cidade:$('e_cid').value.trim(),pixTipo:$('e_ptipo').value,pixChave:$('e_pchave').value.trim(),pixNome:$('e_pnome').value.trim(),descontoPix:num($('e_pdesc').value),cartaoMax:Math.max(1,Math.round(num($('e_cmax').value))||1),cartaoSemJuros:Math.max(1,Math.round(num($('e_csj').value))||1),cartaoJuros:num($('e_cjur').value),linkPagamento:normUrl($('e_link').value),linkAvaliacao:normUrl($('e_aval').value),googlePerfil:normUrl($('e_gperfil').value),instagram:$('e_insta').value.trim(),site:normUrl($('e_site').value),responsavel:$('e_resp').value.trim(),
-    validade:Math.round(num($('e_val').value))||15,pagamento:$('e_pag').value.trim(),prazo:$('e_prazo').value.trim(),garantia:$('e_gar').value.trim()});
+    garantiaEquipMeses:Math.max(0,Math.round(num($('e_gmes').value))),garantiaServDias:Math.max(0,Math.round(num($('e_gdias').value))),validade:Math.round(num($('e_val').value))||15,pagamento:$('e_pag').value.trim(),prazo:$('e_prazo').value.trim(),garantia:$('e_gar').value.trim()});
   const ex=()=>{const imp=num($('e_imp').value),desp=num($('e_desp').value),m=num($('e_marg').value),r=num($('e_arr').value),soma=imp+desp+m;
     if(soma>=95){$('e_ex').innerHTML=`<b style="color:var(--bad)">Imposto + despesas + lucro somam ${fmtPct(soma)}. A soma precisa ficar abaixo de 95%.</b>`;return}
     let v=100/(1-soma/100);v=r>0?Math.ceil(v/r-1e-9)*r:Math.ceil(v*100-1e-6)/100;
@@ -1775,7 +1787,7 @@ async function salvarOrc(ver){
   const c=S.clientes.find(c=>c.id===o.clienteId);o.clienteNome=c?c.nome:'';
   o.atualizadoEm=new Date().toISOString();
   try{await store.save('orcamentos',o);toast(draft._new?`Orçamento Nº ${nOrc(o.numero)} criado`:'Orçamento salvo');draft=null;
-    if(ver)go('proposta',{id:o.id,force:true});else go('inicio',{force:true})}
+    if(o.tipo==='os'&&o.agenda)go('os',{id:o.id,force:true});else if(ver)go('proposta',{id:o.id,force:true});else go('inicio',{force:true})}
   catch(e){toast(e&&e.code==='quota_exceeded'?'Limite de armazenamento atingido.':'Não foi possível salvar. Tente de novo.')}
 }
 function openPicker(mode){
@@ -2238,16 +2250,19 @@ function osHTML(o){
   const dur=g.inicio&&g.fim?fmtH((new Date(g.fim)-new Date(g.inicio))/36e5):'',fo={antes:[],depois:[],...(g.fotos||{})};
   const fotos=(tit,l)=>{const v=l.map(fotoSync).filter(Boolean).map(u=>fotoCorte.get(u)||u);return v.length?`<div><div class="pp-cat">${tit}</div><div class="osf">${v.map(u=>`<img src="${u}" alt="">`).join('')}</div></div>`:''};
   const assTec=g.assTec||(mesmoTecnico(g)?e.assinatura:'');
-  return `<div class="paper os"><div class="pp-band"><div class="pp-id"><img class="pp-logo2" src="${LOGO}" alt="${esc(e.nome)}"></div><div class="pp-num"><div class="k">Ordem de serviço</div><div class="n">Nº ${nOrc(o.numero)}</div></div></div><div class="pp-stripe"></div>
+  return `<div class="paper os"><div class="pp-band"><div class="pp-id"><img class="pp-logo2" src="${LOGO}" alt="${esc(e.nome)}"></div><div class="pp-num"><div class="k">${o.tipo==='os'?esc(osTipoNome(o)):'Ordem de serviço'}</div><div class="n">OS Nº ${nOrc(o.numero)}</div></div></div><div class="pp-stripe"></div>
     <div class="pp-body">
       <div class="os-quando"><div><span class="pp-k">Data</span><b>${esc(cap(diaTxt(g.data,true)))}</b></div><div><span class="pp-k">Horário</span><b>${esc(g.hora||'A combinar')}</b></div>${g.inicio?`<div><span class="pp-k">Início</span><b>${hm(g.inicio)}</b></div>`:''}${g.fim?`<div><span class="pp-k">Término</span><b>${hm(g.fim)}</b></div>`:''}${dur?`<div><span class="pp-k">Duração</span><b>${dur}</b></div>`:g.duracao?`<div><span class="pp-k">Duração aproximada</span><b>${esc(g.duracao)}</b></div>`:''}</div>
       <div class="pp-meta">
         <div><div class="pp-k">Cliente</div><div class="pp-cli">${esc(c.nome)}</div>${c.telefone?`<div class="pp-small">${esc(c.telefone)}</div>`:''}
-          <div style="margin-top:10px"><div class="pp-k">Endereço da instalação</div><div style="font-weight:600">${esc(g.endereco||endCliente(c)||'A confirmar')}</div></div></div>
-        <div class="pp-dates"><div><div class="pp-k">Proposta</div><div>Nº ${nOrc(o.numero)}</div></div>${g.tecnico?`<div><div class="pp-k">Técnico</div><div>${esc(g.tecnico)}</div></div>`:''}</div>
+          <div style="margin-top:10px"><div class="pp-k">${o.tipo==='os'&&o.osTipo!=='instalacao'?'Endereço do atendimento':'Endereço da instalação'}</div><div style="font-weight:600">${esc(g.endereco||endCliente(c)||'A confirmar')}</div></div></div>
+        <div class="pp-dates">${o.tipo==='os'?`<div><div class="pp-k">Tipo</div><div>${esc(osTipoNome(o))}</div></div>`:`<div><div class="pp-k">Proposta</div><div>Nº ${nOrc(o.numero)}</div></div>`}${g.tecnico?`<div><div class="pp-k">Técnico</div><div>${esc(g.tecnico)}</div></div>`:''}</div>
       </div>
-      ${o.titulo?`<div><div class="pp-k">Projeto</div><div style="font-weight:600">${esc(o.titulo)}</div></div>`:''}
-      ${tab('Serviços',mos)}${tab('Materiais',mats)}
+      ${o.titulo&&o.tipo!=='os'?`<div><div class="pp-k">Projeto</div><div style="font-weight:600">${esc(o.titulo)}</div></div>`:''}
+      ${o.motivo?`<div><div class="pp-k">Motivo do chamado</div><div class="os-obs">${esc(o.motivo)}</div></div>`:''}
+      ${o.tipo==='os'&&calc(o).total>0?`<div><div class="pp-cat">Valores</div><table class="pp-table os-t"><tbody>${its.map(i=>`<tr><td><div style="font-weight:600">${esc(i.nome)}</div><div class="desc">${String(num(i.qtd)).replace('.',',')} ${esc(i.unidade||'un')} × ${money(i.preco)}</div></td><td class="v">${money(num(i.preco)*num(i.qtd))}</td></tr>`).join('')}</tbody></table>
+        ${calc(o).desc?`<div class="os-tot"><span>Desconto</span><span>− ${money(calc(o).desc)}</span></div>`:''}<div class="os-tot g"><span>Total</span><b>${money(calc(o).total)}</b></div></div>${pagOSHTML(o)}`
+        :`${tab('Serviços',mos)}${tab('Materiais',mats)}${o.tipo==='os'&&o.osTipo==='garantia'?`<p class="os-obs" style="margin:0"><b>Atendimento em garantia: sem custo para o cliente.</b></p>`:''}`}
       ${obs?`<div><div class="pp-k">Observações</div><div class="os-obs">${esc(obs)}</div></div>`:''}
       ${fotos('Fotos antes do serviço',fo.antes)}${fotos('Fotos depois do serviço',fo.depois)}
       ${g.relatorio?`<div><div class="pp-cat">Serviço executado</div><div class="os-obs" style="margin-top:8px">${esc(g.relatorio)}</div></div>`:''}
@@ -2260,10 +2275,14 @@ function osHTML(o){
 function textoOS(o){
   const g=o.agenda||{};if(!(g.fim||o.status==='concluido'))return textoAgenda(o);
   const e=S.empresa,c=S.clientes.find(x=>x.id===o.clienteId)||{},nome=String(g.assCliNome||c.nome||'').trim().split(' ')[0],d=g.fim||g.concluidoEm;
+  if(o.tipo==='os'){const t=calc(o),cob=t.total>0&&!o.pgto;
+    return `Olá${nome?', '+nome:''}! O atendimento da OS Nº ${nOrc(o.numero)} (${osTipoNome(o).toLowerCase()}) foi concluído${d?` em ${new Date(d).toLocaleDateString('pt-BR')}`:''}.\n\nSegue a ordem de serviço com as fotos e o relatório do que foi feito.${cob?`\n\nValor: ${money(t.total)}. As formas de pagamento (Pix e cartão) estão na OS em anexo.`:''}\n\nQualquer dúvida, é só chamar. Obrigado pela confiança!\n${e.nome||'DaylinTech'}`+textoAval()}
   return `Olá${nome?', '+nome:''}! A instalação referente à proposta Nº ${nOrc(o.numero)} foi concluída${d?` em ${new Date(d).toLocaleDateString('pt-BR')}`:''}.\n\nSegue a ordem de serviço com as fotos e o relatório do que foi feito.\n\nQualquer dúvida, é só chamar. Obrigado pela confiança!\n${e.nome||'DaylinTech'}`+textoAval();
 }
 function textoAgenda(o){
   const g=o.agenda||{},e=S.empresa,c=S.clientes.find(x=>x.id===o.clienteId)||{},nome=String(c.nome||(o.aceite&&o.aceite.nome)||'').trim().split(' ')[0];
+  if(o.tipo==='os'){const det=[`📅 ${cap(diaTxt(g.data,true))}${g.hora?` às ${g.hora}`:''}`,g.endereco&&`📍 ${g.endereco}`,g.tecnico&&`👷 Técnico: ${g.tecnico}`,g.duracao&&`⏱️ Duração aproximada: ${g.duracao}`].filter(Boolean);
+    return [`Olá${nome?', '+nome:''}! Aqui é da ${e.nome||'DaylinTech'}.`,'','✅ OS marcada com sucesso!',`${osTipoNome(o)} · OS Nº ${nOrc(o.numero)}`,o.motivo&&`Motivo: ${o.motivo}`,...det,'','Se precisar remarcar, é só responder esta mensagem. Até lá!'].filter(x=>x!==false&&x!==undefined&&x!==null).join('\n')}
   const det=[`📅 ${cap(diaTxt(g.data,true))}${g.hora?` às ${g.hora}`:''}`,g.endereco&&`📍 ${g.endereco}`,g.tecnico&&`👷 Técnico: ${g.tecnico}`,g.duracao&&`⏱️ Duração estimada: ${g.duracao}`].filter(Boolean);
   return [`Olá${nome?', '+nome:''}! Aqui é da ${e.nome||'DaylinTech'}.`,'',`Confirmando a instalação referente à proposta Nº ${nOrc(o.numero)}:`,...det,'','Se precisar remarcar, é só responder esta mensagem. Até lá!'].join('\n');
 }
@@ -2278,7 +2297,7 @@ async function enviarComPDF(o,arquivo,texto,titulo){
 async function verOS(o,recem){
   let cur=S.orcamentos.find(x=>x.id===o.id)||o;const nomeArq=`OS-${nOrc(cur.numero)}-${arqNome(cliNome(cur))}.pdf`;
   const nf=((cur.agenda||{}).fotos||{});if([...(nf.antes||[]),...(nf.depois||[])].length){if([...(nf.antes||[]),...(nf.depois||[])].some(f=>!fotoSync(f)))toast('Carregando fotos…');await carregarFotos(cur);cur=S.orcamentos.find(x=>x.id===o.id)||cur}
-  const fim=!!((cur.agenda||{}).fim||cur.status==='concluido');if(fim)await prepAval();
+  const fim=!!((cur.agenda||{}).fim||cur.status==='concluido');if(fim)await prepAval();await prepPagOS(cur);
   let pdf=null;const pronto=htmlPDF(osHTML(cur)).then(b=>pdf=new File([b],nomeArq,{type:'application/pdf'}),()=>null);
   openSheet('Ordem de serviço',`${recem?`<p class="note" style="margin-top:0"><b>Instalação agendada.</b> Agora confirme com o cliente pelo WhatsApp.</p>`:''}<div class="paper-wrap">${osHTML(cur)}</div>`,
     `<button class="btn left" id="os_ed">Editar</button><button class="btn" id="os_dl">${svg(UI.dl)}Baixar PDF</button><button class="btn primary" id="os_wa">${fim?'Enviar no WhatsApp':'Confirmar no WhatsApp'}</button>`,
@@ -2361,13 +2380,18 @@ function vOS(app){
     <label class="os-add">${svg(UI.plus)}<span>Adicionar fotos</span><input type="file" accept="image/*" multiple hidden data-add="${t}"></label></div>`;
   app.innerHTML=`
   <div class="row" style="justify-content:space-between"><button class="btn ghost" data-nav="agenda">${svg(UI.back)}Agenda</button><span class="os-fase">${fase}</span></div>
-  <div><div class="eyebrow">Ordem de serviço Nº ${nOrc(o.numero)}</div><h1 class="h1">${esc(c.nome)}</h1>
+  <div><div class="eyebrow">${o.tipo==='os'?esc(osTipoNome(o)):'Ordem de serviço'} · OS Nº ${nOrc(o.numero)}</div><h1 class="h1">${esc(c.nome)}</h1>${o.motivo?`<p style="margin:6px 0 0"><b>Motivo:</b> ${esc(o.motivo)}</p>`:''}
     <p class="muted" style="margin:6px 0 0">${esc(cap(diaTxt(g.data,true)))}${g.hora?` às ${esc(g.hora)}`:''}${g.endereco?` · ${esc(g.endereco)}`:''}</p>
     ${g.endereco?`<div class="row" style="gap:8px;margin-top:10px">${(e=>`<a class="btn sm" href="${esc(rotaURL(e))}" target="_blank" rel="noopener">Rota no Google Maps</a><a class="btn sm" href="${esc(rotaURL(e,'waze'))}" target="_blank" rel="noopener">Rota no Waze</a>`)([g.endereco,c.cep].filter(Boolean).join(', '))}</div>`:''}</div>
   <section class="panel"><div class="spread" style="align-items:center"><h2 class="h2">Andamento</h2><button class="btn sm" id="ox_ed">Editar agendamento</button></div>
     <div class="os-tempo"><div><span class="hint">Início</span><b>${g.inicio?hm(g.inicio):'—'}</b></div><div><span class="hint">Término</span><b>${g.fim?hm(g.fim):'—'}</b></div><div><span class="hint">${dur?'Duração':'Duração aproximada'}</span><b>${dur||esc(g.duracao||'—')}</b></div></div>
     <div class="row">${!g.inicio?`<button class="btn primary" id="os_ini">Iniciar serviço</button>`:!g.fim?`<button class="btn primary" id="os_fim">Finalizar serviço</button>`:''}${g.inicio?`<button class="btn ghost sm" id="os_hr">Corrigir horários</button>`:''}</div>
   </section>
+  ${o.tipo==='os'?(()=>{const t=calc(o),its=o.itens||[];return `<section class="panel"><div class="spread" style="align-items:center"><h2 class="h2">Cobrança</h2><span class="hint">opcional</span></div>
+    ${its.length?`<div class="list">${its.map(i=>`<div class="li"><div><div class="t">${esc(i.nome)}</div><div class="d">${String(num(i.qtd)).replace('.',',')} × ${money(i.preco)}</div></div><div class="r"><span class="num">${money(num(i.preco)*num(i.qtd))}</span></div></div>`).join('')}</div><div class="spread"><b>Total</b><b>${money(t.total)}</b></div>`
+      :`<p class="muted" style="margin:0">${o.osTipo==='garantia'?'Atendimento em garantia: sem custo para o cliente.':'Sem cobrança. Se for cobrar a visita, materiais ou mão de obra, adicione aqui.'}</p>`}
+    <div class="row"><button class="btn ${its.length?'':'primary'}" id="ox_cob">${its.length?'Editar valores':'Cobrar: adicionar materiais e mão de obra'}</button>${t.total>0?`<button class="btn" id="ox_pg">${o.pgto?'Editar pagamento':'Registrar pagamento'}</button>${o.pgto?`<button class="btn" id="ox_rc">Recibo</button>`:''}`:''}</div>
+    ${t.total>0&&!o.pgto?`<span class="hint">O PDF da OS sai com o QR Code do Pix${safeUrl(o.linkPagamento)||safeUrl(S.empresa.linkPagamento)?' e do link do cartão':''}. Link do cartão: em Editar valores → Condições.</span>`:''}</section>`})():''}
   <section class="panel"><h2 class="h2">Fotos antes do serviço</h2>${grade('antes')}</section>
   <section class="panel"><h2 class="h2">Fotos depois do serviço</h2>${grade('depois')}</section>
   <section class="panel"><h2 class="h2">Relatório do serviço</h2><div class="field"><label for="os_rel" class="sr-only">Relatório</label><textarea id="os_rel" placeholder="O que foi feito, testes, pendências e orientações ao cliente…">${esc(g.relatorio||'')}</textarea><span class="hint">Salva sozinho quando você sai do campo. Aparece na OS.</span></div></section>
@@ -2383,6 +2407,7 @@ function vOS(app){
   app.querySelectorAll('[data-add]').forEach(inp=>inp.onchange=async()=>{const fs=[...inp.files];inp.value='';if(!fs.length)return;toast(fs.length>1?`Enviando ${fs.length} fotos…`:'Enviando foto…');
     try{await addFotos(o,inp.dataset.add,fs);toast(fs.length>1?'Fotos salvas':'Foto salva')}catch(err){toast(/espaço/i.test(err&&err.message||'')?'Sem espaço no navegador para mais fotos.':'Não foi possível salvar a foto. Tente de novo.')}});
   $('ox_ed').onclick=()=>agendar(o);
+  if($('ox_cob'))$('ox_cob').onclick=()=>editarOrc(o);if($('ox_pg'))$('ox_pg').onclick=()=>registrarPagamento(o);if($('ox_rc'))$('ox_rc').onclick=()=>verRecibo(o.id);
   if($('os_ini'))$('os_ini').onclick=()=>salvarAgenda(o,{inicio:new Date().toISOString()}).then(()=>toast('Serviço iniciado'),erro);
   if($('os_fim'))$('os_fim').onclick=()=>salvarAgenda(o,{fim:new Date().toISOString()}).then(()=>toast('Serviço finalizado'),erro);
   if($('os_hr'))$('os_hr').onclick=()=>horariosSheet(o);
@@ -2399,15 +2424,116 @@ function concluirOS(o){
     const ag={...(cur.agenda||{}),concluidoEm:new Date().toISOString()};if(ag.inicio&&!ag.fim)ag.fim=ag.concluidoEm;
     try{await store.save('orcamentos',{...cur,status:'concluido',agenda:ag,atualizadoEm:new Date().toISOString()});render();toast('Instalação concluída')}catch(e){toast('Não foi possível salvar.')}});
 }
+/* ---------- OS avulsa (visita técnica, manutenção, garantia) ---------- */
+// Fica em "orcamentos" com tipo:'os', para reaproveitar a tela da OS, o editor de itens, o pagamento e o recibo.
+const OS_TIPOS={visita:'Visita técnica',manutencao:'Manutenção',garantia:'Atendimento em garantia',instalacao:'Instalação',outro:'Serviço'};
+const osTipoNome=o=>OS_TIPOS[o.osTipo]||'Serviço';
+function novaOS(pre={}){
+  const e=S.empresa,cs=[...S.clientes].sort((a,b)=>a.nome.localeCompare(b.nome));
+  openSheet('Nova OS',`<div class="form">
+    <div class="field full"><label for="no_cli">Cliente</label><div class="row" style="gap:6px;flex-wrap:nowrap"><select id="no_cli" style="flex:1;min-width:0"><option value="">Escolha o cliente…</option>${cs.map(c=>`<option value="${c.id}" ${c.id===pre.clienteId?'selected':''}>${esc(c.nome)}</option>`).join('')}</select><button class="btn" type="button" id="no_novo">${svg(UI.plus)}Novo</button></div></div>
+    <div class="field"><label for="no_tipo">Tipo</label><select id="no_tipo">${Object.entries(OS_TIPOS).map(([k,l])=>`<option value="${k}" ${(pre.tipo||'visita')===k?'selected':''}>${l}</option>`).join('')}</select></div>
+    <div class="field"><label for="no_tec">Técnico</label><input id="no_tec" value="${esc(pre.tecnico||e.responsavel||'')}"></div>
+    <div class="field full"><label for="no_mot">Motivo / problema relatado</label><textarea id="no_mot" placeholder="Ex.: interfone não abre o portão">${esc(pre.motivo||'')}</textarea></div>
+    <div class="field"><label for="no_data">Data</label><input type="date" id="no_data" value="${esc(pre.data||proxUtil())}"></div>
+    <div class="field"><label for="no_hora">Horário</label><input type="time" id="no_hora" value="${esc(pre.hora||'08:00')}"></div>
+    <div class="field full"><label for="no_end">Endereço</label><input id="no_end" value="${esc(pre.endereco||'')}"></div>
+    <div class="field full"><label for="no_dur">Duração aproximada</label><input id="no_dur" value="${esc(pre.duracao||'')}" placeholder="Ex.: 1 h"></div>
+    ${pre.tipo==='garantia'?`<p class="note full" style="margin:0">Atendimento em garantia: a OS sai sem cobrança. Se precisar cobrar algo fora da garantia, adicione depois na OS.</p>`:''}
+  </div>`,
+    `<button class="btn" data-act="close">Cancelar</button><button class="btn primary" id="no_ok">Criar OS</button>`,
+    L=>{const $=id=>L.querySelector('#'+id),atual=()=>({...pre,clienteId:$('no_cli').value,tipo:$('no_tipo').value,tecnico:$('no_tec').value,motivo:$('no_mot').value,data:$('no_data').value,hora:$('no_hora').value,endereco:$('no_end').value,duracao:$('no_dur').value});
+      const end=()=>{const c=S.clientes.find(x=>x.id===$('no_cli').value);if(c&&!pre.endereco)$('no_end').value=endCliente(c)};
+      $('no_cli').addEventListener('change',()=>{pre.endereco='';end()});if(!pre.endereco)end();
+      $('no_novo').onclick=()=>{const guardado=atual();closeSheet();formCli(null,c=>novaOS({...guardado,clienteId:c.id,endereco:''}))};
+      $('no_ok').onclick=async()=>{const d=atual();if(!d.clienteId){toast('Escolha o cliente.');return}if(!d.data){toast('Escolha a data.');return}
+        const o={id:uid(),numero:S.orcamentos.reduce((m,x)=>Math.max(m,x.numero||0),0)+1,tipo:'os',osTipo:d.tipo,motivo:d.motivo.trim(),origemId:pre.origemId||'',clienteId:d.clienteId,
+          titulo:OS_TIPOS[d.tipo],itens:[],descontoPct:0,validadeDias:e.validade,pagamento:e.pagamento,prazo:'',garantia:e.garantia,obs:'',status:'aprovado',
+          criadoEm:new Date().toISOString(),atualizadoEm:new Date().toISOString(),
+          agenda:{data:d.data,hora:d.hora,endereco:d.endereco.trim(),tecnico:d.tecnico.trim(),duracao:d.duracao.trim(),atualizadoEm:new Date().toISOString()}};
+        try{await store.save('orcamentos',o);closeSheet();toast('OS criada');verOS(S.orcamentos.find(x=>x.id===o.id)||o,true)}catch(err){toast('Não foi possível criar a OS. Tente de novo.')}};
+    });
+}
+// Formas de pagamento da OS cobrada (Pix e cartão em QR Code, porque no PDF o link não é clicável).
+async function prepPagOS(o){if(o.tipo!=='os'||o.pgto)return;const t=calc(o);if(!(t.total>0))return;const pl=pixPayload(valorPix(t.total),'OS'+nOrc(o.numero));if(pl)await qrPNG(pl);const lk=safeUrl(o.linkPagamento)||safeUrl(S.empresa.linkPagamento);if(lk)await qrPNG(lk)}
+function pagOSHTML(o){const t=calc(o);if(!(t.total>0))return '';
+  if(o.pgto)return `<div class="aval"><div class="aval-t"><b>Pago</b><span>${money(o.pgto.valor)} via ${esc(formaTxt(o.pgto))} em ${dataBR(o.pgto.data)}.</span></div></div>`;
+  const vp=valorPix(t.total),pl=pixPayload(vp,'OS'+nOrc(o.numero)),lk=safeUrl(o.linkPagamento)||safeUrl(S.empresa.linkPagamento),qp=pl&&qrCache[pl],qc=lk&&qrCache[lk];
+  if(!qp&&!qc)return '';
+  return `<div><div class="pp-cat">Formas de pagamento</div><div class="os-pag">
+    ${qp?`<div class="aval"><div class="aval-t"><b>Pix: ${money(vp)}</b><span>${num(S.empresa.descontoPix)?`Com ${fmtPct(S.empresa.descontoPix)} de desconto. `:''}Aponte a câmera do app do banco para o código.</span><span>Recebedor: ${esc(S.empresa.pixNome||S.empresa.nome)}</span></div><img class="aval-qr" src="${qp}" alt="QR Code do Pix"></div>`:''}
+    ${qc?`<div class="aval"><div class="aval-t"><b>Cartão de crédito</b><span>${esc(cap(cartaoTxt()))}. Aponte a câmera para abrir o link de pagamento.</span></div><img class="aval-qr" src="${qc}" alt="QR Code do link de pagamento"></div>`:''}
+  </div></div>`}
+/* ---------- Compras, notas fiscais e garantia ---------- */
+const addMesesISO=(iso,m)=>{const d=new Date(String(iso).slice(0,10)+'T12:00:00');d.setMonth(d.getMonth()+m);return isoDia(d)};
+const addDiasISO=(iso,n)=>{const d=new Date(String(iso).slice(0,10)+'T12:00:00');d.setDate(d.getDate()+n);return isoDia(d)};
+const diasAte=iso=>Math.round((new Date(iso+'T12:00:00')-new Date(hojeISO()+'T12:00:00'))/864e5);
+const dataBR=iso=>iso?new Date(String(iso).slice(0,10)+'T12:00:00').toLocaleDateString('pt-BR'):'';
+// Data da instalação: a informada em "Compras e garantia" ou, se não tiver, a do término da OS.
+function dataInstalacao(o){const g=o.agenda||{};return o.instaladoEm||String(g.fim||g.concluidoEm||'').slice(0,10)||(o.status==='concluido'?g.data||'':'')}
+function garantiaInfo(o){
+  const e=S.empresa,inst=dataInstalacao(o),meses=Math.round(num(e.garantiaEquipMeses)),dias=Math.round(num(e.garantiaServDias)),notas=o.notas||{};
+  const mats=(o.itens||[]).map((i,ix)=>({i,ix})).filter(x=>!isMO(x.i));
+  const servAte=inst&&dias>0?addDiasISO(inst,dias):'';
+  const equipAte=mats.map(x=>{const b=(notas[x.ix]&&notas[x.ix].data)||inst;return b&&meses>0?addMesesISO(b,meses):''}).filter(Boolean).sort().pop()||'';
+  const ate=[servAte,equipAte].filter(Boolean).sort().pop()||'';
+  return {inst,servAte,equipAte,ate,ativa:!!ate&&ate>=hojeISO(),mats,notas};
+}
+function garantiaSheet(o){
+  const cur=S.orcamentos.find(x=>x.id===o.id)||o,g=garantiaInfo(cur),notas=JSON.parse(JSON.stringify(cur.notas||{}));
+  const lojaPadrao=i=>{const p=S.produtos.find(x=>x.id===i.produtoId),ef=p&&fornEf(p);return ef&&ef.f?ef.f.nome||'':''};
+  const linha=({i,ix})=>{const n=notas[ix]||{};return `<div class="gar-l"><div class="gar-n"><b>${esc(i.nome)}</b><span class="hint">${String(num(i.qtd)).replace('.',',')} ${esc(i.unidade||'un')}</span></div>
+    <div class="gar-f"><label>Nota fiscal<input data-nf="${ix}" value="${esc(n.nf||'')}" inputmode="numeric" placeholder="Nº"></label><label>Data da nota<input type="date" data-nd="${ix}" value="${esc(n.data||'')}"></label><label>Revenda<input data-nr="${ix}" value="${esc(n.revenda!=null?n.revenda:lojaPadrao(i))}" placeholder="Loja"></label></div></div>`};
+  openSheet(`Compras e garantia — Nº ${nOrc(cur.numero)}`,`
+    <p class="muted" style="margin-top:0">${esc(cliNome(cur))}. Anote a nota fiscal de cada material comprado: é o que garante a troca pelo fabricante.</p>
+    ${g.mats.length?`<details class="gar-todos"><summary>Mesma nota para todos os itens</summary><div class="gar-f"><label>Nota fiscal<input id="gt_nf" inputmode="numeric"></label><label>Data da nota<input type="date" id="gt_nd"></label><label>Revenda<input id="gt_nr"></label></div><button class="btn sm" type="button" id="gt_ok">Aplicar a todos</button></details>
+    <div class="gar-lista">${g.mats.map(linha).join('')}</div>`:`<p class="note">Este orçamento não tem materiais.</p>`}
+    <h3 class="h2" style="margin:18px 0 8px">Instalação e garantia</h3>
+    <div class="form"><div class="field"><label for="gi_data">Data da instalação</label><input type="date" id="gi_data" value="${esc(g.inst||'')}"></div><div class="field"></div></div>
+    <div class="gar-res" id="gi_res"></div>`,
+    `<button class="btn" data-act="close">Cancelar</button><button class="btn primary" id="gi_ok">Salvar</button>`,
+    L=>{const $=id=>L.querySelector('#'+id),ler=()=>{L.querySelectorAll('[data-nf]').forEach(x=>{const ix=x.dataset.nf;notas[ix]={nf:x.value.trim(),data:L.querySelector(`[data-nd="${ix}"]`).value,revenda:L.querySelector(`[data-nr="${ix}"]`).value.trim()}})};
+      const res=()=>{ler();const gi=garantiaInfo({...cur,notas,instaladoEm:$('gi_data').value});const linhaRes=(r,ate)=>ate?`<div class="ln"><span>${r}</span><b>até ${dataBR(ate)}</b> <span class="pill ${ate>=hojeISO()?'st-aprovado':'st-recusado'}">${ate>=hojeISO()?`faltam ${diasAte(ate)} dias`:'vencida'}</span></div>`:'';
+        $('gi_res').innerHTML=gi.inst?linhaRes(`Instalação (${num(S.empresa.garantiaServDias)} dias)`,gi.servAte)+linhaRes(`Equipamentos (${num(S.empresa.garantiaEquipMeses)} meses)`,gi.equipAte):'<p class="hint" style="margin:0">Informe a data da instalação para calcular a garantia.</p>'};
+      L.querySelector('.sheet-b').addEventListener('input',res);res();
+      if($('gt_ok'))$('gt_ok').onclick=()=>{const nf=$('gt_nf').value.trim(),nd=$('gt_nd').value,nr=$('gt_nr').value.trim();
+        L.querySelectorAll('[data-nf]').forEach(x=>{const ix=x.dataset.nf;if(nf)x.value=nf;if(nd)L.querySelector(`[data-nd="${ix}"]`).value=nd;if(nr)L.querySelector(`[data-nr="${ix}"]`).value=nr});res();toast('Aplicado a todos os itens')};
+      $('gi_ok').onclick=async()=>{ler();const atual=S.orcamentos.find(x=>x.id===cur.id)||cur;
+        try{await store.save('orcamentos',{...atual,notas,instaladoEm:$('gi_data').value||'',atualizadoEm:new Date().toISOString()});closeSheet();render();toast('Compras e garantia salvas')}catch(e){toast('Não foi possível salvar. Tente de novo.')}};
+    });
+}
+function vGarantias(app){
+  const q=normNome(ui.buscaGar||'');
+  const base=S.orcamentos.filter(o=>o.tipo!=='os'&&vendido(o)&&(!q||normNome(cliNome(o)).includes(q)));
+  const lista=base.map(o=>({o,g:garantiaInfo(o)})).filter(x=>x.g.inst);
+  const ativas=lista.filter(x=>x.g.ativa).sort((a,b)=>a.g.ate.localeCompare(b.g.ate));
+  const vencidas=lista.filter(x=>!x.g.ativa).sort((a,b)=>b.g.ate.localeCompare(a.g.ate)).slice(0,15);
+  const semInst=base.filter(o=>!dataInstalacao(o));
+  const card=({o,g},vencida)=>{const d=diasAte(g.ate),semNF=g.mats.some(x=>!(g.notas[x.ix]&&g.notas[x.ix].nf));
+    return `<div class="ag-card"><div class="ag-d ${vencida?'wait':d<=30?'late':''}"><b>${vencida?'—':d}</b><span>${vencida?'vencida':d===1?'dia':'dias'}</span></div>
+    <div class="ag-i"><b>${esc(cliNome(o))}</b><span>Nº ${nOrc(o.numero)}${o.titulo?` · ${esc(o.titulo)}`:''} · instalado em ${dataBR(g.inst)}</span>
+      <span>${g.servAte?`Instalação até ${dataBR(g.servAte)}`:''}${g.servAte&&g.equipAte?' · ':''}${g.equipAte?`Equipamentos até ${dataBR(g.equipAte)}`:''}</span>${semNF&&g.mats.length?'<span style="color:var(--bad)">Falta anotar nota fiscal</span>':''}</div>
+    <div class="ag-b"><button class="btn sm" data-act="garantia" data-id="${o.id}">Compras e NF</button>${vencida?'':`<button class="btn sm primary" data-gar-os="${o.id}">Atendimento</button>`}</div></div>`};
+  const sec=(t,h)=>h?`<div><h2 class="h2" style="margin-bottom:10px">${t}</h2><div class="ag-list">${h}</div></div>`:'';
+  app.innerHTML=`
+  <div class="spread"><div><div class="eyebrow">${ativas.length} cliente${ativas.length===1?'':'s'} na garantia</div><h1 class="h1">Garantias</h1></div></div>
+  <div class="toolbar"><label class="search">${svg(UI.search)}<input type="search" id="buscaGar" placeholder="Buscar cliente" value="${esc(ui.buscaGar||'')}" aria-label="Buscar cliente"></label></div>
+  ${!lista.length&&!semInst.length?`<div class="empty"><b>Nenhuma garantia ainda</b><span class="muted">Quando uma instalação for concluída, ela aparece aqui com o prazo da garantia.</span></div>`:''}
+  ${sec('Em garantia',ativas.map(x=>card(x)).join(''))}
+  ${semInst.length?`<p class="note">${semInst.length} orçamento${semInst.length>1?'s aprovados ainda não têm':' aprovado ainda não tem'} data de instalação. A garantia começa a contar quando a instalação é concluída na OS ou informada em "Compras e garantia".</p>`:''}
+  ${sec('Vencidas',vencidas.map(x=>card(x,true)).join(''))}`;
+  const b=app.querySelector('#buscaGar');b.addEventListener('input',()=>{ui.buscaGar=b.value;render()});
+  app.querySelectorAll('[data-gar-os]').forEach(x=>x.onclick=()=>{const o=S.orcamentos.find(y=>y.id===x.dataset.garOs);novaOS({clienteId:o.clienteId,tipo:'garantia',origemId:o.id})});
+}
 function vAgenda(app){
   const hoje=hojeISO(),os=S.orcamentos,ordem=(a,b)=>(a.agenda.data+(a.agenda.hora||'')).localeCompare(b.agenda.data+(b.agenda.hora||''));
   const ag=os.filter(o=>o.agenda&&o.agenda.data&&!['concluido','recusado'].includes(o.status)).sort(ordem);
   const late=ag.filter(o=>o.agenda.data<hoje),hj=ag.filter(o=>o.agenda.data===hoje),prox=ag.filter(o=>o.agenda.data>hoje);
-  const espera=os.filter(o=>(vendido(o)||o.aceite)&&o.status!=='concluido'&&!o.agenda).map(o=>({o,l:prazoLimite(o)})).sort((a,b)=>((a.l&&a.l.iso)||'9').localeCompare((b.l&&b.l.iso)||'9'));
+  const espera=os.filter(o=>o.tipo!=='os'&&(vendido(o)||o.aceite)&&o.status!=='concluido'&&!o.agenda).map(o=>({o,l:prazoLimite(o)})).sort((a,b)=>((a.l&&a.l.iso)||'9').localeCompare((b.l&&b.l.iso)||'9'));
   const feitos=os.filter(o=>o.status==='concluido'&&o.agenda&&o.agenda.data).sort((a,b)=>-ordem(a,b)).slice(0,8);
   const mes=iso=>new Date(iso+'T12:00:00').toLocaleDateString('pt-BR',{month:'short'}).replace('.','');
   const card=(o,cls)=>{const g=o.agenda;return `<div class="ag-card"><div class="ag-d ${cls||''}"><b>${g.data.slice(8,10)}</b><span>${mes(g.data)}</span></div>
-    <div class="ag-i"><b>${esc(cliNome(o))}${g.inicio&&!g.fim&&o.status!=='concluido'?' <span class="os-fase" style="font-size:11px">Em andamento</span>':''}</b><span>${esc(cap(diaTxt(g.data,true).split(',')[0]))}${g.hora?` às ${esc(g.hora)}`:''} · Nº ${nOrc(o.numero)}${o.titulo?` · ${esc(o.titulo)}`:''}</span>${g.endereco?`<span>${esc(g.endereco)}</span>`:''}</div>
+    <div class="ag-i"><b>${esc(cliNome(o))}${g.inicio&&!g.fim&&o.status!=='concluido'?' <span class="os-fase" style="font-size:11px">Em andamento</span>':''}</b><span>${esc(cap(diaTxt(g.data,true).split(',')[0]))}${g.hora?` às ${esc(g.hora)}`:''} · ${o.tipo==='os'?`${esc(osTipoNome(o))} · OS`:''} Nº ${nOrc(o.numero)}${o.tipo!=='os'&&o.titulo?` · ${esc(o.titulo)}`:''}</span>${o.motivo?`<span>${esc(o.motivo)}</span>`:''}${g.endereco?`<span>${esc(g.endereco)}</span>`:''}</div>
     <div class="ag-b">${g.endereco?`<a class="btn sm" href="${esc(rotaURL([g.endereco,(S.clientes.find(x=>x.id===o.clienteId)||{}).cep].filter(Boolean).join(', ')))}" target="_blank" rel="noopener">Rota</a>`:''}<button class="btn sm" data-ag-os="${o.id}">OS</button><button class="btn sm" data-ag-wa="${o.id}">WhatsApp</button>${o.status==='concluido'?'':`<button class="btn sm primary" data-ag-ok="${o.id}">Concluir</button>`}</div></div>`};
   const esperaCard=({o,l})=>`<div class="ag-card"><div class="ag-d wait"><b>—</b><span>sem data</span></div>
     <div class="ag-i"><b>${esc(cliNome(o))}</b><span>Nº ${nOrc(o.numero)}${o.titulo?` · ${esc(o.titulo)}`:''}</span><span>${l?(l.iso<hoje?`<b style="color:var(--bad)">Prazo da proposta venceu em ${diaTxt(l.iso)}</b>`:`Agendar até ${esc(diaTxt(l.iso,true))}`):'Sem prazo na proposta'}</span></div>
@@ -2415,14 +2541,14 @@ function vAgenda(app){
   const sec=(tit,html)=>html?`<div><h2 class="h2" style="margin-bottom:10px">${tit}</h2><div class="ag-list">${html}</div></div>`:'';
   const vazio=!ag.length&&!espera.length&&!feitos.length;
   app.innerHTML=`
-  <div class="spread"><div><div class="eyebrow">${hj.length?`${hj.length} instalação${hj.length>1?'ões':''} hoje`:'Instalações'}</div><h1 class="h1">Agenda</h1></div></div>
+  <div class="spread"><div><div class="eyebrow">${hj.length?`${hj.length} atendimento${hj.length>1?'s':''} hoje`:'Instalações e visitas'}</div><h1 class="h1">Agenda</h1></div><button class="btn primary" id="ag_nova">${svg(UI.plus)}Nova OS</button></div>
   ${vazio?`<div class="empty"><b>Nenhuma instalação por aqui ainda</b><span class="muted">Quando um cliente aceitar a proposta, ela aparece aqui para você agendar.</span></div>`:''}
   ${sec('Atrasadas',late.map(o=>card(o,'late')).join(''))}
   ${sec('Hoje',hj.map(o=>card(o,'hoje')).join(''))}
   ${sec('Próximas',prox.map(o=>card(o)).join(''))}
   ${sec('Aguardando agendamento',espera.map(esperaCard).join(''))}
   ${sec('Concluídas',feitos.map(o=>card(o,'wait')).join(''))}`;
-  const pega=id=>S.orcamentos.find(x=>x.id===id);
+  const pega=id=>S.orcamentos.find(x=>x.id===id);app.querySelector('#ag_nova').onclick=()=>novaOS();
   app.querySelectorAll('[data-ag-os]').forEach(b=>b.onclick=()=>go('os',{id:b.dataset.agOs}));
   app.querySelectorAll('[data-ag-wa]').forEach(b=>b.onclick=()=>{const o=pega(b.dataset.agWa);mensagemCliente(o,'Confirmar instalação',textoAgenda(o))});
   app.querySelectorAll('[data-ag-ok]').forEach(b=>b.onclick=()=>concluirOS(pega(b.dataset.agOk)));
@@ -2452,6 +2578,8 @@ function vProposta(app){
       <div class="step"><span class="st-n">3</span><div class="st-t"><b>Recibo</b><span class="hint">${p?'Pronto, com sua assinatura.':'Liberado depois do pagamento.'}</span></div><button class="btn sm ${p?'primary':''}" id="fx_rc" ${p?'':'disabled'}>Ver recibo</button></div>
       <div class="step ${o.agenda?'done':''}"><span class="st-n">${o.agenda?'✓':'4'}</span><div class="st-t"><b>Agendamento</b><span class="hint">${o.agenda?`${esc(cap(diaTxt(o.agenda.data,true)))}${o.agenda.hora?` às ${esc(o.agenda.hora)}`:''}${o.status==='concluido'?' · concluído':''}`:(()=>{const l=prazoLimite(o);return a||vendido(o)?(l?`Prazo da proposta: até ${diaTxt(l.iso)}.`:'Marque a data da instalação.'):'Liberado depois do aceite.'})()}</span></div>
         <div class="st-b">${o.agenda?`<button class="btn sm" id="fx_ag">Editar</button><button class="btn sm primary" id="fx_os">Ver OS</button>`:`<button class="btn sm ${a||vendido(o)?'primary':''}" id="fx_ag">Agendar</button>`}</div></div>
+      ${(()=>{const gi=garantiaInfo(o),ok=gi.inst&&(!gi.mats.length||gi.mats.every(x=>gi.notas[x.ix]&&gi.notas[x.ix].nf));return `<div class="step ${ok?'done':''}"><span class="st-n">${ok?'✓':'5'}</span><div class="st-t"><b>Compras e garantia</b><span class="hint">${gi.inst?`${gi.ativa?`Em garantia até ${dataBR(gi.ate)}`:'Garantia vencida'}${gi.mats.some(x=>!(gi.notas[x.ix]&&gi.notas[x.ix].nf))?' · falta anotar nota fiscal':''}`:'Notas fiscais dos materiais e prazo da garantia.'}</span></div>
+        <div class="st-b"><button class="btn sm ${vendido(o)&&!ok?'primary':''}" type="button" data-act="garantia" data-id="${o.id}">${gi.inst||Object.keys(gi.notas).length?'Abrir':'Anotar notas'}</button></div></div>`})()}
     </div>
     ${pixChave()?'':`<p class="note" style="margin:0">Cadastre sua chave Pix e seu WhatsApp na aba Empresa para a proposta mostrar o QR Code e o botão de aceite.</p>`}
   </section>
@@ -2505,12 +2633,13 @@ document.addEventListener('click',e=>{
   if(a==='novo-serv'){formServ();return}
   if(a==='importar'){importarCotacao();return}
   if(a==='padronizar'){padronizarNomes();return}
+  if(a==='garantia'){const o=S.orcamentos.find(x=>x.id===t.dataset.id);if(o)garantiaSheet(o);return}
   if(a==='importar-home'){go('catalogo');importarCotacao();return}
   if(a==='novo-cli'){formCli();return}
   if(t.dataset.status){ui.status=t.dataset.status;render();return}
   if(t.dataset.cat){ui.cat=t.dataset.cat;render();return}
   if(t.dataset.grupo){ui.grupo=t.dataset.grupo;render();return}
-  if(t.dataset.openOrc){closeSheet();go('proposta',{id:t.dataset.openOrc});return}
+  if(t.dataset.openOrc){closeSheet();const oo=S.orcamentos.find(x=>x.id===t.dataset.openOrc);go(oo&&oo.tipo==='os'&&oo.agenda?'os':'proposta',{id:t.dataset.openOrc});return}
   if(t.dataset.editProd){const pr=S.produtos.find(p=>p.id===t.dataset.editProd);(isMO(pr)?formServ:formProd)(pr);return}
   if(t.dataset.editCli){formCli(S.clientes.find(c=>c.id===t.dataset.editCli));return}
   if(t.dataset.q!==undefined&&draft){const i=draft.itens[+t.dataset.q];i.qtd=Math.max(1,num(i.qtd)+(+t.dataset.d));draft._dirty=true;renderEditorParts();return}
