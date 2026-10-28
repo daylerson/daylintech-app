@@ -909,7 +909,7 @@ function vCatalogo(app){
   app.innerHTML=`
   <div class="spread">
     <div><div class="eyebrow">${mats.length} produto${mats.length===1?'':'s'}</div><h1 class="h1">Catálogo</h1></div>
-    <div class="row"><button class="btn internal" data-act="importar">${svg(UI.up)}Importar cotação</button><button class="btn primary" data-act="novo-prod">${svg(UI.plus)}Novo produto</button></div>
+    <div class="row">${S.produtos.some(p=>nomeGritado(p.nome))?`<button class="btn internal" data-act="padronizar">Padronizar nomes</button>`:''}<button class="btn internal" data-act="importar">${svg(UI.up)}Importar cotação</button><button class="btn primary" data-act="novo-prod">${svg(UI.plus)}Novo produto</button></div>
   </div>
   <div class="toolbar">
     <label class="search">${svg(UI.search)}<input type="search" id="buscaProd" placeholder="Buscar produto, marca ou modelo" value="${esc(ui.busca)}" aria-label="Buscar produtos"></label>
@@ -1163,6 +1163,58 @@ async function ocrImagens(imgs,aviso){
   finally{ocrLog=null}
   return t;
 }
+// Nome no padrão do catálogo: "Câmera bullet VHD 1220 B" (frase normal, com acento, modelo em maiúsculas),
+// sem código, sem "PÇ/UN" e sem a marca (que vai para o campo Marca).
+const ACENTOS={camera:'câmera',cameras:'câmeras',video:'vídeo',audio:'áudio',eletrica:'elétrica',eletrico:'elétrico',eletronica:'eletrônica',eletronico:'eletrônico',plastica:'plástica',plastico:'plástico',
+  automatico:'automático',automatica:'automática',magnetico:'magnético',magnetica:'magnética',analogico:'analógico',analogica:'analógica',digital:'digital',metalico:'metálico',metalica:'metálica',
+  distribuicao:'distribuição',alimentacao:'alimentação',protecao:'proteção',instalacao:'instalação',extensao:'extensão',tensao:'tensão',conexao:'conexão',resolucao:'resolução',visao:'visão',gravacao:'gravação',
+  potencia:'potência',padrao:'padrão',servico:'serviço',servicos:'serviços',peca:'peça',pecas:'peças',modulo:'módulo',rele:'relé',saida:'saída',bracadeira:'braçadeira',eletroima:'eletroímã',
+  monitoravel:'monitorável',infravermelho:'infravermelho',organizadora:'organizadora',acrilico:'acrílico',aluminio:'alumínio',fisico:'físico',unico:'único',unica:'única',automacao:'automação',
+  dupla:'dupla',agua:'água',cartao:'cartão',cartoes:'cartões',botao:'botão',botoes:'botões',portao:'portão',condominio:'condomínio',residencia:'residência',fusivel:'fusível',lampada:'lâmpada',
+  memoria:'memória',bateria:'bateria',tamper:'tamper',interface:'interface',ip:'IP',sirene:'sirene',saidas:'saídas',flexivel:'flexível',rigido:'rígido',termico:'térmico',bivolt:'bivolt'};
+const SIGLAS=new Set(['dvr','nvr','hd','ir','cftv','bnc','ip','led','usb','hdmi','rj45','utp','ahd','hdcvi','tvi','ssd','tb','gb','mp','rfid','nfc','lcd','pvc','ac','dc','pt','br','net','pet','va','ups','gsm','lte','sd','fhd','uhd','ptz','dvr','nbr','abs','cat5e','cat6','ftp','sfp','wan','lan','vga','xvr','mhdx','nvd','iot','wifi','poe','sms','app','cpu']);
+const SIGLA_FORMA={poe:'PoE',wifi:'Wi-Fi',multihd:'MultiHD',fullcolor:'Full Color',gigabit:'Gigabit'};
+const MARCAS={intelbras:'Intelbras',hikvision:'Hikvision',hilook:'HiLook',dahua:'Dahua',giga:'Giga',jfl:'JFL',ppa:'PPA',garen:'Garen',rcg:'RCG',multilaser:'Multilaser','tp-link':'TP-Link',tplink:'TP-Link',
+  mercusys:'Mercusys',furukawa:'Furukawa','2flex':'2Flex',elgin:'Elgin',pial:'Pial',legrand:'Legrand',siemens:'Siemens',schneider:'Schneider',steck:'Steck',weg:'WEG',ecp:'ECP',rossi:'Rossi',agl:'AGL',
+  seventh:'Seventh',ubiquiti:'Ubiquiti',tramontina:'Tramontina',sil:'Sil',cobrecom:'Cobrecom',nexans:'Nexans',sfire:'Sfire',khomp:'Khomp',hdl:'HDL',amelco:'Amelco',tecnoseg:'Tecnoseg',westerndigital:'Western Digital',seagate:'Seagate'};
+function nomeBonito(desc,cod){
+  let t=String(desc||'').replace(/\b[CSP]\/\s*/gi,m=>({c:'com ',s:'sem ',p:'para '}[m[0].toLowerCase()])).replace(/[_|]+/g,' ').replace(/\s+/g,' ').trim();
+  const toks=t.split(' ').filter(Boolean),saida=[];let marca='';
+  for(let i=0;i<toks.length;i++){let w=toks[i];const n=normNome(w).replace(/[^a-z0-9-]/g,'');
+    if(cod&&w===cod)continue;
+    if(/^\d{7,14}$/.test(w))continue;                                   // código de barras
+    if(/^(p[cç]s?|pe[cç]as?|un|und|unid|unids|unidades?)\.?$/i.test(w))continue; // unidade de venda
+    if(MARCAS[n]){if(!marca)marca=MARCAS[n];continue}
+    saida.push(w)}
+  const out=saida.map((w,i)=>{const n=normNome(w).replace(/[^a-z0-9]/g,''),prox=saida[i+1]||'',ant=saida[i-1]||'';
+    const m=w.match(/^(\d+(?:[.,]\d+)?)(m|mm|cm|mts?|metros?)$/i);if(m)return m[1]+' '+(/^mm$/i.test(m[2])?'mm':/^cm$/i.test(m[2])?'cm':'m');
+    if(/\d/.test(w))return w.toUpperCase().replace(/(\d)V$/,'$1V').replace(/(\d)AH$/,'$1Ah').replace(/(\d)MP$/,'$1MP');
+    if(SIGLA_FORMA[n])return SIGLA_FORMA[n];
+    if(SIGLAS.has(n))return w.toUpperCase();
+    // letras do modelo: "VHD 1220 B", "SIR 1000 PT", "VB 301 P"
+    if(/^[A-Za-z]{2,4}$/.test(w)&&w===w.toUpperCase()&&/^\d{2,5}$/.test(prox)&&!ACENTOS[n])return w;
+    if(/^[A-Za-z]{1,2}$/.test(w)&&w===w.toUpperCase()&&/\d/.test(ant))return w;
+    const low=w.toLowerCase();return ACENTOS[n]||low});
+  let nome=out.join(' ').replace(/\s+/g,' ').trim();nome=nome.charAt(0).toUpperCase()+nome.slice(1);
+  // Modelo: letras + número (+ letras curtas), ex.: VHD 1220 B, MHDX 1108, XB1270
+  const mm=nome.match(/\b([A-Z]{2,5}-?\s?\d{2,5}(?:[\s-](?:[A-Z]{1,3}\d?|G\d|\d{1,3}))*)\b/);
+  return {nome,marca,modelo:mm?mm[1].trim():''};
+}
+// Nome "gritado": a maior parte das letras em maiúsculas.
+const nomeGritado=t=>{const l=String(t||'').replace(/[^A-Za-zÀ-ÿ]/g,'');return l.length>=8&&l.replace(/[^A-ZÀ-Þ]/g,'').length/l.length>0.7};
+// Arruma produtos já cadastrados com nome todo em maiúsculas (ex.: importados antes do padrão).
+function padronizarNomes(){
+  const alvo=S.produtos.filter(p=>nomeGritado(p.nome)).map(p=>({p,nb:nomeBonito(p.nome,p.codigo)})).filter(x=>x.nb.nome&&x.nb.nome!==x.p.nome);
+  if(!alvo.length){toast('Os nomes já estão no padrão.');return}
+  openSheet('Padronizar nomes',`<p style="margin-top:0">${alvo.length} produto${alvo.length>1?'s estão':' está'} com o nome todo em maiúsculas. Confira como fica e desmarque o que não quiser mudar. Preço, custo e lojas não mudam.</p>
+    <div class="list">${alvo.map((x,i)=>{const extra=[x.nb.marca&&!x.p.marca?'Marca: '+x.nb.marca:'',x.nb.modelo&&!x.p.modelo?'Modelo: '+x.nb.modelo:''].filter(Boolean).join(' · ');
+      return `<label class="li" style="gap:12px;align-items:flex-start;cursor:pointer"><input type="checkbox" data-pn="${i}" checked style="margin-top:4px"><div style="flex:1;min-width:0"><div class="d" style="text-decoration:line-through">${esc(x.p.nome)}</div><div class="t">${esc(x.nb.nome)}</div>${extra?`<div class="d">${esc(extra)}</div>`:''}</div></label>`}).join('')}</div>`,
+    `<button class="btn" data-act="close">Cancelar</button><button class="btn primary" id="pn_ok">Padronizar</button>`,
+    L=>{L.querySelector('#pn_ok').onclick=async()=>{const sel=[...L.querySelectorAll('[data-pn]:checked')].map(c=>alvo[+c.dataset.pn]);if(!sel.length){closeSheet();return}
+      const b=L.querySelector('#pn_ok');b.disabled=true;let n=0;
+      for(const {p,nb} of sel){try{await store.save('produtos',{...p,nome:nb.nome,marca:p.marca||nb.marca,modelo:p.modelo||nb.modelo,atualizadoEm:new Date().toISOString()});n++}catch(e){}}
+      closeSheet();render();toast(n===sel.length?`${n} nome${n>1?'s padronizados':' padronizado'}`:`${n} de ${sel.length} padronizados. Tente de novo os que faltaram.`)}});
+}
 function catGratis(t){t=normNome(t);
   return /camera|dvr|nvr|bullet|dome|lente|hdcvi/.test(t)?'cameras':/alarme|sensor|sirene|central de alarme|teclado|controle remoto/.test(t)?'alarmes':
     /interfone|porteiro|videoporteiro|monofone/.test(t)?'interfones':/fechadura|leitor biom|controle de acesso|\btag\b|cartao rfid/.test(t)?'fechaduras':
@@ -1188,7 +1240,7 @@ function lerTextoCotacao(txt,produtos){
     let resto=l.replace(RS,' ').replace(/R\$/g,' ');
     // Código: a primeira palavra se for número longo ou letras+números (ex.: 778899, FT1210); senão, a primeira com letras e números.
     const pri=(resto.match(/^\s*(\S+)/)||[])[1]||'';
-    let cod=/^\d{5,13}$/.test(pri)||(/^[A-Za-z0-9][A-Za-z0-9.\/-]{3,}$/.test(pri)&&/\d/.test(pri)&&/[A-Za-z]/.test(pri))?pri:'';
+    let cod=/^\d{5,13}$/.test(pri)||(/^[A-Za-z0-9][A-Za-z0-9.\/-]{3,}$/.test(pri)&&/\d/.test(pri)&&/[A-Za-z]/.test(pri))||(/^[A-Z0-9]{2,6}-[A-Z0-9]{1,4}$/.test(pri)&&resto.trim().length>pri.length+3)?pri:'';
     if(!cod){const c=resto.match(/\b(?=[A-Za-z0-9.\/-]*\d)(?=[A-Za-z0-9.\/-]*[A-Za-z])[A-Za-z0-9][A-Za-z0-9.\/-]{3,}\b/);if(c)cod=c[0]}
     // Candidatos a quantidade: números soltos ou com unidade (10x, 2 un, 50 pç, 100m).
     const cands=[];const QR=/(?:^|[\s(])(?:qtd?e?\.?\s*:?\s*)?(\d{1,4})(\s*(?:x|un|und|unid|p[cç]s?|cx|mts?|m|kits?|rolos?)\.?)?(?![\w%,.\/-]|[cç])/gi;
@@ -1213,7 +1265,8 @@ function lerTextoCotacao(txt,produtos){
       for(const x of cat){if(x.pal.length<2)continue;const hits=x.pal.filter(w=>pd.includes(w)).length,sc=hits/x.pal.length;if(hits>=2&&sc>best){best=sc;melhor=x.p}}
       if(melhor&&best>=0.6)conf='media';else melhor=null}
     itens.push({descricao:desc.slice(0,160),codigo:cod||null,qtd,custoUnitario:unit,produtoId:melhor?melhor.id:null,confianca:conf,
-      novo:melhor?null:{nome:desc.slice(0,80),categoria:catGratis(desc),marca:'',modelo:cod||'',unidade:/\bmts?\b|\bmetros?\b/i.test(l)?'m':'un'}});
+      novo:melhor?null:(()=>{const nb=nomeBonito(desc,cod);return {nome:nb.nome.slice(0,80),categoria:catGratis(desc),marca:nb.marca,modelo:nb.modelo||(cod&&/[A-Za-z]/.test(cod)&&/\d/.test(cod)?cod:''),
+        unidade:/\b\d+\s*(mts?|m|metros?)\b/i.test(l.replace(desc,''))?'m':/\bp[cç]s?\b|pe[cç]a/i.test(l)?'pç':/\bkits?\b/i.test(l)?'kit':'un'}})()});
   }
   return {distribuidora:null,frete,itens};
 }
@@ -2451,6 +2504,7 @@ document.addEventListener('click',e=>{
   if(a==='novo-prod'){formProd();return}
   if(a==='novo-serv'){formServ();return}
   if(a==='importar'){importarCotacao();return}
+  if(a==='padronizar'){padronizarNomes();return}
   if(a==='importar-home'){go('catalogo');importarCotacao();return}
   if(a==='novo-cli'){formCli();return}
   if(t.dataset.status){ui.status=t.dataset.status;render();return}
