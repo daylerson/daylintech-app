@@ -49,7 +49,8 @@ end;
 $$;
 
 -- O cliente aceita. O valor vem do que foi gravado na proposta, não do navegador do cliente.
-create or replace function public.aceitar_proposta(p_token text, p_nome text, p_doc text, p_forma text, p_parcela int default 0)
+drop function if exists public.aceitar_proposta(text, text, text, text, int);
+create or replace function public.aceitar_proposta(p_token text, p_nome text, p_doc text, p_forma text, p_parcela int default 0, p_whats text default '')
 returns jsonb
 language plpgsql
 security definer
@@ -72,6 +73,7 @@ begin
 
   p_nome := left(btrim(coalesce(p_nome, '')), 200);
   p_doc  := left(btrim(coalesce(p_doc, '')), 30);
+  p_whats := left(btrim(coalesce(p_whats, '')), 30);
   if p_nome = '' then
     raise exception 'informe o nome' using errcode = '22023';
   end if;
@@ -91,7 +93,7 @@ begin
   end if;
 
   ac := jsonb_build_object(
-    'nome', p_nome, 'doc', p_doc, 'forma', p_forma, 'parcelas', v_parcelas,
+    'nome', p_nome, 'doc', p_doc, 'whats', p_whats, 'forma', p_forma, 'parcelas', v_parcelas,
     'valor', v_valor, 'data', to_char(now() at time zone 'utc', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'),
     'via', 'link');
 
@@ -110,6 +112,6 @@ end;
 $$;
 
 revoke all on function public.ver_proposta(text) from public;
-revoke all on function public.aceitar_proposta(text, text, text, text, int) from public;
+revoke all on function public.aceitar_proposta(text, text, text, text, int, text) from public;
 grant execute on function public.ver_proposta(text) to anon, authenticated;
-grant execute on function public.aceitar_proposta(text, text, text, text, int) to anon, authenticated;
+grant execute on function public.aceitar_proposta(text, text, text, text, int, text) to anon, authenticated;

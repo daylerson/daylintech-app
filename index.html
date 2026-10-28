@@ -637,8 +637,8 @@ function nuvemDb(linhas){
     if(p.eventType==='DELETE'){const o=p.old||{};if(o.col){tira(o.col,o.id);fire(o.col)}}
     else if(p.new&&p.new.col){
       const antes=cache[p.new.col]&&cache[p.new.col][p.new.id],ac=p.new.data&&p.new.data.aceite;
-      if(p.new.col==='orcamentos'&&ac&&ac.via==='link'&&!(antes&&antes.aceite))toast(`Proposta Nº ${nOrc(p.new.data.numero)} aceita por ${ac.nome}!`);
-      put(p.new);fire(p.new.col)}
+      const novoAceite=p.new.col==='orcamentos'&&ac&&ac.via==='link'&&!(antes&&antes.aceite);
+      put(p.new);fire(p.new.col);if(novoAceite)setTimeout(()=>avisoAceite(p.new.id),50)}
   }).subscribe();
   // Se a conexão ao vivo cair, recarrega tudo ao voltar para o app.
   document.addEventListener('visibilitychange',async()=>{if(document.visibilityState!=='visible')return;try{trocarTudo(await carregarTudo())}catch(e){}});
@@ -1699,6 +1699,7 @@ function aceiteHTML(o,link){
     <form id="acc_form" class="acc-form" hidden>
       <label>Nome completo<input id="acc_nome" value="${esc(c.nome||'')}" autocomplete="name" required></label>
       <label>CPF ou CNPJ<input id="acc_doc" value="${esc(c.documento||'')}" inputmode="numeric"></label>
+      <label>Seu WhatsApp<input id="acc_tel" value="${esc(c.telefone||'')}" inputmode="tel" autocomplete="tel" placeholder="(21) 90000-0000"></label>
       <fieldset><legend>Como prefere pagar?</legend>
         ${pl?`<label class="acc-r"><input type="radio" name="fp" value="pix" checked> Pix${dp?` com ${fmtPct(dp)} de desconto`:''}: <b>${money(valorPix(t.total))}</b></label>`:''}
         <label class="acc-r"><input type="radio" name="fp" value="cartao" ${pl?'':'checked'}> <span style="flex:1;min-width:0">Cartão de crédito: ${esc(cartaoTxt())}</span></label>
@@ -1723,7 +1724,7 @@ f.addEventListener('submit',function(e){e.preventDefault();var nome=$('acc_nome'
 if(!nome||!$('acc_ok2').checked){$('acc_err').hidden=false;return}$('acc_err').hidden=true;
 var x=fp(),pg='A combinar';if(x==='pix')pg='Pix'+(D.dp?' com '+D.dp+' de desconto':'')+': '+D.vp;else if(x==='cartao')pg='Cartão de crédito';
 var d=new Date(),dt=d.toLocaleDateString('pt-BR')+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
-var msg=['*ACEITE DE PROPOSTA*','Proposta: Nº '+D.num+' — '+D.emp,'Cliente: '+nome,'CPF/CNPJ: '+(doc||'não informado'),'Valor da proposta: '+D.total,'Pagamento: '+pg,'Data: '+dt,'','Li e aceito a proposta e as condições.'].join('\\n');
+var msg=['*ACEITE DE PROPOSTA*','Proposta: Nº '+D.num+' — '+D.emp,'Cliente: '+nome,'CPF/CNPJ: '+(doc||'não informado'),'WhatsApp: '+(($('acc_tel')&&$('acc_tel').value.trim())||'não informado'),'Valor da proposta: '+D.total,'Pagamento: '+pg,'Data: '+dt,'','Li e aceito a proposta e as condições.'].join('\\n');
 var url='https://wa.me/'+D.wa+'?text='+encodeURIComponent(msg);$('acc_wa').href=url;f.hidden=true;$('acc_done').hidden=false;
 if(x==='pix'){$('acc_pix').hidden=false;var px=$('pay_pix');if(px){px.classList.add('hl');}}window.location.href=url});})();`;
 function dadosCliente(o){const t=calc(o),e=S.empresa,r2=v=>Math.round(num(v)*100)/100;return {num:nOrc(o.numero),emp:e.nome||'DaylinTech',total:money(t.total),totalN:r2(t.total),vp:money(valorPix(t.total)),...(pixChave()?{vpN:r2(valorPix(t.total))}:{}),dp:num(e.descontoPix)?fmtPct(e.descontoPix):'',wa:waNum(),parc:parcelas(t.total).map(x=>({n:x.n,p:money(x.p),t:money(x.total),tN:r2(x.total),j:x.juros}))}}
@@ -1760,12 +1761,48 @@ async function baixar(nome,html,tipo='text/html;charset=utf-8'){
 const arqNome=t=>String(t).replace(/[^\w\-À-ú ]/g,'').trim().replace(/\s+/g,'-');
 function lerAceiteMsg(txt){const g=re=>{const m=txt.match(re);return m?m[1].trim():''};const r={};
   r.nome=g(/Cliente:\s*(.+)/i);r.doc=g(/CPF\/CNPJ:\s*(.+)/i);if(/não informado/i.test(r.doc))r.doc='';
+  r.whats=g(/WhatsApp:\s*(.+)/i);if(/não informado/i.test(r.whats))r.whats='';
   const pg=g(/Pagamento:\s*(.+)/i);
   if(/pix/i.test(pg)){r.forma='pix';const v=pg.match(/R\$\s*([\d.,]+)/);if(v)r.valor=num(v[1])}
   else if(/cart/i.test(pg)){r.forma='cartao';const n=pg.match(/(\d+)x/);r.parcelas=n?+n[1]:1;const tot=pg.match(/total\s*R\$\s*([\d.,]+)/i),par=pg.match(/de\s*R\$\s*([\d.,]+)/i);r.valor=tot?num(tot[1]):(par?num(par[1])*r.parcelas:0)}
   else if(pg)r.forma='combinar';
   const dt=g(/Data:\s*(.+)/i).match(/(\d{2})\/(\d{2})\/(\d{4})\s*(\d{2}):(\d{2})/);if(dt)r.data=new Date(+dt[3],dt[2]-1,+dt[1],+dt[4],+dt[5]).toISOString();
   return r}
+// Guarda no cadastro o CPF e o WhatsApp informados no aceite, se ainda não tiver.
+async function completarCliente(c,a){if(!c||!c.id||!a)return;const n={...c};if(a.doc&&!c.documento)n.documento=a.doc;if(a.whats&&!c.telefone)n.telefone=a.whats;
+  if(n.documento!==c.documento||n.telefone!==c.telefone){try{await store.save('clientes',n)}catch(e){}}}
+function textoCliente(o){
+  const a=o.aceite||{},e=S.empresa,emp=e.nome||'DaylinTech',nome=String(a.nome||(S.clientes.find(x=>x.id===o.clienteId)||{}).nome||'').trim().split(' ')[0],t=calc(o);
+  const prop=o.linkToken?(()=>{const u=new URL('proposta.html',location.href);u.hash=o.linkToken;return u.href})():'',lk=safeUrl(o.linkPagamento)||safeUrl(e.linkPagamento);
+  const L=[`Olá${nome?', '+nome:''}! Recebemos o seu aceite da proposta Nº ${nOrc(o.numero)} da ${emp}. Obrigado pela confiança!`];
+  if(!o.pgto){
+    if(a.forma==='pix')L.push(`Vimos que você prefere pagar no Pix${num(e.descontoPix)?`, com ${fmtPct(e.descontoPix)} de desconto`:''}: ${money(a.valor||valorPix(t.total))}.${prop?` Se ainda não pagou, o QR Code e o código copia e cola estão na proposta:\n${prop}`:''}`);
+    else if(a.forma==='cartao')L.push(`Vimos que você prefere pagar no cartão de crédito (${cartaoTxt()}).${lk?` Para pagar, é só usar este link:\n${lk}`:' Vamos te enviar o link de pagamento.'}`);
+    else L.push('Vamos combinar com você a melhor forma de pagamento.');
+  }
+  L.push('Em breve entraremos em contato para mais detalhes.');
+  return L.join('\n\n');
+}
+function mensagemCliente(o){
+  const cur=S.orcamentos.find(x=>x.id===o.id)||o,a=cur.aceite||{},c=S.clientes.find(x=>x.id===cur.clienteId)||{};
+  openSheet('Mensagem ao cliente',`<div class="form">
+      <div class="field full"><label for="mc_tel">WhatsApp do cliente</label><input id="mc_tel" inputmode="tel" value="${esc(a.whats||c.telefone||'')}" placeholder="(21) 90000-0000"><span class="hint">Sem número, o WhatsApp abre para você escolher o contato.</span></div>
+      <div class="field full"><label for="mc_txt">Mensagem</label><textarea id="mc_txt" style="min-height:230px">${esc(textoCliente(cur))}</textarea><span class="hint">Pode editar antes de enviar. Abre o seu WhatsApp com a mensagem pronta.</span></div></div>`,
+    `<button class="btn" data-act="close">Fechar</button><button class="btn primary" id="mc_ok">Abrir no WhatsApp</button>`,
+    L=>{L.querySelector('#mc_ok').onclick=()=>{const d=soDig(L.querySelector('#mc_tel').value),fone=d?(d.length<=11?'55'+d:d):'';
+      window.open(`https://wa.me/${fone}?text=${encodeURIComponent(L.querySelector('#mc_txt').value)}`,'_blank','noopener');closeSheet()}});
+}
+// Aviso quando o cliente aceita pelo link (chega pelo realtime).
+function avisoAceite(id){
+  const o=S.orcamentos.find(x=>x.id===id);if(!o||!o.aceite)return;const a=o.aceite;
+  completarCliente(S.clientes.find(x=>x.id===o.clienteId),a);
+  const ocupado=document.getElementById('layer').innerHTML||view.name==='editor';
+  if(ocupado){toast(`Proposta Nº ${nOrc(o.numero)} aceita por ${a.nome}!`);return}
+  openSheet('Proposta aceita!',`<p style="margin-top:0"><b>${esc(a.nome)}</b> aceitou agora a proposta Nº ${nOrc(o.numero)}.</p>
+    <p>Pagamento escolhido: ${esc((t=>t.charAt(0).toUpperCase()+t.slice(1))(formaTxt(a)))}${a.valor?` · ${money(a.valor)}`:''}.</p><p class="muted">Mande uma mensagem de confirmação para o cliente pelo WhatsApp.</p>`,
+    `<button class="btn" data-act="close">Depois</button><button class="btn" id="aa_ver">Ver proposta</button><button class="btn primary" id="aa_msg">Mandar mensagem</button>`,
+    L=>{L.querySelector('#aa_ver').onclick=()=>{closeSheet();go('proposta',{id:o.id})};L.querySelector('#aa_msg').onclick=()=>{closeSheet();mensagemCliente(o)}});
+}
 function registrarAceite(o){
   const a=o.aceite||{},c=S.clientes.find(x=>x.id===o.clienteId)||{},t=calc(o);
   openSheet('Registrar aceite',`
@@ -1773,6 +1810,7 @@ function registrarAceite(o){
     <div class="form">
       <div class="field"><label for="ac_nome">Nome do cliente</label><input id="ac_nome" value="${esc(a.nome||c.nome||'')}"></div>
       <div class="field"><label for="ac_doc">CPF ou CNPJ</label><input id="ac_doc" value="${esc(a.doc||c.documento||'')}" inputmode="numeric"></div>
+      <div class="field"><label for="ac_tel">WhatsApp do cliente</label><input id="ac_tel" value="${esc(a.whats||c.telefone||'')}" inputmode="tel"></div>
       <div class="field"><label for="ac_forma">Forma de pagamento</label><select id="ac_forma">${Object.entries(FORMAS).map(([k,l])=>`<option value="${k}" ${(a.forma||'pix')===k?'selected':''}>${l}</option>`).join('')}</select></div>
       <div class="field"><label for="ac_parc">Parcelas</label><input id="ac_parc" inputmode="numeric" value="${esc(a.parcelas||1)}"></div>
       <div class="field"><label for="ac_valor">Valor combinado (R$)</label><input id="ac_valor" inputmode="decimal" value="${String((a.valor||valorPix(t.total)).toFixed(2)).replace('.',',')}"></div>
@@ -1780,12 +1818,12 @@ function registrarAceite(o){
     </div>`,
     `${o.aceite?`<button class="btn danger left" id="ac_del">Desfazer aceite</button>`:''}<button class="btn" data-act="close">Cancelar</button><button class="btn primary" id="ac_save">Salvar aceite</button>`,
     L=>{const $=id=>L.querySelector('#'+id);
-      $('ac_msg').addEventListener('input',()=>{const r=lerAceiteMsg($('ac_msg').value);if(r.nome)$('ac_nome').value=r.nome;if(r.doc)$('ac_doc').value=r.doc;if(r.forma)$('ac_forma').value=r.forma;if(r.parcelas)$('ac_parc').value=r.parcelas;if(r.valor)$('ac_valor').value=r.valor.toFixed(2).replace('.',',');if(r.data)$('ac_data').value=localDT(new Date(r.data))});
+      $('ac_msg').addEventListener('input',()=>{const r=lerAceiteMsg($('ac_msg').value);if(r.nome)$('ac_nome').value=r.nome;if(r.doc)$('ac_doc').value=r.doc;if(r.whats)$('ac_tel').value=r.whats;if(r.forma)$('ac_forma').value=r.forma;if(r.parcelas)$('ac_parc').value=r.parcelas;if(r.valor)$('ac_valor').value=r.valor.toFixed(2).replace('.',',');if(r.data)$('ac_data').value=localDT(new Date(r.data))});
       $('ac_save').onclick=async()=>{const nome=$('ac_nome').value.trim();if(!nome){toast('Informe o nome do cliente.');return}
-        const ac={nome,doc:$('ac_doc').value.trim(),forma:$('ac_forma').value,parcelas:Math.max(1,Math.round(num($('ac_parc').value))||1),valor:num($('ac_valor').value),data:$('ac_data').value?new Date($('ac_data').value).toISOString():new Date().toISOString()};
+        const ac={nome,doc:$('ac_doc').value.trim(),whats:$('ac_tel').value.trim(),forma:$('ac_forma').value,parcelas:Math.max(1,Math.round(num($('ac_parc').value))||1),valor:num($('ac_valor').value),data:$('ac_data').value?new Date($('ac_data').value).toISOString():new Date().toISOString()};
         const cur=S.orcamentos.find(x=>x.id===o.id)||o;
         try{await store.save('orcamentos',{...cur,aceite:ac,status:vendido(cur)?cur.status:'aprovado',atualizadoEm:new Date().toISOString()});
-          if(c.id&&ac.doc&&!c.documento){try{await store.save('clientes',{...c,documento:ac.doc})}catch(err){}}
+          completarCliente(c,ac);
           closeSheet();render();toast('Aceite registrado. Proposta aprovada!')}catch(err){toast('Não foi possível salvar. Tente de novo.')}};
       if(o.aceite)$('ac_del').onclick=async()=>{const cur=S.orcamentos.find(x=>x.id===o.id)||o;const n={...cur};delete n.aceite;try{await store.save('orcamentos',n);if(sb&&cur.linkToken){try{await sb.from('propostas').update({aceite:null,aceito_em:null}).eq('orcamento_id',cur.id)}catch(e){}}closeSheet();render();toast('Aceite removido')}catch(err){toast('Não foi possível salvar.')}};
     });
@@ -1849,7 +1887,7 @@ function vProposta(app){
   <section class="panel internal">
     <div class="spread" style="align-items:center"><h2 class="h2">Fechamento</h2><span class="hint">Aceite, pagamento e recibo</span></div>
     <div class="steps">
-      <div class="step ${a?'done':''}"><span class="st-n">${a?'✓':'1'}</span><div class="st-t"><b>Aceite do cliente</b><span class="hint">${a?`${esc(a.nome)} aceitou em ${fmtDT(a.data)} · ${esc(formaTxt(a))}${a.valor?` · ${money(a.valor)}`:''}`:(sb?'Mande o link da proposta: o aceite do cliente aparece aqui sozinho.':'Quando o cliente aceitar pelo WhatsApp, cole a mensagem aqui.')}</span></div><button class="btn sm ${a?'':'primary'}" id="fx_ac">${a?'Editar':'Registrar aceite'}</button></div>
+      <div class="step ${a?'done':''}"><span class="st-n">${a?'✓':'1'}</span><div class="st-t"><b>Aceite do cliente</b><span class="hint">${a?`${esc(a.nome)} aceitou em ${fmtDT(a.data)} · ${esc(formaTxt(a))}${a.valor?` · ${money(a.valor)}`:''}`:(sb?'Mande o link da proposta: o aceite do cliente aparece aqui sozinho.':'Quando o cliente aceitar pelo WhatsApp, cole a mensagem aqui.')}</span></div>${a?`<button class="btn sm primary" id="fx_msg">Mensagem</button>`:''}<button class="btn sm ${a?'':'primary'}" id="fx_ac">${a?'Editar':'Registrar aceite'}</button></div>
       <div class="step ${p?'done':''}"><span class="st-n">${p?'✓':'2'}</span><div class="st-t"><b>Pagamento</b><span class="hint">${p?`${money(p.valor)} via ${esc(formaTxt(p))} em ${fmtDate(p.data+'T12:00:00')}${p.tipo==='parcial'?' · parcial':''}`:'Registre quando o dinheiro entrar.'}</span></div><button class="btn sm ${a&&!p?'primary':''}" id="fx_pg">${p?'Editar':'Registrar pagamento'}</button></div>
       <div class="step"><span class="st-n">3</span><div class="st-t"><b>Recibo</b><span class="hint">${p?'Pronto, com sua assinatura.':'Liberado depois do pagamento.'}</span></div><button class="btn sm ${p?'primary':''}" id="fx_rc" ${p?'':'disabled'}>Ver recibo</button></div>
     </div>
@@ -1869,6 +1907,7 @@ function vProposta(app){
   pagamentoHTML(o).then(h=>{const el=$('pp_pay');if(el)el.innerHTML=h});
   $('st_sel').onchange=async e=>{try{await store.save('orcamentos',{...o,status:e.target.value,atualizadoEm:new Date().toISOString()});toast(e.target.value==='aprovado'?'Aprovado! Veja a lista de compras.':'Status: '+STATUS[e.target.value])}catch(err){toast('Não foi possível alterar o status.')}};
   $('fx_ac').onclick=()=>registrarAceite(o);
+  if(a)$('fx_msg').onclick=()=>mensagemCliente(o);
   if(sb)$('pp_link').onclick=async()=>{const b=$('pp_link');b.disabled=true;try{await linkProposta(o)}catch(e){toast('Não foi possível criar o link. Confira a internet e tente de novo.')}finally{b.disabled=false}};
   $('fx_pg').onclick=()=>registrarPagamento(o);
   $('fx_rc').onclick=()=>verRecibo(o.id);

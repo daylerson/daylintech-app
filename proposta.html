@@ -53,7 +53,7 @@ body{margin:0;background:#EEF2F7;color:#0B1A33;font:15px/1.5 Barlow,system-ui,-a
     $('acc_btns').hidden=true;f.hidden=true;$('acc_done').hidden=false;
     if(!agora){$('acc_done_t').textContent='Proposta aceita em '+fmt(a.data)+'.';$('acc_done_s').textContent='Aceite de '+a.nome+'. Pagamento: '+pagtoTxt(a)+'.'}
     if(a.forma==='pix'){$('acc_pix').hidden=false;var px=$('pay_pix');if(px)px.classList.add('hl')}
-    if(agora&&D.wa){var msg=['*ACEITE DE PROPOSTA*','Proposta: Nº '+D.num+' — '+D.emp,'Cliente: '+a.nome,'CPF/CNPJ: '+(a.doc||'não informado'),'Valor da proposta: '+D.total,'Pagamento: '+pagtoTxt(a),'Data: '+fmt(a.data).replace(' às ',' '),'','Li e aceito a proposta e as condições.'].join('\n');
+    if(agora&&D.wa){var msg=['*ACEITE DE PROPOSTA*','Proposta: Nº '+D.num+' — '+D.emp,'Cliente: '+a.nome,'CPF/CNPJ: '+(a.doc||'não informado'),'WhatsApp: '+(a.whats||'não informado'),'Valor da proposta: '+D.total,'Pagamento: '+pagtoTxt(a),'Data: '+fmt(a.data).replace(' às ',' '),'','Li e aceito a proposta e as condições.'].join('\n');
       $('acc_wa').href='https://wa.me/'+D.wa+'?text='+encodeURIComponent(msg);$('acc_wa_w').hidden=false}
   }
   if(P.aceite){concluido(P.aceite,false);return}
@@ -66,7 +66,10 @@ body{margin:0;background:#EEF2F7;color:#0B1A33;font:15px/1.5 Barlow,system-ui,-a
     var nome=$('acc_nome').value.trim(),doc=$('acc_doc').value.trim(),err=$('acc_err');
     if(!nome||!$('acc_ok2').checked){err.textContent='Preencha seu nome e marque que leu e aceita a proposta.';err.hidden=false;return}
     err.hidden=true;var b=$('acc_send');b.disabled=true;b.textContent='Enviando…';
-    var res;try{res=await sb.rpc('aceitar_proposta',{p_token:token,p_nome:nome,p_doc:doc,p_forma:fp(),p_parcela:0})}catch(x){res={error:x}}
+    var tel=$('acc_tel')?$('acc_tel').value.trim():'',args={p_token:token,p_nome:nome,p_doc:doc,p_forma:fp(),p_parcela:0,p_whats:tel};
+    var res;try{res=await sb.rpc('aceitar_proposta',args)}catch(x){res={error:x}}
+    // Banco ainda sem o campo WhatsApp (propostas.sql antigo): aceita sem ele.
+    if(res.error&&res.error.code==='PGRST202'){delete args.p_whats;try{res=await sb.rpc('aceitar_proposta',args)}catch(x){res={error:x}}}
     if(res.error||!res.data){b.disabled=false;b.textContent='Confirmar aceite';err.textContent='Não foi possível registrar o aceite. Confira a internet e tente de novo.';err.hidden=false;return}
     concluido(res.data,res.data.nome===nome);
   });
