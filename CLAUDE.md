@@ -11,6 +11,7 @@ App da DaylinTech, empresa de instalação de câmeras, alarmes, interfones, fec
 - `supabase/schema.sql`: tabelas `docs` e `membros`, regras de acesso (RLS) e realtime. Rodar uma vez no SQL Editor do Supabase.
 - `supabase/propostas.sql`: tabela `propostas` e funções `ver_proposta` / `aceitar_proposta` (proposta com link). Rodar depois do schema.sql.
 - `supabase/fotos.sql`: pasta privada `os-fotos` no Storage para as fotos das OS, só para membros. Rodar depois do schema.sql.
+- `supabase/functions/ler-cotacao/index.ts`: Edge Function que lê cotações com a API da Anthropic (`claude-opus-5-5`, saída em JSON Schema, `fallbacks: "default"`). Só atende membros (`e_membro`). Precisa do segredo `ANTHROPIC_API_KEY` no Supabase. Publicada pelo painel (Edge Functions → editor), não pelo GitHub Pages.
 - `proposta.html`: página pública que o cliente abre (`proposta.html#<token>`), sem login.
 - `vendor/html2canvas-1.4.1.min.js` e `vendor/jspdf-4.2.1.umd.min.js`: geram o recibo em PDF (`reciboPDF()`), carregados só quando o recibo abre.
 - `vendor/supabase-2.117.3.js`: biblioteca do Supabase servida pelo próprio site (funciona offline pelo service worker). Para atualizar, trocar o arquivo e `SUPABASE_SRC` no index.html e a lista em `sw.js`.
@@ -51,7 +52,7 @@ O app foi feito como artefato do claude.ai e usa `window.claude.use(...)`. Fora 
 
 - `db`: já trocado. Com `config.js` preenchido, o app usa o Supabase com login (e-mail e senha); sem ele, cai para o `localStorage`.
 - `downloads`: já trocado. `baixar()` agora faz download comum (Blob + `<a download>`).
-- `sample`: leitura de cotações com IA (`lerCotacao`). Fora do Claude, precisa de um backend que chame a API da Anthropic. Nunca colocar a chave de API no front-end.
+- `sample`: já trocado. Com a nuvem ligada, `getSample()` devolve `nuvemLeitor`, que chama a função `ler-cotacao` do Supabase com o mesmo formato (`limits()`, `json()`); os códigos de erro dela viram mensagens em `MSG_SAMPLE`. A chave da Anthropic fica só nos segredos do Supabase, nunca no site.
 
 ## Banco na nuvem (Supabase)
 

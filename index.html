@@ -1048,7 +1048,24 @@ loadScript.ok={};
 function paraJpeg(file,max=2000){return new Promise((res,rej)=>{const url=URL.createObjectURL(file);const img=new Image();
   img.onload=()=>{const k=Math.min(1,max/Math.max(img.width,img.height));const c=document.createElement('canvas');c.width=Math.max(1,Math.round(img.width*k));c.height=Math.max(1,Math.round(img.height*k));const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(url);c.toBlob(b=>b?res(b):rej(new Error('img')),'image/jpeg',.88)};
   img.onerror=()=>{URL.revokeObjectURL(url);rej(new Error('img'))};img.src=url})}
-async function getSample(){try{return window.claude&&window.claude.use?await window.claude.use('sample'):null}catch(e){return null}}
+async function getSample(){if(sb)return nuvemLeitor;try{return window.claude&&window.claude.use?await window.claude.use('sample'):null}catch(e){return null}}
+// Leitura de cotação fora do Claude: função "ler-cotacao" no Supabase (supabase/functions/ler-cotacao), que guarda a chave da Anthropic.
+// Mesmo formato do leitor do artefato (limits() e json()), para lerCotacao() não mudar.
+const nuvemLeitor={
+  async limits(){return {images:{maxCount:5}}},
+  async json(prompt,opts={}){
+    const imagens=await Promise.all((opts.images||[]).map(async b=>(await blobDataURL(b)).split(',')[1]));
+    const {data,error}=await sb.functions.invoke('ler-cotacao',{body:{prompt,imagens},signal:opts.signal});
+    if(opts.signal&&opts.signal.aborted)throw {code:'cancelled'};
+    if(error){let code='falha';
+      try{const r=error.context;if(r&&r.status===404)code='nao_instalada';else if(r&&r.json){const j=await r.json();code=j.erro||code}}catch(e){}
+      if(error.name==='FunctionsFetchError')code='sem_conexao';
+      throw {code};
+    }
+    if(!data||!data.dados)throw {code:'invalid_json'};
+    return data.dados;
+  }
+};
 async function pdfLer(file,maxImg){
   await loadScript(PDFW);await loadScript(PDFJS);
   const doc=await window.pdfjsLib.getDocument({data:new Uint8Array(await file.arrayBuffer()),isEvalSupported:false}).promise;
@@ -1061,7 +1078,10 @@ async function pdfLer(file,maxImg){
   for(let i=1;i<=Math.min(doc.numPages,maxImg||0);i++){const pg=await doc.getPage(i);const vp=pg.getViewport({scale:2});const c=document.createElement('canvas');c.width=vp.width;c.height=vp.height;await pg.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;images.push(await new Promise(r=>c.toBlob(r,'image/jpeg',.9)))}
   return {images};
 }
-const MSG_SAMPLE={not_granted:'O uso do Claude não foi liberado para este app. Libere nas permissões do artefato para ler cotações.',sampling_disabled:'A leitura automática não está disponível nesta conta.',rate_limited:'Muitas leituras seguidas. Aguarde um pouco e tente de novo.',image_rejected:'Uma das imagens não pôde ser lida. Tente outra foto ou envie em PDF.',images_unavailable:'Imagens não podem ser lidas aqui. Cole o texto ou envie PDF ou planilha.',prompt_too_large:'A cotação é grande demais. Envie em partes.',invalid_json:'Não consegui organizar os itens dessa cotação. Tente de novo.',refused:'Não foi possível ler esse conteúdo. Tente outro arquivo.',session_expired:'Sua sessão expirou. Entre de novo no Claude.'};
+const MSG_SAMPLE={not_granted:'O uso do Claude não foi liberado para este app. Libere nas permissões do artefato para ler cotações.',sampling_disabled:'A leitura automática não está disponível nesta conta.',rate_limited:'Muitas leituras seguidas. Aguarde um pouco e tente de novo.',image_rejected:'Uma das imagens não pôde ser lida. Tente outra foto ou envie em PDF.',images_unavailable:'Imagens não podem ser lidas aqui. Cole o texto ou envie PDF ou planilha.',prompt_too_large:'A cotação é grande demais. Envie em partes.',invalid_json:'Não consegui organizar os itens dessa cotação. Tente de novo.',refused:'Não foi possível ler esse conteúdo. Tente outro arquivo.',session_expired:'Sua sessão expirou. Entre de novo no Claude.',
+  sem_acesso:'Seu usuário não tem acesso à leitura de cotações. Saia e entre de novo.',nao_instalada:'A leitura automática ainda não foi ligada: falta publicar a função "ler-cotacao" no Supabase.',
+  sem_chave:'A leitura automática ainda não foi ligada: falta cadastrar a chave da Anthropic (ANTHROPIC_API_KEY) nos segredos do Supabase.',chave_invalida:'A chave da Anthropic cadastrada no Supabase não funcionou. Confira a chave e os créditos da conta.',
+  sem_conexao:'Sem conexão com o servidor. Confira a internet e tente de novo.',rejeitado:'O arquivo não pôde ser lido. Tente um print mais nítido ou cole o texto.'};
 let impPrev={files:[],txt:'',dist:''};
 async function importarCotacao(erro){
   const sample=await getSample();
@@ -1071,7 +1091,7 @@ async function importarCotacao(erro){
   openSheet('Importar cotação',`
     ${erro?`<p class="errbox">${esc(erro)}</p>`:''}
     <p class="muted" style="margin:0">Envie a cotação que a distribuidora mandou. O app lê cada equipamento, encontra no seu catálogo e calcula o novo preço de venda com imposto e lucro. Você confere tudo antes de aplicar.</p>
-    ${sample?'':`<p class="note">A leitura automática não está disponível nesta tela. Abra o app pelo claude.ai no navegador ou atualize o aplicativo do Claude.</p>`}
+    ${sample?'':`<p class="note">A leitura automática precisa da nuvem ligada (login no Supabase).</p>`}
     <div class="drop" id="im_drop">
       <div class="row" style="gap:8px">
         <span class="btn filebtn">${svg(UI.img)}Tirar foto<input id="im_cam" type="file" accept="image/*" capture="environment" aria-label="Tirar foto da cotação"></span>
