@@ -6,7 +6,7 @@
 -- Só quem está na tabela "membros" consegue ler ou gravar qualquer coisa.
 
 create table if not exists public.docs (
-  col            text        not null check (col in ('produtos', 'clientes', 'orcamentos', 'config')),
+  col            text        not null check (col in ('produtos', 'clientes', 'orcamentos', 'config', 'veiculos', 'gastos', 'compras')),
   id             text        not null,
   data           jsonb       not null,
   atualizado_em  timestamptz not null default now(),

@@ -289,6 +289,29 @@ body.apresentacao .internal{display:none!important}
 .pix-box{flex-direction:row;align-items:center;gap:16px;padding:12px}
 .st-b{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
 .ag-list{display:flex;flex-direction:column;gap:10px}
+.mais{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.mais-i{display:flex;gap:12px;align-items:center;text-align:left;padding:14px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);color:var(--ink);cursor:pointer;font:inherit}
+.mais-i>svg{width:30px;height:30px;flex:none;padding:6px;border-radius:10px;background:var(--brand-soft);color:var(--brand);box-sizing:content-box}
+.mais-i>span{display:flex;flex-direction:column;gap:2px}.mais-i b{font-size:15px}.mais-i[aria-current="page"]{border-color:var(--brand);box-shadow:0 0 0 1px var(--brand)}
+.op-tabs{display:flex;gap:4px;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:4px;align-self:flex-start;max-width:100%}
+.op-tabs button{border:0;background:none;padding:8px 18px;border-radius:9px;font:inherit;font-weight:700;color:var(--muted);cursor:pointer}.op-tabs button[aria-selected="true"]{background:var(--surface);color:var(--brand);box-shadow:var(--shadow)}
+#op_c{display:flex;flex-direction:column;gap:16px}
+.placa{display:inline-flex;flex-direction:column;align-items:center;border:2px solid #1d1d1d;border-radius:6px;background:#fff;color:#111;font:800 18px/1 var(--f-mono);letter-spacing:.08em;padding:0 10px 4px;flex:none}
+.placa i{display:block;width:calc(100% + 20px);background:#0b3d91;color:#fff;font:700 8px/1.6 var(--f-body);letter-spacing:.2em;text-align:center;font-style:normal;margin-bottom:3px;border-radius:3px 3px 0 0}
+.op-dot{width:10px;height:10px;border-radius:50%;flex:none;display:inline-block}.op-dot.comb{background:var(--accent)}.op-dot.mec{background:var(--brand)}.op-dot.doc{background:var(--bad)}.op-dot.out{background:#9AA6B8}
+.li.op-g{width:100%;text-align:left;font:inherit;color:inherit;border:0;border-top:1px solid var(--line);background:none;cursor:pointer;grid-template-columns:auto minmax(0,1fr) auto;gap:4px 12px}.op-g:first-child{border-top:0}
+.op-bars{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:4px;height:150px;align-items:end}
+.op-bars>div{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:3px;min-width:0}
+.op-bars i{display:block;width:70%;max-width:28px;background:var(--brand);border-radius:4px 4px 0 0;min-height:1px}.op-bars span{font-size:10.5px;color:var(--muted);text-transform:capitalize}.op-bars .op-bv{font-size:9.5px;white-space:nowrap}
+.op-leg{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12.5px;color:var(--muted)}.op-leg span{display:flex;align-items:center;gap:6px}
+.chk{flex-direction:row!important;align-items:center;gap:8px}.chk input{width:18px;height:18px}
+.ab-ps{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin-top:6px}
+.cp-add input{flex:1;min-width:0;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);font:inherit}.cp-add{flex-wrap:nowrap}
+.cp-list{display:flex;flex-direction:column;gap:10px}
+.cp-card{display:flex;gap:12px;justify-content:space-between;align-items:flex-start;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;box-shadow:var(--shadow)}.cp-card.urg{border-left:4px solid var(--bad)}
+.cp-i{display:flex;flex-direction:column;gap:3px;min-width:0}.cp-i>span{font-size:13px;color:var(--muted)}
+.cp-r{display:flex;flex-direction:column;gap:8px;align-items:flex-end;flex:none}
+@media (max-width:560px){.cp-card{flex-direction:column}.cp-r{align-items:stretch;width:100%}.cp-r .num{text-align:left}.cp-r .row{justify-content:flex-start!important}}
 .corr-b{align-self:flex-start;font-size:12.5px;padding:2px 0}
 .corr{display:flex;flex-direction:column;gap:8px;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
 .corr-i{display:flex;flex-direction:column;gap:2px;border-top:1px solid var(--line);padding-top:8px}.corr-i s{color:var(--bad)}.corr-i .linkbtn{align-self:flex-start;font-size:12px;padding:0}
@@ -565,6 +588,8 @@ const NAVI={
   home:'<path d="M3 11l9-7 9 7"/><path d="M5 10v10h5v-6h4v6h5V10"/>',
   agenda:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M8 14h3v3H8z"/>',
   garantias:'<path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/>',
+  mais:'<rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><circle cx="17" cy="17" r="3"/>',
+  operacional:'<path d="M4 16V12l2-5h12l2 5v4z"/><path d="M4 12h16"/><circle cx="8" cy="16.5" r="1.8"/><circle cx="16" cy="16.5" r="1.8"/>',
   impostos:'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h3"/>',
   maodeobra:'<path d="M14.5 5.5a4 4 0 0 0 4.9 4.9L11 18.8a2.1 2.1 0 0 1-3-3l8.4-8.4"/><path d="M14.5 5.5l2-2"/>',
   inicio:'<path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/><path d="M10 12h5M10 15h5M10 18h3"/>',
@@ -617,7 +642,8 @@ function idadePill(d){return d==null?'':`<span class="pill ${d>30?'conf-baixa':'
 
 const DEF_EMPRESA={nome:'DaylinTech',slogan:'Tecnologia que protege',cnpj:'',telefone:'',email:'',endereco:'',margem:30,imposto:6,despesas:0,arredondar:1,descontoPix:5,cartaoMax:12,cartaoSemJuros:3,cartaoJuros:2.99,pixTipo:'cpf',pixChave:'',pixNome:'',cidade:'',whatsapp:'',linkPagamento:'',responsavel:'',assinatura:'',validade:15,pagamento:'Oferecemos 3 formas de pagamento:\n1) 50% na aprovação e 50% na conclusão do serviço (Pix ou transferência).\n2) Pix à vista com 5% de desconto.\n3) Cartão de crédito em até 3x sem juros ou em até 12x com juros da operadora.',garantia:'Equipamentos: 12 meses de garantia do fabricante (verificar com o fabricante). Nos primeiros 30 dias, qualquer defeito tem troca expressa. Após os 30 dias, o equipamento com defeito é retirado e enviado para a análise de garantia do fabricante; durante esse período, o cliente pode ficar sem o equipamento.\nInstalação: 90 dias (3 meses) de garantia total com a DaylinTech: qualquer problema na instalação é resolvido sem custo. Após os 90 dias, é cobrada visita técnica de R$ 130,00 para diagnóstico.',garantiaEquipMeses:12,garantiaServDias:90,prazo:'Início da instalação em até 5 dias úteis após a aprovação.'};
 
-const S={produtos:[],clientes:[],orcamentos:[],empresa:{...DEF_EMPRESA},ready:{produtos:false,clientes:false,orcamentos:false,empresa:false}};
+const COLS=['produtos','clientes','orcamentos','veiculos','gastos','compras'];
+const S={produtos:[],clientes:[],orcamentos:[],veiculos:[],gastos:[],compras:[],empresa:{...DEF_EMPRESA},ready:{produtos:false,clientes:false,orcamentos:false,veiculos:false,gastos:false,compras:false,empresa:false}};
 let view={name:'home'};
 let ui={busca:'',cat:'todas',status:'todos',buscaCli:'',buscaMO:'',grupo:'todos'};
 let draft=null;
@@ -645,10 +671,10 @@ async function initStore(){
   else try{db=window.claude&&window.claude.use?await window.claude.use('db'):null}catch(e){db=null}
   if(!db){
     const all=lsGet();
-    ['produtos','clientes','orcamentos'].forEach(c=>{S[c]=all[c]||[];S.ready[c]=true});
+    COLS.forEach(c=>{S[c]=all[c]||[];S.ready[c]=true});
     S.empresa={...DEF_EMPRESA,...(all.empresa||{})};S.ready.empresa=true;render();atualizarTextos();return;
   }
-  ['produtos','clientes','orcamentos'].forEach(c=>{
+  COLS.forEach(c=>{
     db.collection(c).onSnapshot(snap=>{S[c]=snap.docs.map(d=>d.data());S.ready[c]=true;render(true)},err=>{S.ready[c]=true;toast('Não foi possível carregar '+c+'.');render()});
   });
   db.doc('config/empresa').onSnapshot(s=>{S.empresa={...DEF_EMPRESA,...(s.exists?s.data():{})};S.ready.empresa=true;render(true)},()=>{S.ready.empresa=true;render()});
@@ -728,7 +754,7 @@ function nuvemDb(linhas){
     vazio:()=>!Object.values(cache).some(x=>Object.keys(x).length),
     // Substitui tudo pelo conteúdo de um backup.
     async importar(bk){
-      const cols=['produtos','clientes','orcamentos'],ls=[];
+      const cols=COLS.filter(c=>Array.isArray(bk[c])),ls=[];// coleção que não está no backup (backup antigo) fica como está
       cols.forEach(c=>(Array.isArray(bk[c])?bk[c]:[]).filter(x=>x&&x.id).forEach(x=>ls.push({col:c,id:String(x.id),data:x})));
       ls.push({col:'config',id:'empresa',data:bk.empresa||{}});
       for(let i=0;i<ls.length;i+=200)ok(await sb.from('docs').upsert(ls.slice(i,i+200)));
@@ -807,11 +833,18 @@ function confirmSheet(title,msg,okLabel,onOk){
 }
 
 /* ---------- Navegação ---------- */
-const TABS=[['home','Início'],['inicio','Orçamentos'],['agenda','Agenda'],['garantias','Garantias'],['catalogo','Catálogo'],['maodeobra','Mão de obra'],['clientes','Clientes'],['impostos','Impostos']];
+const TABS=[['home','Início'],['inicio','Orçamentos'],['agenda','Agenda'],['garantias','Garantias'],['catalogo','Catálogo'],['maodeobra','Mão de obra'],['clientes','Clientes'],['impostos','Impostos'],['operacional','Operacional'],['ajustes','Empresa']];
+const NAV_MAIN=['home','inicio','agenda','clientes','catalogo'];
+const NAV_MAIS=[['garantias','Clientes na garantia e notas fiscais'],['maodeobra','Serviços, preços e tempo de instalação'],['operacional','Carro, combustível e lista de compras',1],['impostos','Guias, declarações e CNPJ',1],['ajustes','Dados, Pix, textos padrão e backup',1]];
+const tabNome=k=>(TABS.find(t=>t[0]===k)||[k,k])[1];
+function abrirMais(){const cur=view.name;
+  openSheet('Mais',`<div class="mais">${NAV_MAIS.map(([k,d,int])=>`<button class="mais-i ${int?'internal':''}" data-nav="${k}" ${cur===k?'aria-current="page"':''}>${svg(NAVI[k])}<span><b>${tabNome(k)}</b><span class="hint">${d}</span></span></button>`).join('')}</div>`)}
 function renderNav(){
   const cur=['editor','proposta'].includes(view.name)?'inicio':view.name==='os'?'agenda':view.name;
-  document.getElementById('toptabs').innerHTML=TABS.map(([k,l])=>`<button data-nav="${k}" ${k==='impostos'?'class="internal"':''} ${cur===k?'aria-current="page"':''}>${l}</button>`).join('');
-  document.getElementById('bottomnav').innerHTML=TABS.map(([k,l])=>`<button data-nav="${k}" ${k==='impostos'?'class="internal"':''} ${cur===k?'aria-current="page"':''}>${svg(NAVI[k])}${l}</button>`).join('');
+  const mais=NAV_MAIS.find(x=>x[0]===cur),bt=(k,ic)=>`<button data-nav="${k}" ${cur===k?'aria-current="page"':''}>${ic?svg(NAVI[k]):''}${tabNome(k)}</button>`;
+  const mb=ic=>`<button data-act="mais" class="nav-mais" ${mais?'aria-current="page"':''} aria-haspopup="dialog">${ic?svg(mais?NAVI[cur]:NAVI.mais):''}${mais?tabNome(cur):'Mais'}${ic?'':' ▾'}</button>`;
+  document.getElementById('toptabs').innerHTML=NAV_MAIN.map(k=>bt(k)).join('')+mb();
+  document.getElementById('bottomnav').innerHTML=NAV_MAIN.map(k=>bt(k,1)).join('')+mb(1);
 }
 function go(name,extra={}){
   if(view.name==='editor'&&name!=='editor'&&draft&&draft._dirty&&!extra.force){
@@ -830,7 +863,7 @@ function render(fromSnap){
   if(fromSnap&&view.name==='editor'){renderEditorParts();return}
   const active=document.activeElement&&document.activeElement.id;
   const pos=document.activeElement&&document.activeElement.selectionStart;
-  ({home:vHome,inicio:vInicio,catalogo:vCatalogo,maodeobra:vMaoDeObra,clientes:vClientes,ajustes:vAjustes,editor:vEditor,proposta:vProposta,agenda:vAgenda,os:vOS,garantias:vGarantias,impostos:vImpostos}[view.name]||vHome)(app);
+  ({home:vHome,inicio:vInicio,catalogo:vCatalogo,maodeobra:vMaoDeObra,clientes:vClientes,ajustes:vAjustes,editor:vEditor,proposta:vProposta,agenda:vAgenda,os:vOS,garantias:vGarantias,impostos:vImpostos,operacional:vOperacional}[view.name]||vHome)(app);
   if(active){const el=document.getElementById(active);if(el&&el.tagName==='INPUT'&&el.type==='search'){el.focus();try{el.setSelectionRange(pos,pos)}catch(e){}}}
 }
 
@@ -877,7 +910,7 @@ function vHome(app){
   if(antigos.length)upd.push(`<button class="up-i internal" data-nav="catalogo"><span class="up-dot warn"></span><span><b>${antigos.length} preço${antigos.length===1?'':'s'} com mais de 30 dias</b><span class="hint">${esc(antigos.slice(0,3).map(p=>p.nome).join(', '))}${antigos.length>3?'…':''}. Peça uma cotação nova.</span></span></button>`);
   if(semLoja.length)upd.push(`<button class="up-i internal" data-nav="catalogo"><span class="up-dot muted"></span><span><b>${semLoja.length} produto${semLoja.length===1?'':'s'} sem loja cadastrada</b><span class="hint">Cadastre onde comprar para comparar preços.</span></span></button>`);
   recentes.forEach(p=>{const ef=fornEf(p);upd.push(`<button class="up-i internal" data-edit-prod="${p.id}"><span class="up-dot brand"></span><span><b>Preço atualizado: ${esc(p.nome)}</b><span class="hint">${money(p.custo)}${ef?` na ${esc(ef.f.nome)}`:''} · ${fmtDate(dataPreco(p))}</span></span></button>`)});
-  avisosFiscais().forEach(a=>{const h=`<button class="up-i internal" data-nav="impostos"><span class="up-dot ${a.cls}"></span><span><b>${esc(a.t)}</b><span class="hint">${esc(a.h)}</span></span></button>`;if(a.cls==='warn')upd.unshift(h);else upd.push(h)});
+  [...avisosFiscais(),...avisosOperacionais().map(a=>({...a,nav:'operacional'}))].forEach(a=>{const h=`<button class="up-i internal" data-nav="${a.nav||'impostos'}"><span class="up-dot ${a.cls}"></span><span><b>${esc(a.t)}</b><span class="hint">${esc(a.h)}</span></span></button>`;if(a.cls==='warn')upd.unshift(h);else upd.push(h)});
   const ult=[...os].sort((a,b)=>(b.criadoEm||'').localeCompare(a.criadoEm||'')).slice(0,3);
   const tile=(nav,icon,label,cls='')=>`<button class="tile ${cls}" ${nav}>${svg(icon)}<span>${label}</span></button>`;
   app.innerHTML=`
@@ -1693,15 +1726,15 @@ function vAjustes(app){
   })();
   if(sb){sb.auth.getSession().then(r=>{const u=r.data.session&&r.data.session.user;if(u&&$('e_conta'))$('e_conta').textContent=u.email}).catch(()=>{});$('e_sair').onclick=()=>sb.auth.signOut()}
   $('e_bkout').onclick=async()=>{
-    const bk={produtos:S.produtos,clientes:S.clientes,orcamentos:S.orcamentos,empresa:S.empresa};
+    const bk={...Object.fromEntries(COLS.map(c=>[c,S[c]])),empresa:S.empresa};
     if(await baixar(`backup-daylintech-${new Date().toISOString().slice(0,10)}.json`,JSON.stringify(bk,null,2),'application/json'))toast('Backup exportado. Guarde o arquivo em lugar seguro.');
   };
   $('e_bkin').onclick=()=>$('e_bkfile').click();
   $('e_bkfile').onchange=async ev=>{
     const f=ev.target.files[0];ev.target.value='';if(!f)return;
     let bk;try{bk=JSON.parse(await f.text())}catch(err){toast('Esse arquivo não é um backup válido.');return}
-    const cols=['produtos','clientes','orcamentos'];
-    if(!bk||typeof bk!=='object'||!cols.some(c=>Array.isArray(bk[c]))&&!bk.empresa){toast('Esse arquivo não é um backup da DaylinTech.');return}
+    const cols=COLS.filter(c=>Array.isArray(bk&&bk[c]));
+    if(!bk||typeof bk!=='object'||!cols.length&&!bk.empresa){toast('Esse arquivo não é um backup da DaylinTech.');return}
     const n=c=>Array.isArray(bk[c])?bk[c].length:0;
     confirmSheet('Restaurar backup?',`O arquivo tem ${n('produtos')} produtos, ${n('clientes')} clientes e ${n('orcamentos')} orçamentos. Ele vai <b>substituir</b> tudo o que está no app agora. Se quiser guardar os dados atuais, exporte um backup antes.`,'Restaurar',async()=>{
       try{
@@ -1712,8 +1745,8 @@ function vAjustes(app){
             for(const x of novos)await store.save(c,x)}
           await store.saveEmpresa(bk.empresa||{});
         }else{
-          const all={};cols.forEach(c=>all[c]=Array.isArray(bk[c])?bk[c]:[]);all.empresa=bk.empresa||{};if(!lsSet(all)){toast('O navegador não deixou gravar o backup. Libere espaço e tente de novo.');return}
-          cols.forEach(c=>S[c]=all[c]);
+          const all={};COLS.forEach(c=>all[c]=Array.isArray(bk[c])?bk[c]:S[c]);all.empresa=bk.empresa||{};if(!lsSet(all)){toast('O navegador não deixou gravar o backup. Libere espaço e tente de novo.');return}
+          COLS.forEach(c=>S[c]=all[c]);
         }
         S.empresa={...DEF_EMPRESA,...(bk.empresa||{})};render();toast('Backup restaurado');atualizarTextos();
       }catch(err){toast('Não foi possível restaurar. Tente de novo.')}
@@ -2840,6 +2873,236 @@ function vImpostos(app){
   $('ft_gov').onchange=()=>salva({titular:lerT()});
   if($('ft_wa'))$('ft_wa').onclick=()=>{let n=soDig(t.contadorTel);if(n.length<=11)n='55'+n;window.open('https://wa.me/'+n+'?text='+encodeURIComponent(textoFiscal(f)),'_blank','noopener')};
 }
+/* ---------- Operacional: carro da empresa e lista de compras ---------- */
+const GASTO_TIPOS={combustivel:'Combustível',manutencao:'Mecânica e revisão',reforma:'Reforma e funilaria',documento:'IPVA e documentos',seguro:'Seguro',multa:'Multa',outro:'Outros (lavagem, pedágio, estacionamento)'};
+const GASTO_GRUPO={combustivel:'comb',manutencao:'mec',reforma:'mec',documento:'doc',seguro:'doc',multa:'doc',outro:'out'};
+const GRUPOS_CARRO=[['comb','Combustível'],['mec','Mecânica e reforma'],['doc','Documentos, seguro e multas'],['out','Outros']];
+const COMB={gasolina:'Gasolina',etanol:'Etanol',diesel:'Diesel',gnv:'GNV'};
+const UFS='AC AL AM AP BA CE DF ES GO MA MG MS MT PA PB PE PI PR RJ RN RO RR RS SC SE SP TO'.split(' ');
+const PRIORIDADE={urgente:'Urgente',normal:'Normal',depois:'Quando der'};
+const OP_LINK={multas:'https://portalservicos.senatran.serpro.gov.br/',detran:uf=>`https://www.detran.${String(uf||'rj').toLowerCase()}.gov.br/`,ipva:uf=>'https://www.google.com/search?q='+encodeURIComponent(`consultar IPVA ${uf||'RJ'} pela placa site:gov.br`)};
+const veiculos=()=>[...(S.veiculos||[])].sort((a,b)=>String(a.criadoEm||'').localeCompare(String(b.criadoEm||'')));
+const veicAtual=()=>{const vs=veiculos();return vs.find(v=>v.id===ui.veic)||vs[0]};
+const veicNome=v=>v.nome||[v.marca,v.modelo].filter(Boolean).join(' ')||'Carro';
+const gastosDe=v=>(S.gastos||[]).filter(g=>g.veiculoId===v.id).sort((a,b)=>String(b.data||'').localeCompare(String(a.data||''))||num(b.km)-num(a.km));
+const kmAtual=v=>Math.max(num(v.kmInicial),...gastosDe(v).map(g=>num(g.km)));
+const fmtKm=k=>Math.round(num(k)).toLocaleString('pt-BR')+' km';
+const fmtL=l=>num(l).toLocaleString('pt-BR',{maximumFractionDigits:2})+' L';
+const opV=v=>v===''||v==null?'':String(v).replace('.',',');
+// Consumo: entre dois tanques cheios, km rodados ÷ litros colocados depois do primeiro.
+function trechosConsumo(gs){const fs=gs.filter(g=>g.tipo==='combustivel'&&num(g.km)>0).sort((a,b)=>num(a.km)-num(b.km)),out=[];let ant=null,l=0;
+  for(const f of fs){if(ant)l+=num(f.litros);if(f.cheio){if(ant&&l>0&&num(f.km)>num(ant.km))out.push({km:num(f.km)-num(ant.km),l,data:f.data});ant=f;l=0}}return out}
+function resumoCarro(v,ano){const gs=gastosDe(v),doAno=gs.filter(g=>String(g.data||'').startsWith(ano)),soma=l=>l.reduce((t,g)=>t+num(g.valor),0);
+  const grupos=Object.fromEntries(GRUPOS_CARRO.map(([k])=>[k,soma(doAno.filter(g=>GASTO_GRUPO[g.tipo]===k))]));
+  const comb=doAno.filter(g=>g.tipo==='combustivel'),tr=trechosConsumo(gs).filter(t=>String(t.data||'').startsWith(ano));
+  const kms=doAno.map(g=>num(g.km)).filter(k=>k>0),antes=gs.filter(g=>String(g.data||'')<ano+'-01-01'&&num(g.km)>0).map(g=>num(g.km));
+  const ini=antes.length?Math.max(...antes):num(v.kmInicial)||(kms.length?Math.min(...kms):0),rodado=kms.length?Math.max(0,Math.max(...kms)-ini):0;
+  const meses=Array.from({length:12},(_,i)=>soma(doAno.filter(g=>+String(g.data).slice(5,7)===i+1)));
+  return {gs,doAno,total:soma(doAno),grupos,litros:comb.reduce((t,g)=>t+num(g.litros),0),kmL:tr.length?tr.reduce((t,x)=>t+x.km,0)/tr.reduce((t,x)=>t+x.l,0):0,rodado,meses,ultComb:gs.find(g=>g.tipo==='combustivel')}}
+function avisosCarro(v){const out=[],km=kmAtual(v),gs=gastosDe(v);
+  [['licenciamento','Licenciamento'],['ipvaVence','IPVA'],['seguroVence','Seguro']].forEach(([k,l])=>{if(!v[k])return;const d=diasAte(v[k]);
+    if(d<0)out.push({cls:'warn',t:`${l} venceu em ${dataBR(v[k])}`,h:veicNome(v)+(v.placa?' · '+v.placa:'')});else if(d<=30)out.push({cls:d<=7?'warn':'info',t:`${l} vence ${d===0?'hoje':d===1?'amanhã':'em '+d+' dias'} (${dataBR(v[k])})`,h:veicNome(v)+(v.placa?' · '+v.placa:'')})});
+  const rev=gs.find(g=>g.tipo==='manutencao'&&(num(g.proxKm)>0||g.proxData));
+  if(rev){const fk=num(rev.proxKm)>0?num(rev.proxKm)-km:null,fd=rev.proxData?diasAte(rev.proxData):null;
+    if(fk!=null&&fk<=500||fd!=null&&fd<=15)out.push({cls:fk!=null&&fk<0||fd!=null&&fd<0?'warn':'info',t:`Próxima manutenção: ${rev.desc||'revisão'}`,h:[fk!=null?(fk<0?`passou ${fmtKm(-fk)}`:`faltam ${fmtKm(fk)}`):'',fd!=null?(fd<0?`data passou (${dataBR(rev.proxData)})`:`até ${dataBR(rev.proxData)}`):''].filter(Boolean).join(' · ')+' · '+veicNome(v)})}
+  const ms=gs.filter(g=>g.tipo==='multa'&&g.situacao==='pendente');
+  if(ms.length)out.push({cls:'warn',t:`${ms.length} multa${ms.length>1?'s':''} para pagar · ${money(ms.reduce((t,g)=>t+num(g.valor),0))}`,h:ms.filter(g=>g.vence).map(g=>'vence '+dataBR(g.vence)).slice(0,2).join(', ')||veicNome(v)});
+  return out}
+function avisosOperacionais(){const out=veiculos().flatMap(avisosCarro),urg=(S.compras||[]).filter(c=>c.status!=='comprado'&&c.prioridade==='urgente');
+  if(urg.length)out.push({cls:'info',t:`${urg.length} compra${urg.length>1?'s':''} urgente${urg.length>1?'s':''} na lista`,h:urg.slice(0,3).map(c=>c.nome).join(', ')});return out}
+async function salvarOp(col,obj,msg){
+  try{await store.save(col,obj);if(msg)toast(msg);return true}
+  catch(e){toast(e&&(e.code==='23514'||/check constraint/i.test(e.message||''))?'Falta atualizar o banco: rode o arquivo operacional.sql no Supabase.':'Não foi possível salvar. Confira a internet e tente de novo.');return false}}
+// Localização: postos num raio de 800 m (mapa aberto OpenStreetMap). Sem posto, devolve o endereço.
+const distM=(a,b,c,d)=>{const r=Math.PI/180,x=(d-b)*r*Math.cos((a+c)/2*r),y=(c-a)*r;return Math.round(Math.sqrt(x*x+y*y)*6371e3)};
+async function postosPerto(){
+  if(!navigator.geolocation)throw new Error('sem-gps');
+  const pos=await new Promise((ok,err)=>navigator.geolocation.getCurrentPosition(ok,err,{enableHighAccuracy:true,timeout:15000,maximumAge:60000}));
+  const la=pos.coords.latitude,lo=pos.coords.longitude;let ps=[],end='';
+  try{const q=`[out:json][timeout:15];(node["amenity"="fuel"](around:800,${la},${lo});way["amenity"="fuel"](around:800,${la},${lo}););out center tags 30;`;
+    const r=await fetch('https://overpass-api.de/api/interpreter',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'data='+encodeURIComponent(q)});
+    if(r.ok)ps=((await r.json()).elements||[]).map(e=>{const t=e.tags||{},y=e.lat!=null?e.lat:e.center&&e.center.lat,x=e.lon!=null?e.lon:e.center&&e.center.lon,nm=t.name||t.brand||'Posto';
+      return {nome:t.brand&&!normNome(nm).includes(normNome(t.brand))?`${nm} (${t.brand})`:nm,rua:[t['addr:street'],t['addr:housenumber']].filter(Boolean).join(', '),lat:y,lon:x,d:y!=null?distM(la,lo,y,x):9e9}}).filter(p=>p.lat!=null).sort((a,b)=>a.d-b.d).slice(0,5)}catch(e){}
+  if(!ps.length)try{const j=await (await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${la}&lon=${lo}&zoom=17&accept-language=pt-BR`)).json(),a=j.address||{};end=[a.road,a.suburb||a.neighbourhood,a.city||a.town||a.village].filter(Boolean).join(', ')}catch(e){}
+  return {la,lo,ps,end}}
+const mapaURL=(la,lo)=>`https://www.google.com/maps/search/?api=1&query=${la},${lo}`;
+function formVeic(v){const n=!v;v=v||{id:uid(),uf:'RJ',combustivel:'flex'};
+  const f=(id,l,val,extra='',full)=>`<div class="field ${full?'full':''}"><label for="${id}">${l}</label><input id="${id}" value="${esc(val||'')}" ${extra}></div>`;
+  openSheet(n?'Cadastrar carro':veicNome(v),`<div class="form">
+    ${f('vc_nome','Apelido',v.nome,'placeholder="Ex.: Strada branca"')}${f('vc_mod','Marca e modelo',v.modelo,'placeholder="Ex.: Fiat Strada 1.4"')}
+    ${f('vc_ano','Ano',v.ano,'inputmode="numeric"')}${f('vc_placa','Placa',v.placa,'style="text-transform:uppercase" autocapitalize="characters" placeholder="ABC1D23"')}
+    ${f('vc_ren','RENAVAM',v.renavam,'inputmode="numeric"')}${f('vc_chassi','Chassi (opcional)',v.chassi,'style="text-transform:uppercase"')}
+    <div class="field"><label for="vc_uf">Estado do documento</label><select id="vc_uf">${UFS.map(u=>`<option ${(v.uf||'RJ')===u?'selected':''}>${u}</option>`).join('')}</select></div>
+    <div class="field"><label for="vc_comb">Combustível</label><select id="vc_comb">${[['flex','Flex (gasolina e etanol)'],...Object.entries(COMB)].map(([k,l])=>`<option value="${k}" ${v.combustivel===k?'selected':''}>${l}</option>`).join('')}</select></div>
+    ${f('vc_km','Km no painel hoje',v.kmInicial,'inputmode="numeric" placeholder="Ex.: 85.400"')}
+    ${f('vc_lic','Licenciamento vence em',v.licenciamento,'type="date"')}
+    ${f('vc_ipv','IPVA: valor do ano (R$)',opV(v.ipvaValor),'inputmode="decimal"')}${f('vc_ipd','IPVA: vencimento (ou próxima parcela)',v.ipvaVence,'type="date"')}
+    ${f('vc_seg','Seguradora',v.seguradora)}${f('vc_apo','Apólice',v.apolice,'inputmode="numeric"')}
+    ${f('vc_sgd','Seguro vence em',v.seguroVence,'type="date"')}${f('vc_sgt','Assistência 24 h (telefone)',v.seguroTel,'inputmode="tel"')}
+    <div class="field full"><label for="vc_obs">Observações</label><textarea id="vc_obs" placeholder="Ex.: pneu trocado em março; chave reserva no escritório.">${esc(v.obs||'')}</textarea></div>
+  </div>`,`${n?'':'<button class="btn danger left" id="vc_del">Excluir</button>'}<button class="btn" data-act="close">Cancelar</button><button class="btn primary" id="vc_ok">Salvar</button>`,L=>{
+    const $=id=>L.querySelector('#'+id),t=id=>$(id).value.trim();
+    $('vc_ok').onclick=async()=>{const o={...v,nome:t('vc_nome'),modelo:t('vc_mod'),ano:t('vc_ano'),placa:t('vc_placa').toUpperCase().replace(/[^A-Z0-9]/g,''),renavam:soDig(t('vc_ren')),chassi:t('vc_chassi').toUpperCase(),uf:$('vc_uf').value,combustivel:$('vc_comb').value,
+      kmInicial:num(soDig(t('vc_km')))||'',licenciamento:$('vc_lic').value,ipvaValor:t('vc_ipv')?num(t('vc_ipv')):'',ipvaVence:$('vc_ipd').value,seguradora:t('vc_seg'),apolice:t('vc_apo'),seguroVence:$('vc_sgd').value,seguroTel:t('vc_sgt'),obs:t('vc_obs'),criadoEm:v.criadoEm||new Date().toISOString(),atualizadoEm:new Date().toISOString()};
+      if(!o.nome&&!o.modelo&&!o.placa){toast('Informe pelo menos o apelido, o modelo ou a placa.');return}
+      if(await salvarOp('veiculos',o,'Carro salvo')){ui.veic=o.id;closeSheet();render()}};
+    if(!n)$('vc_del').onclick=()=>{const gs=gastosDe(v);confirmSheet('Excluir carro?',`${esc(veicNome(v))} e ${gs.length} lançamento${gs.length===1?'':'s'} de gastos serão apagados.`,'Excluir',async()=>{try{for(const g of gs)await store.remove('gastos',g.id);await store.remove('veiculos',v.id);ui.veic='';render();toast('Carro excluído')}catch(e){toast('Não foi possível excluir.')}})};
+  })}
+function formComb(v,g){const n=!g,ult=gastosDe(v).find(x=>x.tipo==='combustivel'),km=kmAtual(v);
+  g=g||{id:uid(),veiculoId:v.id,tipo:'combustivel',data:hojeISO(),comb:v.combustivel&&v.combustivel!=='flex'?v.combustivel:(ult&&ult.comb)||'gasolina',cheio:true,precoL:ult&&ult.precoL||''};
+  openSheet(n?'Abastecimento':'Editar abastecimento',`<div class="form">
+    <div class="field"><label for="ab_data">Data</label><input id="ab_data" type="date" value="${esc(g.data)}"></div>
+    <div class="field"><label for="ab_km">Km no painel</label><input id="ab_km" inputmode="numeric" value="${esc(g.km||'')}" placeholder="${km?'Último: '+Math.round(km).toLocaleString('pt-BR'):'Ex.: 85.400'}"></div>
+    <div class="field"><label for="ab_comb">Combustível</label><select id="ab_comb">${Object.entries(COMB).map(([k,l])=>`<option value="${k}" ${g.comb===k?'selected':''}>${l}</option>`).join('')}</select></div>
+    <div class="field"><label for="ab_pl">Preço por litro (R$)</label><input id="ab_pl" inputmode="decimal" value="${esc(opV(g.precoL))}" placeholder="Ex.: 6,19"></div>
+    <div class="field"><label for="ab_val">Valor pago (R$)</label><input id="ab_val" inputmode="decimal" value="${esc(opV(g.valor))}" placeholder="Ex.: 150,00"></div>
+    <div class="field"><label for="ab_l">Litros</label><input id="ab_l" inputmode="decimal" value="${esc(opV(g.litros))}" placeholder="Calcula sozinho"></div>
+    <label class="field full chk"><input type="checkbox" id="ab_ch" ${g.cheio?'checked':''}> <span>Completei o tanque <span class="hint">(serve para calcular o consumo em km/l)</span></span></label>
+    <div class="field full"><label for="ab_posto">Posto</label><input id="ab_posto" value="${esc(g.local||'')}" placeholder="Nome do posto">
+      <div class="row" style="gap:6px;margin-top:6px"><button type="button" class="btn sm" id="ab_gps">${svg('<path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>')}Posto onde estou</button><span id="ab_map"></span></div>
+      <div id="ab_ps" class="ab-ps"></div></div>
+    <p class="hint full" id="ab_av" style="margin:0"></p>
+  </div>`,`${n?'':'<button class="btn danger left" id="ab_del">Excluir</button>'}<button class="btn" data-act="close">Cancelar</button><button class="btn primary" id="ab_ok">Salvar</button>`,L=>{
+    const $=id=>L.querySelector('#'+id);let lat=g.lat,lon=g.lon,manual=!!g.litros&&!n;
+    const calcula=()=>{const pl=num($('ab_pl').value),vl=num($('ab_val').value);if(!manual&&pl>0&&vl>0)$('ab_l').value=opV((vl/pl).toFixed(2));
+      const k=num(soDig($('ab_km').value));$('ab_av').innerHTML=k&&km&&k<km&&n?`<b style="color:var(--bad)">O km está menor que o último registrado (${fmtKm(km)}).</b>`:''};
+    ['ab_pl','ab_val','ab_km'].forEach(i=>$(i).addEventListener('input',calcula));$('ab_l').addEventListener('input',()=>{manual=!!$('ab_l').value.trim();if(!num($('ab_val').value)&&num($('ab_pl').value)&&num($('ab_l').value))$('ab_val').value=opV((num($('ab_pl').value)*num($('ab_l').value)).toFixed(2))});calcula();
+    if(lat)$('ab_map').innerHTML=`<a class="linkbtn" href="${mapaURL(lat,lon)}" target="_blank" rel="noopener">Ver no mapa</a>`;
+    $('ab_gps').onclick=async()=>{const b=$('ab_gps');b.disabled=true;const txt=b.innerHTML;b.textContent='Procurando…';
+      try{const r=await postosPerto();lat=r.la;lon=r.lo;$('ab_map').innerHTML=`<a class="linkbtn" href="${mapaURL(lat,lon)}" target="_blank" rel="noopener">Ver no mapa</a>`;
+        if(r.ps.length){$('ab_ps').innerHTML='<span class="hint">Toque no posto certo:</span>'+r.ps.map((p,i)=>`<button type="button" class="corr-s" data-p="${i}">${esc(p.nome)} · ${p.d<1000?p.d+' m':(p.d/1000).toFixed(1).replace('.',',')+' km'}</button>`).join('');
+          $('ab_ps').querySelectorAll('[data-p]').forEach(x=>x.onclick=()=>{const p=r.ps[+x.dataset.p];$('ab_posto').value=p.nome+(p.rua?' — '+p.rua:'');lat=p.lat;lon=p.lon;$('ab_ps').innerHTML=''});
+          if(!$('ab_posto').value.trim()){const p=r.ps[0];$('ab_posto').value=p.nome+(p.rua?' — '+p.rua:'');lat=p.lat;lon=p.lon}}
+        else{$('ab_ps').innerHTML=`<span class="hint">Não achei posto no mapa aqui perto. ${r.end?'Você está em: '+esc(r.end)+'. ':''}Digite o nome do posto.</span>`;if(!$('ab_posto').value.trim()&&r.end)$('ab_posto').value=r.end}}
+      catch(e){toast(e&&e.code===1?'Permita a localização para o app achar o posto.':'Não foi possível pegar a localização. Digite o nome do posto.')}
+      finally{b.disabled=false;b.innerHTML=txt}};
+    $('ab_ok').onclick=async()=>{const vl=num($('ab_val').value);if(!(vl>0)){toast('Informe o valor pago.');return}
+      const o={...g,data:$('ab_data').value||hojeISO(),km:num(soDig($('ab_km').value))||'',comb:$('ab_comb').value,precoL:num($('ab_pl').value)||'',valor:vl,litros:num($('ab_l').value)||'',cheio:$('ab_ch').checked,local:$('ab_posto').value.trim(),lat:lat||'',lon:lon||'',atualizadoEm:new Date().toISOString()};
+      if(await salvarOp('gastos',o,'Abastecimento salvo'))closeSheet()};
+    if(!n)$('ab_del').onclick=()=>confirmSheet('Excluir abastecimento?','Este lançamento será apagado.','Excluir',()=>store.remove('gastos',g.id).then(()=>toast('Excluído'),()=>toast('Não foi possível excluir.')));
+  })}
+function formGasto(v,g,tipo){if(g&&g.tipo==='combustivel')return formComb(v,g);const n=!g,km=kmAtual(v);
+  g=g||{id:uid(),veiculoId:v.id,tipo:tipo||'manutencao',data:hojeISO(),situacao:'paga'};
+  const ph={manutencao:'Ex.: troca de óleo e filtro',reforma:'Ex.: pintura do para-choque',documento:'Ex.: IPVA 2027, parcela 1',seguro:'Ex.: renovação do seguro',multa:'Ex.: excesso de velocidade na BR-116',outro:'Ex.: lavagem'};
+  openSheet(n?'Novo gasto':'Editar gasto',`<div class="form">
+    <div class="field full"><label for="gs_tipo">Tipo</label><select id="gs_tipo">${Object.entries(GASTO_TIPOS).filter(([k])=>k!=='combustivel').map(([k,l])=>`<option value="${k}" ${g.tipo===k?'selected':''}>${l}</option>`).join('')}</select></div>
+    <div class="field full"><label for="gs_desc">O que foi feito</label><textarea id="gs_desc" placeholder="${esc(ph[g.tipo]||'')}">${esc(g.desc||'')}</textarea></div>
+    <div class="field"><label for="gs_data">Data</label><input id="gs_data" type="date" value="${esc(g.data)}"></div>
+    <div class="field"><label for="gs_val">Valor (R$)</label><input id="gs_val" inputmode="decimal" value="${esc(opV(g.valor))}"></div>
+    <div class="field"><label for="gs_km">Km no painel</label><input id="gs_km" inputmode="numeric" value="${esc(g.km||'')}" placeholder="${km?'Último: '+Math.round(km).toLocaleString('pt-BR'):''}"></div>
+    <div class="field"><label for="gs_loc">Oficina ou local</label><input id="gs_loc" value="${esc(g.local||'')}"></div>
+    <div class="field" data-so="manutencao"><label for="gs_pk">Próxima troca/revisão no km</label><input id="gs_pk" inputmode="numeric" value="${esc(g.proxKm||'')}" placeholder="Ex.: 95.000"></div>
+    <div class="field" data-so="manutencao"><label for="gs_pd">ou na data</label><input id="gs_pd" type="date" value="${esc(g.proxData||'')}"></div>
+    <div class="field" data-so="multa"><label for="gs_sit">Situação</label><select id="gs_sit"><option value="pendente" ${g.situacao==='pendente'?'selected':''}>Para pagar</option><option value="paga" ${g.situacao!=='pendente'?'selected':''}>Paga</option></select></div>
+    <div class="field" data-so="multa"><label for="gs_vc">Vencimento</label><input id="gs_vc" type="date" value="${esc(g.vence||'')}"></div>
+  </div>`,`${n?'':'<button class="btn danger left" id="gs_del">Excluir</button>'}<button class="btn" data-act="close">Cancelar</button><button class="btn primary" id="gs_ok">Salvar</button>`,L=>{
+    const $=id=>L.querySelector('#'+id),mostra=()=>{const t=$('gs_tipo').value;L.querySelectorAll('[data-so]').forEach(x=>x.hidden=x.dataset.so!==t);$('gs_desc').placeholder=ph[t]||''};
+    $('gs_tipo').onchange=mostra;mostra();
+    $('gs_ok').onclick=async()=>{const t=$('gs_tipo').value,vl=num($('gs_val').value);if(!(vl>0)){toast('Informe o valor.');return}
+      const o={...g,tipo:t,desc:$('gs_desc').value.trim(),data:$('gs_data').value||hojeISO(),valor:vl,km:num(soDig($('gs_km').value))||'',local:$('gs_loc').value.trim(),
+        proxKm:t==='manutencao'?num(soDig($('gs_pk').value))||'':'',proxData:t==='manutencao'?$('gs_pd').value:'',situacao:t==='multa'?$('gs_sit').value:'',vence:t==='multa'?$('gs_vc').value:'',atualizadoEm:new Date().toISOString()};
+      if(await salvarOp('gastos',o,'Gasto salvo'))closeSheet()};
+    if(!n)$('gs_del').onclick=()=>confirmSheet('Excluir gasto?','Este lançamento será apagado.','Excluir',()=>store.remove('gastos',g.id).then(()=>toast('Excluído'),()=>toast('Não foi possível excluir.')));
+  })}
+function formCompra(c){const n=!c;c=c||{id:uid(),status:'pendente',prioridade:'normal',criadoEm:new Date().toISOString()};
+  openSheet(n?'Item para comprar':'Editar item',`<div class="form">
+    <div class="field full"><label for="cp_n">O que é</label><input id="cp_n" value="${esc(c.nome||'')}" placeholder="Ex.: alicate de crimpar RJ45"></div>
+    <div class="field full"><label for="cp_u">Para que serve</label><textarea id="cp_u" placeholder="Ex.: crimpar cabo de rede nas instalações de câmeras IP">${esc(c.uso||'')}</textarea></div>
+    <div class="field full"><label for="cp_l">Link na internet</label><input id="cp_l" inputmode="url" value="${esc(c.link||'')}" placeholder="https://…"></div>
+    <div class="field"><label for="cp_v">Valor (R$)</label><input id="cp_v" inputmode="decimal" value="${esc(opV(c.valor))}"></div>
+    <div class="field"><label for="cp_p">Prioridade</label><select id="cp_p">${Object.entries(PRIORIDADE).map(([k,l])=>`<option value="${k}" ${c.prioridade===k?'selected':''}>${l}</option>`).join('')}</select></div>
+  </div>`,`${n?'':'<button class="btn danger left" id="cp_del">Excluir</button>'}<button class="btn" data-act="close">Cancelar</button><button class="btn primary" id="cp_ok">Salvar</button>`,L=>{
+    const $=id=>L.querySelector('#'+id);
+    $('cp_ok').onclick=async()=>{const nome=$('cp_n').value.trim();if(!nome){toast('Escreva o que precisa comprar.');return}
+      if(await salvarOp('compras',{...c,nome,uso:$('cp_u').value.trim(),link:normUrl($('cp_l').value),valor:$('cp_v').value.trim()?num($('cp_v').value):'',prioridade:$('cp_p').value,atualizadoEm:new Date().toISOString()},'Item salvo'))closeSheet()};
+    if(!n)$('cp_del').onclick=()=>confirmSheet('Excluir item?',`${esc(c.nome)} sai da lista.`,'Excluir',()=>store.remove('compras',c.id).then(()=>toast('Excluído'),()=>toast('Não foi possível excluir.')));
+  })}
+function compreiSheet(c){openSheet('Comprei',`<p style="margin-top:0"><b>${esc(c.nome)}</b></p><div class="form">
+    <div class="field"><label for="cq_v">Quanto pagou (R$)</label><input id="cq_v" inputmode="decimal" value="${esc(opV(c.valor))}"></div>
+    <div class="field"><label for="cq_d">Data</label><input id="cq_d" type="date" value="${hojeISO()}"></div>
+    <div class="field full"><label for="cq_o">Onde comprou (opcional)</label><input id="cq_o" value="${esc(c.onde||'')}"></div></div>`,
+  `<button class="btn" data-act="close">Cancelar</button><button class="btn primary" id="cq_ok">Marcar como comprado</button>`,L=>{const $=id=>L.querySelector('#'+id);
+    $('cq_ok').onclick=async()=>{if(await salvarOp('compras',{...c,status:'comprado',valorPago:$('cq_v').value.trim()?num($('cq_v').value):num(c.valor)||'',compradoEm:$('cq_d').value||hojeISO(),onde:$('cq_o').value.trim(),atualizadoEm:new Date().toISOString()},'Marcado como comprado'))closeSheet()}})}
+const dominio=u=>{try{return new URL(u).hostname.replace(/^www\./,'')}catch(e){return ''}};
+function vOperacional(app){
+  const aba=ui.opAba||'carro';
+  const pend=(S.compras||[]).filter(c=>c.status!=='comprado');
+  app.innerHTML=`<div><div class="eyebrow">Carro e compras da empresa</div><h1 class="h1">Operacional</h1></div>
+    <div class="op-tabs" role="tablist">${[['carro','Carro'],['compras',`Compras${pend.length?` (${pend.length})`:''}`]].map(([k,l])=>`<button role="tab" aria-selected="${aba===k}" data-op-aba="${k}">${l}</button>`).join('')}</div>
+    <div id="op_c"></div>`;
+  app.querySelectorAll('[data-op-aba]').forEach(b=>b.onclick=()=>{ui.opAba=b.dataset.opAba;render()});
+  (aba==='compras'?vCompras:vCarro)(app.querySelector('#op_c'));
+}
+function vCarro(el){
+  const v=veicAtual();
+  if(!v){el.innerHTML=`<div class="empty"><b>Nenhum carro cadastrado</b><span class="muted">Cadastre o carro da empresa para registrar combustível, mecânica, documentos e multas, e ver quanto ele gasta no ano.</span><button class="btn primary" id="vc_novo">${svg(UI.plus)}Cadastrar carro</button></div>`;el.querySelector('#vc_novo').onclick=()=>formVeic();return}
+  const vs=veiculos(),anoAt=hojeISO().slice(0,4),anos=[...new Set([anoAt,...gastosDe(v).map(g=>String(g.data||'').slice(0,4)).filter(Boolean)])].sort().reverse(),ano=anos.includes(ui.opAno)?ui.opAno:anoAt;
+  const r=resumoCarro(v,ano),km=kmAtual(v),av=avisosCarro(v),mx=Math.max(...r.meses,1),todos=ui.opTodos;
+  const lista=r.doAno.slice(0,todos?999:15);
+  const item=g=>{const comb=g.tipo==='combustivel';return `<button class="li op-g" data-g="${g.id}"><span class="op-dot ${GASTO_GRUPO[g.tipo]}"></span><div><div class="t">${comb?`${COMB[g.comb]||'Combustível'}${g.litros?' · '+fmtL(g.litros):''}${g.precoL?' · '+money(g.precoL)+'/L':''}`:esc(GASTO_TIPOS[g.tipo].split(' (')[0])+(g.desc?': '+esc(g.desc):'')}${g.tipo==='multa'&&g.situacao==='pendente'?' <span class="pill fx-bad">para pagar</span>':''}</div>
+    <div class="d">${dataBR(g.data)}${g.km?' · '+fmtKm(g.km):''}${g.local?' · '+esc(g.local):''}</div></div><div class="r"><span class="num">${money(g.valor)}</span></div></button>`};
+  el.innerHTML=`
+  ${vs.length>1?`<div class="chips">${vs.map(x=>`<button class="chip" data-veic="${x.id}" aria-pressed="${x.id===v.id}">${esc(veicNome(x))}</button>`).join('')}</div>`:''}
+  <section class="panel op-car">
+    <div class="spread" style="align-items:flex-start"><div><h2 class="h2">${esc(veicNome(v))}</h2><span class="hint">${[v.nome&&v.modelo?esc(v.modelo):'',esc(v.ano||''),km?'Km atual: '+fmtKm(km):''].filter(Boolean).join(' · ')}</span></div>${v.placa?`<span class="placa"><i>BRASIL</i>${esc(v.placa)}</span>`:''}</div>
+    <div class="row" style="gap:8px"><button class="btn primary" id="op_ab">${svg('<path d="M4 21V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16"/><path d="M3 21h12M6 9h6"/><path d="M14 10h2a2 2 0 0 1 2 2v5a1.5 1.5 0 0 0 3 0V8l-3-3"/>')}Abasteci</button><button class="btn" id="op_mec">${svg(ICON.servicos)}Mecânica</button><button class="btn" id="op_out">${svg(UI.plus)}Outro gasto</button><button class="btn ghost" id="op_ed">${svg(UI.edit)}Dados do carro</button></div>
+    ${av.length?`<div class="ups">${av.map(a=>`<div class="up-i"><span class="up-dot ${a.cls}"></span><span><b>${esc(a.t)}</b><span class="hint">${esc(a.h)}</span></span></div>`).join('')}</div>`:''}
+  </section>
+  <div class="spread" style="align-items:center"><h2 class="h2">Gastos do carro</h2><select id="op_ano" class="btn sm" aria-label="Ano">${anos.map(a=>`<option ${a===ano?'selected':''}>${a}</option>`).join('')}</select></div>
+  <div class="fx-cards">
+    <div class="fx-card"><span>Total em ${ano}</span><b>${money(r.total)}</b><span>${r.rodado?`${fmtKm(r.rodado)} rodados · ${money(r.total/r.rodado)}/km`:'Anote o km para ver o custo por km'}</span></div>
+    <div class="fx-card"><span>Combustível</span><b>${money(r.grupos.comb)}</b><span>${r.litros?fmtL(r.litros):'—'}${r.ultComb&&r.ultComb.precoL?` · último ${money(r.ultComb.precoL)}/L`:''}</span></div>
+    <div class="fx-card"><span>Consumo médio</span><b>${r.kmL?r.kmL.toFixed(1).replace('.',',')+' km/l':'—'}</b><span>${r.kmL?'Entre tanques cheios':'Complete o tanque 2 vezes, anotando o km'}</span></div>
+    <div class="fx-card"><span>Mecânica e reforma</span><b>${money(r.grupos.mec)}</b><span>Documentos, seguro e multas: ${money(r.grupos.doc)}</span></div>
+  </div>
+  ${r.total?`<section class="panel"><div class="op-bars" role="img" aria-label="Gastos por mês em ${ano}">${r.meses.map((m,i)=>`<div title="${esc(cap(new Date(+ano,i,15).toLocaleDateString('pt-BR',{month:'long'})))}: ${money(m)}"><span class="op-bv">${m?Math.round(m).toLocaleString('pt-BR'):''}</span><i style="height:${m/mx*100}%"></i><span>${new Date(+ano,i,15).toLocaleDateString('pt-BR',{month:'short'}).slice(0,3)}</span></div>`).join('')}</div>
+    <div class="op-leg">${GRUPOS_CARRO.filter(([k])=>r.grupos[k]).map(([k,l])=>`<span><i class="op-dot ${k}"></i>${l}: <b>${money(r.grupos[k])}</b> (${Math.round(r.grupos[k]/r.total*100)}%)</span>`).join('')}</div></section>`:''}
+  ${lista.length?`<div class="list">${lista.map(item).join('')}</div>${r.doAno.length>15&&!todos?`<button class="linkbtn" id="op_todos">Ver todos os ${r.doAno.length} lançamentos de ${ano}</button>`:''}`:`<div class="empty" style="padding:18px">Nenhum gasto em ${ano}. Toque em "Abasteci" ou "Mecânica" para registrar.</div>`}
+  <section class="panel">
+    <h2 class="h2">Documentos e consultas</h2>
+    <dl class="fx-dl">
+      <div><dt>Placa</dt><dd>${esc(v.placa||'—')}${v.placa?` <button class="linkbtn" data-copy="${esc(v.placa)}">copiar</button>`:''}</dd></div>
+      <div><dt>RENAVAM</dt><dd>${esc(v.renavam||'—')}${v.renavam?` <button class="linkbtn" data-copy="${esc(v.renavam)}">copiar</button>`:''}</dd></div>
+      <div><dt>Licenciamento</dt><dd>${v.licenciamento?'vence '+dataBR(v.licenciamento):'—'}</dd></div>
+      <div><dt>IPVA</dt><dd>${[v.ipvaValor?money(v.ipvaValor):'',v.ipvaVence?'vence '+dataBR(v.ipvaVence):''].filter(Boolean).join(' · ')||'—'}</dd></div>
+      <div><dt>Seguro</dt><dd>${[esc(v.seguradora||''),v.seguroVence?'vence '+dataBR(v.seguroVence):''].filter(Boolean).join(' · ')||'—'}${v.seguroTel?`<br><a href="tel:${esc(soDig(v.seguroTel))}">Assistência 24 h: ${esc(v.seguroTel)}</a>`:''}</dd></div>
+      ${v.chassi?`<div><dt>Chassi</dt><dd>${esc(v.chassi)}</dd></div>`:''}
+    </dl>
+    <div class="row" style="gap:6px"><a class="btn sm" href="${OP_LINK.multas}" target="_blank" rel="noopener">Multas (Senatran)</a><a class="btn sm" href="${OP_LINK.detran(v.uf)}" target="_blank" rel="noopener">Detran-${esc(v.uf||'RJ')}</a><a class="btn sm" href="${OP_LINK.ipva(v.uf)}" target="_blank" rel="noopener">Consultar IPVA</a></div>
+    <p class="hint" style="margin:0">Os sites do governo pedem login gov.br ou uma verificação de segurança, então o app abre o site e você cola a placa e o RENAVAM (botões "copiar"). No celular, o app <b>Carteira Digital de Trânsito</b> mostra as multas e o documento do carro. Anote multas e IPVA aqui em "Outro gasto" para entrarem na conta do ano.</p>
+  </section>
+  <div class="row"><button class="btn ghost" id="op_novo">${svg(UI.plus)}Cadastrar outro veículo</button></div>`;
+  const $=id=>el.querySelector('#'+id);
+  $('op_ab').onclick=()=>formComb(v);$('op_mec').onclick=()=>formGasto(v,null,'manutencao');$('op_out').onclick=()=>formGasto(v,null,'documento');$('op_ed').onclick=()=>formVeic(v);$('op_novo').onclick=()=>formVeic();
+  $('op_ano').onchange=e=>{ui.opAno=e.target.value;ui.opTodos=false;render()};
+  if($('op_todos'))$('op_todos').onclick=()=>{ui.opTodos=true;render()};
+  el.querySelectorAll('[data-veic]').forEach(b=>b.onclick=()=>{ui.veic=b.dataset.veic;render()});
+  el.querySelectorAll('[data-g]').forEach(b=>b.onclick=()=>formGasto(v,S.gastos.find(g=>g.id===b.dataset.g)));
+}
+function vCompras(el){
+  const st=ui.opCompra||'pendente',cs=S.compras||[],pend=cs.filter(c=>c.status!=='comprado'),comp=cs.filter(c=>c.status==='comprado');
+  const ord={urgente:0,normal:1,depois:2},ano=hojeISO().slice(0,4);
+  const lista=st==='pendente'?[...pend].sort((a,b)=>(ord[a.prioridade]??1)-(ord[b.prioridade]??1)||String(b.criadoEm).localeCompare(String(a.criadoEm))):[...comp].sort((a,b)=>String(b.compradoEm).localeCompare(String(a.compradoEm)));
+  const est=pend.reduce((t,c)=>t+num(c.valor),0),gastoAno=comp.filter(c=>String(c.compradoEm).startsWith(ano)).reduce((t,c)=>t+num(c.valorPago),0);
+  el.innerHTML=`
+  <form class="row cp-add" id="cp_form"><input id="cp_q" placeholder="O que precisa comprar? Ex.: escada de 7 degraus" aria-label="O que precisa comprar" autocomplete="off"><button class="btn primary" type="submit">${svg(UI.plus)}Anotar</button></form>
+  <div class="spread" style="align-items:center"><div class="chips"><button class="chip" data-cp-st="pendente" aria-pressed="${st==='pendente'}">Para comprar (${pend.length})</button><button class="chip" data-cp-st="comprado" aria-pressed="${st==='comprado'}">Comprados (${comp.length})</button></div>
+    <span class="hint">${st==='pendente'?(est?`Total estimado: <b>${money(est)}</b>`:''):`Gasto em ${ano}: <b>${money(gastoAno)}</b>`}</span></div>
+  ${lista.length?`<div class="cp-list">${lista.map(c=>`<div class="cp-card ${c.prioridade==='urgente'&&st==='pendente'?'urg':''}">
+    <div class="cp-i"><b>${esc(c.nome)}${c.prioridade==='urgente'&&st==='pendente'?' <span class="pill fx-bad">Urgente</span>':c.prioridade==='depois'&&st==='pendente'?' <span class="pill st-rascunho">Quando der</span>':''}</b>${c.uso?`<span>${esc(c.uso)}</span>`:''}
+      ${st==='comprado'?`<span>Comprado em ${dataBR(c.compradoEm)}${c.onde?' · '+esc(c.onde):''}</span>`:''}</div>
+    <div class="cp-r"><b class="num">${st==='comprado'?money(c.valorPago):c.valor!==''&&c.valor!=null?money(c.valor):'<span class="hint">sem valor</span>'}</b>
+      <div class="row" style="gap:6px;justify-content:flex-end">${safeUrl(c.link)?`<a class="btn sm" href="${esc(c.link)}" target="_blank" rel="noopener">Abrir link${dominio(c.link)?` (${esc(dominio(c.link))})`:''}</a>`:st==='pendente'?`<a class="btn sm" href="https://www.google.com/search?tbm=shop&q=${encodeURIComponent(c.nome)}" target="_blank" rel="noopener">${svg(UI.search)}Pesquisar preço</a>`:''}
+      <button class="btn sm" data-cp-ed="${c.id}">Editar</button>${st==='pendente'?`<button class="btn sm primary" data-cp-ok="${c.id}">Comprei</button>`:`<button class="btn sm" data-cp-volta="${c.id}">Voltar para a lista</button>`}</div></div></div>`).join('')}</div>`
+    :`<div class="empty" style="padding:18px">${st==='pendente'?'Nada para comprar. Anote aqui em cima a ferramenta ou o material que faltou no serviço.':'Nenhuma compra marcada ainda.'}</div>`}`;
+  const $=id=>el.querySelector('#'+id),pega=id=>cs.find(c=>c.id===id);
+  $('cp_form').onsubmit=async e=>{e.preventDefault();const nome=$('cp_q').value.trim();if(!nome){$('cp_q').focus();return}
+    const c={id:uid(),nome,status:'pendente',prioridade:'normal',criadoEm:new Date().toISOString()};if(await salvarOp('compras',c,'Anotado. Toque em Editar para pôr link e valor.')){ui.opCompra='pendente';render()}};
+  el.querySelectorAll('[data-cp-st]').forEach(b=>b.onclick=()=>{ui.opCompra=b.dataset.cpSt;render()});
+  el.querySelectorAll('[data-cp-ed]').forEach(b=>b.onclick=()=>formCompra(pega(b.dataset.cpEd)));
+  el.querySelectorAll('[data-cp-ok]').forEach(b=>b.onclick=()=>compreiSheet(pega(b.dataset.cpOk)));
+  el.querySelectorAll('[data-cp-volta]').forEach(b=>b.onclick=()=>{const c={...pega(b.dataset.cpVolta),status:'pendente'};delete c.compradoEm;delete c.valorPago;salvarOp('compras',c,'Voltou para a lista')});
+}
 function vProposta(app){
   const o=S.orcamentos.find(x=>x.id===view.id);
   if(!o){app.innerHTML=`<div class="empty"><b>Orçamento não encontrado</b><button class="btn" data-nav="inicio">Voltar</button></div>`;return}
@@ -2914,6 +3177,7 @@ document.addEventListener('click',e=>{
   if(t.dataset.nav){closeSheet();ui.busca='';go(t.dataset.nav);return}
   const a=t.dataset.act;
   if(a==='close'){closeSheet();return}
+  if(a==='mais'){abrirMais();return}
   if(a==='novo-orc'){novoOrc();return}
   if(a==='novo-prod'){formProd();return}
   if(a==='novo-serv'){formServ();return}

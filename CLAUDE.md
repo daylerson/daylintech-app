@@ -90,3 +90,13 @@ O app foi feito como artefato do claude.ai e usa `window.claude.use(...)`. Fora 
 - `<body spellcheck="true">` liga o corretor do navegador/teclado em todos os campos.
 - Botão "✓ Corrigir português" aparece embaixo de textarea e input de texto dentro de `.field` (não em `.row`, nem com `inputmode`) ao focar (`corrigivel`, listener `focusin`). Usa a API grátis do LanguageTool (`CORR_URL`, pt-BR, ~20 pedidos/min). A troca dispara `input` e `change`, então os campos que salvam sozinhos salvam a correção. `mousedown` com preventDefault no botão e na caixa, para o campo não perder o foco (blur salvaria e redesenharia a tela no meio).
 - OS avulsa: "Editar OS" (`agendar`) também edita tipo e motivo.
+
+## Navegação
+- `NAV_MAIN` (Início, Orçamentos, Agenda, Clientes, Catálogo) fica na barra; o resto fica em "Mais" (`NAV_MAIS`, `abrirMais`, `data-act="mais"`). Quando a tela atual é do "Mais", o botão mostra o nome dela. Itens com 3º campo 1 são `internal` (somem no Modo cliente).
+
+## Aba Operacional (`vOperacional`: `vCarro` e `vCompras`)
+- Coleções novas: `veiculos`, `gastos` (do carro: tipo combustivel/manutencao/reforma/documento/seguro/multa/outro, `veiculoId`), `compras` (status pendente/comprado, prioridade urgente/normal/depois). Lista em `COLS`. O banco precisa do `supabase/operacional.sql` (amplia o check de `docs.col`); sem ele, `salvarOp` avisa.
+- Backup: exporta todas as `COLS`; ao restaurar, coleção ausente no arquivo (backup antigo) fica como está.
+- Consumo: `trechosConsumo` (km entre tanques cheios ÷ litros colocados depois do anterior).
+- "Posto onde estou": geolocalização + Overpass API (amenity=fuel, 800 m); sem posto, endereço pelo Nominatim.
+- Avisos de licenciamento/IPVA/seguro (≤30 dias), próxima revisão (≤500 km ou 15 dias), multas a pagar e compras urgentes vão para a página inicial (`avisosOperacionais`).
