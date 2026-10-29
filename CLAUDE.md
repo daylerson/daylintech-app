@@ -77,3 +77,11 @@ O app foi feito como artefato do claude.ai e usa `window.claude.use(...)`. Fora 
 3. ~~Banco real com login.~~ Feito (Supabase).
 4. ~~Proposta como página online com link.~~ Feito.
 5. Pix automático (confirmação do pagamento sem conferir o extrato) exige integração com um banco ou empresa de pagamentos (Mercado Pago, Asaas etc.), com backend.
+
+## Aba Impostos (`vImpostos`)
+- Dados em `S.empresa.fiscal` (`fiscal()` dá os padrões): `regime` (mei/simples/outro), `ativ`, `inicio` (AAAA-MM), `consulta` (resumo do CNPJ), `das` ({'AAAA-MM':{st:'pago'|'parcelado',data,valor}}; sem registro = em aberto), `anual` e `irpf` ({ano:{st}}; IR é indexado pelo ano-calendário e mostrado como ano+1), `titular`, `extratoEm`, `lembretes`. Salvar com `salvarFiscal(m)`.
+- Nunca criar campo de senha do gov.br.
+- Consulta do CNPJ: BrasilAPI (`/api/cnpj/v1/`), reserva minhareceita.org. Só dados públicos; débitos não vêm daí (PGMEI tem captcha).
+- Valor da guia MEI = 5% do salário mínimo do ano (`SAL_MIN`, atualizar todo janeiro) + ISS/ICMS (`MEI_ATIV`). Vence dia 20 do mês seguinte (`venceGuia`). Multa estimada 0,33%/dia até 20%, sem juros.
+- Avisos na página inicial: `avisosFiscais()`. Lembretes: links do Google Agenda com RRULE e arquivo .ics (`icsFiscal`).
+- A aba tem `class="internal"` (some no Modo cliente). A barra de baixo usa `grid-auto-flow:column`.

@@ -68,7 +68,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .bottomnav{display:none}
 @media (max-width:760px){
   .toptabs{display:none}
-  .bottomnav{display:grid;grid-template-columns:repeat(7,1fr);position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surface);border-top:1px solid var(--line);
+  .bottomnav{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surface);border-top:1px solid var(--line);
     padding-left:max(8px,env(safe-area-inset-left,0px));padding-right:max(8px,env(safe-area-inset-right,0px));padding-bottom:env(safe-area-inset-bottom,0px)}
   .bottomnav button{background:none;border:0;padding:9px 4px 8px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11.5px;font-weight:600;color:var(--muted);cursor:pointer}
   .bottomnav button[aria-current="page"]{color:var(--accent)}
@@ -289,6 +289,29 @@ body.apresentacao .internal{display:none!important}
 .pix-box{flex-direction:row;align-items:center;gap:16px;padding:12px}
 .st-b{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
 .ag-list{display:flex;flex-direction:column;gap:10px}
+.fx-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.fx-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:12px 14px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.fx-card>span{font-size:12.5px;color:var(--muted)}.fx-card>span:first-child{font-weight:700;text-transform:uppercase;letter-spacing:.04em;font-size:11px}
+.fx-card b{font-family:var(--f-display);font-size:26px;line-height:1.15}.fx-card.bad b{color:var(--bad)}.fx-card.ok b{color:var(--ok)}
+.fx-bar{display:block;height:6px;border-radius:9px;background:var(--neutral-soft);overflow:hidden;margin-top:4px}.fx-bar i{display:block;height:100%;background:var(--brand)}.fx-card.bad .fx-bar i{background:var(--bad)}
+.fx-pas{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.fx-pas li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;padding:12px 0;border-top:1px solid var(--line)}.fx-pas li:first-child{border-top:0}
+.fx-pas li>div{display:flex;flex-direction:column;gap:3px}.fx-pas li.ok .st-n{background:var(--ok);color:#fff}.fx-pas li.ok b{color:var(--muted)}
+.fx-dl{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px 18px;margin:0}.fx-dl .full{grid-column:1/-1}
+.fx-dl dt{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}.fx-dl dd{margin:2px 0 0;font-size:14px;overflow-wrap:anywhere}
+.pill.fx-ok{background:var(--ok-soft);color:var(--ok)}.pill.fx-bad{background:var(--bad-soft);color:var(--bad)}
+.fx-anos{display:flex;flex-direction:column;gap:14px}.fx-ano{display:flex;flex-direction:column;gap:6px}
+.fx-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}@media (min-width:700px){.fx-grid{grid-template-columns:repeat(12,minmax(0,1fr))}}
+.fx-m{border:1px solid var(--line);border-radius:8px;padding:6px 2px;font:inherit;font-size:12.5px;font-weight:700;text-align:center;background:var(--surface);color:var(--ink);cursor:pointer;line-height:1.2}
+.fx-m span{display:block;font-size:10px;font-weight:600;color:var(--muted)}
+.fx-m.pago{background:var(--ok-soft);border-color:transparent}.fx-m.pago span{color:var(--ok)}
+.fx-m.parcelado{background:var(--info-soft);border-color:transparent}.fx-m.parcelado span{color:var(--info)}
+.fx-m.atr{background:var(--bad-soft);border-color:transparent;color:var(--bad)}.fx-m.atr span{color:var(--bad)}
+.fx-leg{display:flex;gap:6px 12px;flex-wrap:wrap;align-items:center;font-size:12px;color:var(--muted)}.fx-leg i{display:inline-block;width:14px;height:14px;padding:0;margin-right:-6px;vertical-align:middle;cursor:default}
+.fx-ls{display:flex;flex-direction:column}.fx-l{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:10px 0;border-top:1px solid var(--line)}.fx-ls .fx-l:first-child{border-top:0}
+.fx-l>div{display:flex;flex-direction:column;gap:2px;min-width:0}
+.seg{display:flex;gap:6px;flex-wrap:wrap}.seg label{flex:1;min-width:90px}.seg input{position:absolute;opacity:0}.seg span{display:block;text-align:center;padding:9px 6px;border:1px solid var(--line);border-radius:10px;font-weight:600;cursor:pointer}
+.seg input:checked+span{background:var(--brand);border-color:var(--brand);color:#fff}.seg input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}
 .ag-card{display:flex;gap:12px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px;box-shadow:var(--shadow)}
 .ag-d{width:54px;flex:none;text-align:center;border-radius:10px;background:var(--brand-soft);color:var(--brand);padding:6px 0;display:flex;flex-direction:column;line-height:1.15}
 .ag-d b{font-size:20px;font-family:var(--f-display)}.ag-d span{font-size:10.5px;text-transform:uppercase;font-weight:700;letter-spacing:.04em}
@@ -538,6 +561,7 @@ const NAVI={
   home:'<path d="M3 11l9-7 9 7"/><path d="M5 10v10h5v-6h4v6h5V10"/>',
   agenda:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M8 14h3v3H8z"/>',
   garantias:'<path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/>',
+  impostos:'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h3"/>',
   maodeobra:'<path d="M14.5 5.5a4 4 0 0 0 4.9 4.9L11 18.8a2.1 2.1 0 0 1-3-3l8.4-8.4"/><path d="M14.5 5.5l2-2"/>',
   inicio:'<path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/><path d="M10 12h5M10 15h5M10 18h3"/>',
   catalogo:'<rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/>',
@@ -779,11 +803,11 @@ function confirmSheet(title,msg,okLabel,onOk){
 }
 
 /* ---------- Navegação ---------- */
-const TABS=[['home','Início'],['inicio','Orçamentos'],['agenda','Agenda'],['garantias','Garantias'],['catalogo','Catálogo'],['maodeobra','Mão de obra'],['clientes','Clientes']];
+const TABS=[['home','Início'],['inicio','Orçamentos'],['agenda','Agenda'],['garantias','Garantias'],['catalogo','Catálogo'],['maodeobra','Mão de obra'],['clientes','Clientes'],['impostos','Impostos']];
 function renderNav(){
   const cur=['editor','proposta'].includes(view.name)?'inicio':view.name==='os'?'agenda':view.name;
-  document.getElementById('toptabs').innerHTML=TABS.map(([k,l])=>`<button data-nav="${k}" ${cur===k?'aria-current="page"':''}>${l}</button>`).join('');
-  document.getElementById('bottomnav').innerHTML=TABS.map(([k,l])=>`<button data-nav="${k}" ${cur===k?'aria-current="page"':''}>${svg(NAVI[k])}${l}</button>`).join('');
+  document.getElementById('toptabs').innerHTML=TABS.map(([k,l])=>`<button data-nav="${k}" ${k==='impostos'?'class="internal"':''} ${cur===k?'aria-current="page"':''}>${l}</button>`).join('');
+  document.getElementById('bottomnav').innerHTML=TABS.map(([k,l])=>`<button data-nav="${k}" ${k==='impostos'?'class="internal"':''} ${cur===k?'aria-current="page"':''}>${svg(NAVI[k])}${l}</button>`).join('');
 }
 function go(name,extra={}){
   if(view.name==='editor'&&name!=='editor'&&draft&&draft._dirty&&!extra.force){
@@ -802,7 +826,7 @@ function render(fromSnap){
   if(fromSnap&&view.name==='editor'){renderEditorParts();return}
   const active=document.activeElement&&document.activeElement.id;
   const pos=document.activeElement&&document.activeElement.selectionStart;
-  ({home:vHome,inicio:vInicio,catalogo:vCatalogo,maodeobra:vMaoDeObra,clientes:vClientes,ajustes:vAjustes,editor:vEditor,proposta:vProposta,agenda:vAgenda,os:vOS,garantias:vGarantias}[view.name]||vHome)(app);
+  ({home:vHome,inicio:vInicio,catalogo:vCatalogo,maodeobra:vMaoDeObra,clientes:vClientes,ajustes:vAjustes,editor:vEditor,proposta:vProposta,agenda:vAgenda,os:vOS,garantias:vGarantias,impostos:vImpostos}[view.name]||vHome)(app);
   if(active){const el=document.getElementById(active);if(el&&el.tagName==='INPUT'&&el.type==='search'){el.focus();try{el.setSelectionRange(pos,pos)}catch(e){}}}
 }
 
@@ -849,6 +873,7 @@ function vHome(app){
   if(antigos.length)upd.push(`<button class="up-i internal" data-nav="catalogo"><span class="up-dot warn"></span><span><b>${antigos.length} preço${antigos.length===1?'':'s'} com mais de 30 dias</b><span class="hint">${esc(antigos.slice(0,3).map(p=>p.nome).join(', '))}${antigos.length>3?'…':''}. Peça uma cotação nova.</span></span></button>`);
   if(semLoja.length)upd.push(`<button class="up-i internal" data-nav="catalogo"><span class="up-dot muted"></span><span><b>${semLoja.length} produto${semLoja.length===1?'':'s'} sem loja cadastrada</b><span class="hint">Cadastre onde comprar para comparar preços.</span></span></button>`);
   recentes.forEach(p=>{const ef=fornEf(p);upd.push(`<button class="up-i internal" data-edit-prod="${p.id}"><span class="up-dot brand"></span><span><b>Preço atualizado: ${esc(p.nome)}</b><span class="hint">${money(p.custo)}${ef?` na ${esc(ef.f.nome)}`:''} · ${fmtDate(dataPreco(p))}</span></span></button>`)});
+  avisosFiscais().forEach(a=>{const h=`<button class="up-i internal" data-nav="impostos"><span class="up-dot ${a.cls}"></span><span><b>${esc(a.t)}</b><span class="hint">${esc(a.h)}</span></span></button>`;if(a.cls==='warn')upd.unshift(h);else upd.push(h)});
   const ult=[...os].sort((a,b)=>(b.criadoEm||'').localeCompare(a.criadoEm||'')).slice(0,3);
   const tile=(nav,icon,label,cls='')=>`<button class="tile ${cls}" ${nav}>${svg(icon)}<span>${label}</span></button>`;
   app.innerHTML=`
@@ -2589,6 +2614,223 @@ function vAgenda(app){
   app.querySelectorAll('[data-ag-wa]').forEach(b=>b.onclick=()=>{const o=pega(b.dataset.agWa);mensagemCliente(o,'Confirmar instalação',textoAgenda(o))});
   app.querySelectorAll('[data-ag-ok]').forEach(b=>b.onclick=()=>concluirOS(pega(b.dataset.agOk)));
   app.querySelectorAll('[data-ag-novo]').forEach(b=>b.onclick=()=>agendar(pega(b.dataset.agNovo)));
+}
+/* ---------- Impostos ---------- */
+// Valores e prazos de referência. O valor certo de cada guia é sempre o do PGMEI.
+const SAL_MIN={2019:998,2020:1045,2021:1100,2022:1212,2023:1302,2024:1412,2025:1518,2026:1621};
+const salMin=a=>{const ks=Object.keys(SAL_MIN).map(Number).filter(x=>x<=a);return SAL_MIN[ks.length?Math.max(...ks):2019]};
+const MEI_ATIV={serv:['Serviços (ISS R$ 5)',5,0],com:['Comércio ou indústria (ICMS R$ 1)',0,1],ambos:['Comércio e serviços (R$ 6)',5,1]};
+const REGIMES={mei:'MEI',simples:'Simples Nacional (ME/EPP)',outro:'Outro regime'};
+const MEI_LIMITE=81000;
+const FX_LINK={
+  pgmei:'https://www8.receita.fazenda.gov.br/SimplesNacional/Aplicacoes/ATSPO/pgmei.app/Identificacao',
+  dasn:'https://www8.receita.fazenda.gov.br/SimplesNacional/Aplicacoes/ATSPO/dasnsimei.app/Identificacao',
+  simei:'https://www8.receita.fazenda.gov.br/SimplesNacional/Servicos/Grupo.aspx?grp=t&area=2',
+  simples:'https://www8.receita.fazenda.gov.br/SimplesNacional/',
+  regularize:'https://www.regularize.pgfn.gov.br/',
+  ecac:'https://cav.receita.fazenda.gov.br/autenticacao/login',
+  cartao:'https://solucoes.receita.fazenda.gov.br/servicos/cnpjreva/cnpjreva_solicitacao.asp',
+  irpf:'https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda',
+  govbr:'https://www.gov.br/governodigital/pt-br/conta-gov-br',
+};
+const fiscal=()=>{const f=S.empresa.fiscal||{};return {regime:'mei',ativ:'serv',titular:{},...f,das:{...(f.das||{})},anual:{...(f.anual||{})},irpf:{...(f.irpf||{})}}};
+async function salvarFiscal(m){const f={...fiscal(),...m};S.empresa={...S.empresa,fiscal:f};await store.saveEmpresa(S.empresa);render()}
+const ymHoje=()=>hojeISO().slice(0,7);
+const ymMais=(ym,n)=>{const [a,m]=ym.split('-').map(Number),d=new Date(a,m-1+n,1);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')};
+const ymTxt=ym=>{const [a,m]=ym.split('-').map(Number);return cap(new Date(a,m-1,15).toLocaleDateString('pt-BR',{month:'short'}).replace('.',''))+'/'+a};
+// A guia do mês vence no dia 20 do mês seguinte (fim de semana passa para segunda).
+function venceGuia(ym){const [a,m]=ym.split('-').map(Number),d=new Date(a,m,20,12);while(d.getDay()===0||d.getDay()===6)d.setDate(d.getDate()+1);return isoDia(d)}
+// Recebido pelo app (pagamentos registrados), separado em material e mão de obra.
+function receitas(prefixo){let total=0,serv=0,com=0,n=0;
+  S.orcamentos.forEach(o=>{const p=o.pgto;if(!p||!String(p.data||'').startsWith(prefixo))return;const v=num(p.valor),t=calc(o),pm=t.sub>0?t.mo/t.sub:1;total+=v;serv+=v*pm;com+=v*(1-pm);n++});
+  return {total,serv,com,n}}
+function valorGuia(ym,f){const a=+ym.slice(0,4);
+  if(f.regime==='mei'){const at=MEI_ATIV[f.ativ]||MEI_ATIV.serv;return Math.round(salMin(a)*5)/100+at[1]+at[2]}
+  return Math.round(receitas(ym).total*num(S.empresa.imposto))/100}
+function competencias(f){const fim=ymHoje();if(!f.inicio||f.regime==='outro')return [];let ym=f.inicio.slice(0,7);if(ym>fim)return [];const out=[];while(ym<=fim&&out.length<240){out.push(ym);ym=ymMais(ym,1)}return out}
+function guias(f){const hoje=hojeISO();return competencias(f).map(ym=>{const r=f.das[ym]||{},vence=venceGuia(ym),v=valorGuia(ym,f),st=r.st||'aberto',atr=st==='aberto'&&vence<hoje,dias=atr?diasDesde(vence+'T12:00:00'):0;
+  return {ym,vence,valor:v,st,r,atr,multa:atr?v*Math.min(20,0.33*dias)/100:0}})}
+// Declaração anual: DASN-SIMEI (MEI, até 31/05) ou DEFIS (Simples, até 31/03), do ano anterior.
+const anualNome=f=>f.regime==='mei'?'DASN-SIMEI':'DEFIS';
+const anualPrazo=(f,ano)=>(ano+1)+(f.regime==='mei'?'-05-31':'-03-31');
+function anuais(f){if(!f.inicio||f.regime==='outro')return [];const a0=+f.inicio.slice(0,4),hoje=hojeISO(),out=[];for(let a=a0;a<=+hoje.slice(0,4)-1;a++){const r=f.anual[a]||{},st=r.st||'pendente';out.push({ano:a,st,r,prazo:anualPrazo(f,a),atr:st==='pendente'&&anualPrazo(f,a)<hoje})}return out}
+// IR pessoa física: a declaração de cada ano é entregue até o fim de maio do ano seguinte.
+function irpfs(f){const hoje=hojeISO(),ah=+hoje.slice(0,4),a0=Math.max(f.inicio?+f.inicio.slice(0,4):ah-5,ah-5),out=[];
+  for(let a=a0;a<=ah-1;a++){const r=f.irpf[a]||{},st=r.st||'pendente';out.push({ano:a,st,r,prazo:(a+1)+'-05-31',atr:st==='pendente'&&(a+1)+'-05-31'<hoje})}return out}
+function resumoFiscal(f){const gs=guias(f),atr=gs.filter(g=>g.atr),prox=gs.find(g=>g.st==='aberto'&&!g.atr),an=anuais(f).filter(x=>x.st==='pendente'),ir=irpfs(f).filter(x=>x.st==='pendente');
+  return {gs,atr,prox,an,ir,devido:atr.reduce((t,g)=>t+g.valor,0),multa:atr.reduce((t,g)=>t+g.multa,0)}}
+function avisosFiscais(){const f=fiscal();if(f.regime==='outro')return [];
+  if(!f.inicio)return [{cls:'muted',t:'Configure a aba Impostos',h:'Consulte o CNPJ para o app acompanhar as guias e declarações.'}];
+  const r=resumoFiscal(f),out=[],hoje=hojeISO();
+  if(r.atr.length)out.push({cls:'warn',t:`${r.atr.length} guia${r.atr.length>1?'s':''} de imposto em atraso`,h:`Cerca de ${money(r.devido+r.multa)} com multa, fora juros. Veja o passo a passo para regularizar.`});
+  if(r.prox){const d=diasAte(r.prox.vence);if(d<=10)out.push({cls:d<=3?'warn':'info',t:`Guia de ${ymTxt(r.prox.ym)} vence ${d===0?'hoje':d===1?'amanhã':'em '+dataBR(r.prox.vence)}`,h:`${f.regime==='mei'?'DAS do MEI':'DAS do Simples'} · cerca de ${money(r.prox.valor)}`})}
+  if(r.an.length)out.push({cls:'warn',t:`${anualNome(f)} pendente: ${r.an.map(x=>x.ano).join(', ')}`,h:'Declaração anual da empresa. Sem ela não dá para parcelar as guias desses anos.'});
+  const irAtual=r.ir.find(x=>x.ano===+hoje.slice(0,4)-1);if(r.ir.some(x=>x.atr))out.push({cls:'warn',t:`Imposto de Renda pendente: ${r.ir.filter(x=>x.atr).map(x=>x.ano+1).join(', ')}`,h:'Declaração da pessoa física (seu CPF).'});
+  else if(irAtual&&hoje.slice(5,7)>='03'&&hoje.slice(5,7)<='05')out.push({cls:'info',t:`Imposto de Renda ${irAtual.ano+1}: entregar até o fim de maio`,h:'Declaração da pessoa física (seu CPF).'});
+  return out}
+// Dados públicos do CNPJ (Receita Federal) pela BrasilAPI; se ela falhar, pela Minha Receita.
+async function consultaCNPJ(cnpj){const d=soDig(cnpj);if(d.length!==14)throw new Error('formato');let ult;
+  for(const u of [`https://brasilapi.com.br/api/cnpj/v1/${d}`,`https://minhareceita.org/${d}`]){
+    try{const r=await fetch(u);if(r.status===404||r.status===400)throw new Error('naoachou');if(!r.ok)throw new Error('rede');const j=await r.json();if(!j||!j.cnpj&&!j.razao_social)throw new Error('naoachou');return j}catch(e){ult=e;if(e.message==='naoachou')break}}
+  throw ult}
+function resumoCNPJ(j){const sim=v=>v===true||v==='S'||v==='Sim';
+  return {cnpj:soDig(j.cnpj),razao:j.razao_social||'',fantasia:j.nome_fantasia||'',situacao:j.descricao_situacao_cadastral||j.situacao_cadastral||'',dataSituacao:j.data_situacao_cadastral||'',
+    abertura:j.data_inicio_atividade||'',porte:j.porte||j.descricao_porte||'',natureza:j.natureza_juridica||'',
+    cnae:[j.cnae_fiscal,j.cnae_fiscal_descricao].filter(Boolean).join(' · '),secundarios:(j.cnaes_secundarios||[]).filter(c=>c&&c.codigo).map(c=>c.codigo+' · '+(c.descricao||'')),
+    mei:sim(j.opcao_pelo_mei),meiDesde:j.data_opcao_pelo_mei||'',meiFim:j.data_exclusao_do_mei||'',simples:sim(j.opcao_pelo_simples),simplesDesde:j.data_opcao_pelo_simples||'',simplesFim:j.data_exclusao_do_simples||'',
+    endereco:[[j.descricao_tipo_de_logradouro,j.logradouro].filter(Boolean).join(' '),j.numero,j.bairro,[j.municipio,j.uf].filter(Boolean).join('/')].filter(Boolean).join(', '),em:new Date().toISOString()}}
+const fmtCNPJ=v=>{const d=soDig(v);return d.length===14?d.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/,'$1.$2.$3/$4-$5'):v};
+const fmtCPF=v=>{const d=soDig(v);return d.length===11?d.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/,'$1.$2.$3-$4'):v};
+// Lembretes que repetem sozinhos no calendário do celular.
+function lembretesFiscais(f){const hoje=new Date(),a=hoje.getFullYear(),m=hoje.getMonth(),dia=(y,mm,d)=>isoDia(new Date(y,mm,d)).replace(/-/g,'');
+  const mei=f.regime==='mei',prox15=dia(a,hoje.getDate()>15?m+1:m,15),anual=mei?[4,2]:[2,2],an=dia(hoje>new Date(a,anual[0],anual[1])?a+1:a,anual[0],anual[1]),ir=dia(hoje>new Date(a,3,1)?a+1:a,3,1);
+  return [
+    {t:mei?'Pagar DAS do MEI (vence dia 20)':'Pagar DAS do Simples (vence dia 20)',d:'Emitir e pagar a guia do mês passado: '+(mei?FX_LINK.pgmei:FX_LINK.simples),ini:prox15,rr:'RRULE:FREQ=MONTHLY;BYMONTHDAY=15'},
+    {t:mei?'Entregar DASN-SIMEI (até 31 de maio)':'Entregar DEFIS (até 31 de março)',d:'Declaração anual da empresa sobre o ano passado: '+(mei?FX_LINK.dasn:FX_LINK.simples),ini:an,rr:'RRULE:FREQ=YEARLY'},
+    {t:'Declarar Imposto de Renda pessoa física (até o fim de maio)',d:'Declaração do CPF sobre o ano passado: '+FX_LINK.irpf,ini:ir,rr:'RRULE:FREQ=YEARLY'}]}
+const proxDia=s=>{const d=new Date(+s.slice(0,4),+s.slice(4,6)-1,+s.slice(6,8)+1);return isoDia(d).replace(/-/g,'')};
+const gcalURL=l=>'https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent(l.t)+'&details='+encodeURIComponent(l.d)+'&dates='+l.ini+'/'+proxDia(l.ini)+'&recur='+encodeURIComponent(l.rr);
+function icsFiscal(f){const z=s=>String(s).replace(/[\\,;]/g,m=>'\\'+m),agora=new Date().toISOString().replace(/[-:]/g,'').slice(0,15)+'Z';
+  return ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//DaylinTech//Impostos//PT','CALSCALE:GREGORIAN',...lembretesFiscais(f).flatMap((l,i)=>['BEGIN:VEVENT','UID:daylintech-imposto-'+i+'@daylintech','DTSTAMP:'+agora,'DTSTART;VALUE=DATE:'+l.ini,'DTEND;VALUE=DATE:'+proxDia(l.ini),l.rr,'SUMMARY:'+z(l.t),'DESCRIPTION:'+z(l.d),'BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+z(l.t),'TRIGGER:PT9H','END:VALARM','END:VEVENT']),'END:VCALENDAR'].join('\r\n')}
+function textoFiscal(f){const r=resumoFiscal(f),c=f.consulta||{},anos=[...new Set(r.gs.map(g=>g.ym.slice(0,4)))];
+  const porAno=anos.map(a=>{const x=r.atr.filter(g=>g.ym.startsWith(a));return x.length?`${a}: ${x.length} (${x.map(g=>ymTxt(g.ym).split('/')[0]).join(', ')})`:''}).filter(Boolean);
+  return [`*Situação fiscal — ${S.empresa.nome||'DaylinTech'}*`,
+    `CNPJ: ${fmtCNPJ(c.cnpj||S.empresa.cnpj||'')||'não informado'}${c.situacao?` (${c.situacao})`:''}`,
+    `Regime: ${REGIMES[f.regime]}${f.inicio?` desde ${ymTxt(f.inicio.slice(0,7))}`:''}${c.cnae?`\nAtividade principal: ${c.cnae}`:''}`,
+    `Guias em atraso: ${r.atr.length?`${r.atr.length}, cerca de ${money(r.devido)} (${money(r.devido+r.multa)} com multa, fora juros)`:'nenhuma marcada'}`,...porAno.map(x=>'• '+x),
+    `${anualNome(f)} pendente: ${r.an.length?r.an.map(x=>x.ano).join(', '):'nenhuma'}`,
+    `Imposto de Renda (CPF) pendente: ${r.ir.length?r.ir.map(x=>x.ano+1).join(', '):'nenhum'}`,
+    `Recebido pelo app: ${[...new Set(anuais(f).map(x=>x.ano).concat([+hojeISO().slice(0,4)]))].map(a=>`${a} ${money(receitas(String(a)).total)}`).join(' · ')}`,
+    '','Preciso de orientação para regularizar e manter tudo em dia.'].join('\n')}
+function guiaSheet(g,f){const v=g.valor,st=g.st;
+  openSheet(`Guia de ${ymTxt(g.ym)}`,`
+    <p style="margin:0">Vence em <b>${dataBR(g.vence)}</b> · cerca de <b>${money(v)}</b>${g.atr?`<br><span style="color:var(--bad)">Em atraso: cerca de ${money(v+g.multa)} com multa, mais juros (Selic).</span>`:''}</p>
+    <div class="seg" role="radiogroup" aria-label="Situação da guia">${[['pago','Paga'],['parcelado','Parcelada'],['aberto','Em aberto']].map(([k,l])=>`<label><input type="radio" name="g_st" value="${k}" ${st===k?'checked':''}><span>${l}</span></label>`).join('')}</div>
+    <div class="form" id="g_pg" ${st==='pago'?'':'hidden'}>
+      <div class="field"><label for="g_dt">Pago em</label><input id="g_dt" type="date" value="${esc(g.r.data||hojeISO())}"></div>
+      <div class="field"><label for="g_v">Valor pago (R$)</label><input id="g_v" inputmode="decimal" value="${esc(String(g.r.valor!=null?g.r.valor:'').replace('.',','))}" placeholder="${esc(String(v.toFixed(2)).replace('.',','))}"></div>
+    </div>
+    <p class="note" style="margin:0">O valor certo, com multa e juros do dia, aparece quando você emite a guia no ${f.regime==='mei'?'PGMEI':'Portal do Simples Nacional'}.</p>
+    <a class="btn" href="${f.regime==='mei'?FX_LINK.pgmei:FX_LINK.simples}" target="_blank" rel="noopener">${f.regime==='mei'?'Emitir guia no PGMEI':'Abrir Portal do Simples Nacional'}</a>`,
+    `<button class="btn" data-act="close">Cancelar</button><button class="btn primary" id="g_ok">Salvar</button>`,L=>{
+      const $=id=>L.querySelector('#'+id),sel=()=>L.querySelector('input[name=g_st]:checked').value;
+      L.querySelectorAll('input[name=g_st]').forEach(r=>r.onchange=()=>{$('g_pg').hidden=sel()!=='pago'});
+      $('g_ok').onclick=async()=>{const s=sel(),das={...f.das};if(s==='aberto')delete das[g.ym];else das[g.ym]={st:s,...(s==='pago'?{data:$('g_dt').value,valor:$('g_v').value.trim()?num($('g_v').value):null}:{})};
+        try{await salvarFiscal({das});closeSheet();toast('Guia atualizada')}catch(e){toast('Não foi possível salvar. Tente de novo.')}}})}
+function vImpostos(app){
+  const f=fiscal(),c=f.consulta,t=f.titular||{},mei=f.regime==='mei',r=resumoFiscal(f),hoje=hojeISO(),ano=+hoje.slice(0,4);
+  const an=anuais(f),ir=irpfs(f),rAno=receitas(String(ano));
+  const sitCls=s=>/ATIVA/i.test(s)&&!/INAPTA/i.test(s)?'ok':'bad';
+  const anos=[...new Set(r.gs.map(g=>g.ym.slice(0,4)))].reverse();
+  const meses=anos.map(a=>{const gs=r.gs.filter(g=>g.ym.startsWith(a)),ab=gs.filter(g=>g.atr).length;
+    return `<div class="fx-ano"><div class="spread" style="align-items:center"><b>${a}</b><span class="hint">${ab?`<span style="color:var(--bad)">${ab} em atraso</span>`:gs.every(g=>g.st!=='aberto'||!g.atr)?'em dia':''}</span>${ab?`<button class="linkbtn" data-fx-ano="${a}">Marcar todas como pagas</button>`:''}</div>
+      <div class="fx-grid">${gs.map(g=>`<button class="fx-m ${g.st==='aberto'?(g.atr?'atr':'abe'):g.st}" data-fx-g="${g.ym}" aria-label="Guia de ${ymTxt(g.ym)}: ${g.st==='pago'?'paga':g.st==='parcelado'?'parcelada':g.atr?'em atraso':'a vencer'}">${ymTxt(g.ym).split('/')[0]}<span>${g.st==='pago'?'paga':g.st==='parcelado'?'parcel.':g.atr?'atraso':'a vencer'}</span></button>`).join('')}</div></div>`}).join('');
+  const lin=(x,tipo,nome)=>`<div class="fx-l"><div><b>${nome} ${tipo==='irpf'?x.ano+1:x.ano}</b><span class="hint">${tipo==='irpf'?`Sobre o ano de ${x.ano} · `:''}${x.st==='entregue'?`Entregue${x.r.data?' em '+dataBR(x.r.data):''}`:x.st==='nao'?'Não precisa entregar':x.atr?`<span style="color:var(--bad)">Atrasada · prazo era ${dataBR(x.prazo)}</span>`:`Prazo: ${dataBR(x.prazo)}`}${tipo==='anual'?` · recebido pelo app: ${money(receitas(String(x.ano)).total)}`:''}</span></div>
+    <select class="btn sm" data-fx-${tipo}="${x.ano}" aria-label="${nome} ${tipo==='irpf'?x.ano+1:x.ano}">${[['pendente','Pendente'],['entregue','Entregue'],...(tipo==='irpf'?[['nao','Não precisa']]:[])].map(([k,l])=>`<option value="${k}" ${x.st===k?'selected':''}>${l}</option>`).join('')}</select></div>`;
+  const lim=f.inicio&&+f.inicio.slice(0,4)===ano?MEI_LIMITE/12*(13-+f.inicio.slice(5,7)):MEI_LIMITE,pl=Math.min(100,rAno.total/lim*100);
+  const passos=[
+    {ok:['prata','ouro'].includes(t.gov),t:'Ter a conta gov.br prata ou ouro',h:'É o login dos sites do governo. Prata ou ouro libera o e-CAC e a maioria dos serviços. Dá para subir de nível no app gov.br, com reconhecimento facial ou pelo banco.',a:[[FX_LINK.govbr,'Conta gov.br']]},
+    {ok:!!c,t:'Consultar o CNPJ',h:'O app puxa os dados públicos da Receita e descobre desde quando a empresa é MEI.',a:[]},
+    {ok:!!f.extratoEm,t:mei?'Ver o extrato de débitos no PGMEI':'Ver os débitos no Portal do Simples Nacional',h:mei?'No PGMEI, entre com o CNPJ e abra "Consulta Extrato/Pendências". Depois marque aqui embaixo os meses que já estão pagos.':'Peça ao contador o relatório de pendências ou consulte no e-CAC.',a:[[mei?FX_LINK.pgmei:FX_LINK.ecac,mei?'Abrir PGMEI':'Abrir e-CAC']],b:f.extratoEm?'':'Já conferi'},
+    {ok:!an.some(x=>x.st==='pendente'),t:`Entregar a ${anualNome(f)} dos anos que faltam`,h:mei?`Declaração anual do MEI: informa quanto a empresa faturou no ano. ${an.filter(x=>x.st==='pendente').length?'Faltam: '+an.filter(x=>x.st==='pendente').map(x=>x.ano).join(', ')+'. ':''}O app mostra quanto você recebeu em cada ano. Atrasada tem multa mínima de R$ 50 por ano.`:'Declaração anual do Simples. Normalmente o contador entrega.',a:[[mei?FX_LINK.dasn:FX_LINK.simples,mei?'Entregar DASN-SIMEI':'Portal do Simples']]},
+    {ok:!r.atr.length,t:'Pagar ou parcelar as guias atrasadas',h:`${r.atr.length?`São ${r.atr.length} guia${r.atr.length>1?'s':''}, cerca de ${money(r.devido+r.multa)} com multa, fora juros. `:''}Se não der para pagar tudo, peça o parcelamento (o ano precisa estar com a declaração entregue, e leva uns 5 dias úteis depois da entrega para liberar). Débitos que já foram para a Dívida Ativa se negociam no Regularize, que costuma ter desconto.`,a:[[mei?FX_LINK.simei:FX_LINK.simples,'Parcelamento'],[FX_LINK.regularize,'Regularize (Dívida Ativa)']]},
+    {ok:!ir.some(x=>x.st==='pendente'),t:'Colocar em dia o Imposto de Renda do CPF',h:`É a declaração da pessoa física, separada da empresa. ${ir.filter(x=>x.st==='pendente').length?'Pendentes: '+ir.filter(x=>x.st==='pendente').map(x=>x.ano+1).join(', ')+'. ':''}Nem todo mundo é obrigado: depende do quanto você recebeu e dos seus bens. Na dúvida, confirme com um contador. A multa por atraso começa em R$ 165,74.`,a:[[FX_LINK.irpf,'Meu Imposto de Renda']]},
+    {ok:!!f.lembretes,t:'Ligar os lembretes no celular',h:'Todo dia 15 o celular avisa para pagar a guia, e uma vez por ano lembra das declarações.',a:[],b:'Lembretes'}];
+  const feitos=passos.filter(p=>p.ok).length;
+  app.innerHTML=`
+  <div class="spread"><div><div class="eyebrow">${REGIMES[f.regime]}${c&&c.situacao?' · '+esc(c.situacao):''}</div><h1 class="h1">Impostos</h1></div><button class="btn" id="fx_res">${svg(UI.copy)}Copiar resumo</button></div>
+  <div class="fx-cards">
+    <div class="fx-card ${r.atr.length?'bad':'ok'}"><span>Guias em atraso</span><b>${r.atr.length}</b><span>${r.atr.length?`≈ ${money(r.devido+r.multa)} com multa`:f.inicio?'Nenhuma marcada':'Consulte o CNPJ'}</span></div>
+    <div class="fx-card"><span>Próxima guia</span><b>${r.prox?dataBR(r.prox.vence).slice(0,5):'—'}</b><span>${r.prox?`${ymTxt(r.prox.ym)} · ≈ ${money(r.prox.valor)}`:'—'}</span></div>
+    <div class="fx-card ${r.an.length||r.ir.some(x=>x.atr)?'bad':'ok'}"><span>Declarações pendentes</span><b>${r.an.length+r.ir.length}</b><span>${[r.an.length?`${anualNome(f)} ${r.an.map(x=>x.ano).join(', ')}`:'',r.ir.length?`IR ${r.ir.map(x=>x.ano+1).join(', ')}`:''].filter(Boolean).join(' · ')||'Tudo entregue'}</span></div>
+    ${mei?`<div class="fx-card ${pl>=100?'bad':''}"><span>Faturamento ${ano}</span><b>${Math.round(pl)}%</b><span>${money(rAno.total)} de ${money(lim)} (limite do MEI)</span><i class="fx-bar"><i style="width:${pl}%"></i></i></div>`:''}
+  </div>
+  <section class="panel">
+    <div class="spread" style="align-items:center"><h2 class="h2">Passo a passo para ficar em dia</h2><span class="hint">${feitos} de ${passos.length} feitos</span></div>
+    <ol class="fx-pas">${passos.map((p,i)=>`<li class="${p.ok?'ok':''}"><span class="st-n">${p.ok?'✓':i+1}</span><div><b>${p.t}</b><span class="hint">${p.h}</span>${p.a.length||p.b?`<div class="row" style="gap:6px;margin-top:6px">${p.a.map(([u,l])=>`<a class="btn sm" href="${u}" target="_blank" rel="noopener">${l}</a>`).join('')}${p.b?`<button class="btn sm ${p.ok?'':'primary'}" data-fx-passo="${i}">${p.b}</button>`:''}</div>`:''}</div></li>`).join('')}</ol>
+    <p class="note" style="margin:0">Precisa de ajuda de graça? O Sebrae atende o MEI pelo 0800 570 0800 e ajuda a regularizar. Para um contador, toque em "Copiar resumo" e mande no WhatsApp.</p>
+  </section>
+  <section class="panel">
+    <div class="spread" style="align-items:center"><h2 class="h2">CNPJ</h2>${c?`<span class="hint">Consultado em ${fmtDate(c.em)}</span>`:''}</div>
+    <div class="row" style="gap:8px;flex-wrap:nowrap"><input id="fx_cnpj" value="${esc(fmtCNPJ(S.empresa.cnpj||(c&&c.cnpj)||''))}" inputmode="numeric" placeholder="00.000.000/0000-00" aria-label="CNPJ" style="flex:1;min-width:0"><button class="btn primary" id="fx_cons">${svg(UI.search)}Consultar</button></div>
+    ${c?`<dl class="fx-dl">
+      <div><dt>Razão social</dt><dd>${esc(c.razao)}${c.fantasia?` (${esc(c.fantasia)})`:''}</dd></div>
+      <div><dt>Situação</dt><dd><span class="pill fx-${sitCls(c.situacao)}">${esc(c.situacao||'—')}</span>${c.dataSituacao?` desde ${dataBR(c.dataSituacao)}`:''}</dd></div>
+      <div><dt>Aberta em</dt><dd>${dataBR(c.abertura)||'—'}</dd></div>
+      <div><dt>MEI</dt><dd>${c.mei?`Sim, desde ${dataBR(c.meiDesde)}`:c.meiFim?`Saiu em ${dataBR(c.meiFim)}`:'Não'}</dd></div>
+      <div><dt>Simples Nacional</dt><dd>${c.simples?`Sim${c.simplesDesde?`, desde ${dataBR(c.simplesDesde)}`:''}`:c.simplesFim?`Saiu em ${dataBR(c.simplesFim)}`:'Não'}</dd></div>
+      ${c.porte?`<div><dt>Porte</dt><dd>${esc(c.porte)}</dd></div>`:''}
+      <div class="full"><dt>Atividade principal</dt><dd>${esc(c.cnae||'—')}</dd></div>
+      ${c.secundarios&&c.secundarios.length?`<div class="full"><dt>Atividades secundárias</dt><dd>${c.secundarios.map(esc).join('<br>')}</dd></div>`:''}
+      ${c.endereco?`<div class="full"><dt>Endereço</dt><dd>${esc(c.endereco)}</dd></div>`:''}
+    </dl>${!sitCls(c.situacao).includes('ok')?`<p class="note" style="margin:0;color:var(--bad)">O CNPJ não está ativo. Isso costuma acontecer por falta de declarações. Entregue as declarações pendentes e consulte de novo.</p>`:''}`:'<p class="hint" style="margin:0">A consulta usa os dados públicos da Receita Federal (os mesmos do cartão CNPJ). Débitos não aparecem aqui: eles ficam no PGMEI, que pede o CNPJ e uma verificação de segurança.</p>'}
+    <div class="row" style="gap:6px"><a class="btn sm" href="${FX_LINK.cartao}" target="_blank" rel="noopener">Cartão CNPJ na Receita</a><a class="btn sm" href="${FX_LINK.ecac}" target="_blank" rel="noopener">e-CAC</a></div>
+  </section>
+  <section class="panel">
+    <h2 class="h2">Regime e guias do mês</h2>
+    <div class="form">
+      <div class="field"><label for="fx_reg">Regime</label><select id="fx_reg">${Object.entries(REGIMES).map(([k,l])=>`<option value="${k}" ${f.regime===k?'selected':''}>${l}</option>`).join('')}</select></div>
+      ${mei?`<div class="field"><label for="fx_ativ">Tipo de atividade</label><select id="fx_ativ">${Object.entries(MEI_ATIV).map(([k,[l]])=>`<option value="${k}" ${f.ativ===k?'selected':''}>${l}</option>`).join('')}</select><span class="hint">Muda alguns reais na guia. Confira no PGMEI.</span></div>`:''}
+      <div class="field"><label for="fx_ini">${mei?'MEI desde':'No Simples desde'}</label><input id="fx_ini" type="month" value="${esc((f.inicio||'').slice(0,7))}"><span class="hint">Preenche sozinho na consulta do CNPJ.</span></div>
+    </div>
+    ${f.regime==='outro'?'<p class="note" style="margin:0">Fora do MEI e do Simples, as guias e declarações dependem do regime da empresa. Converse com um contador.</p>':''}
+    ${f.regime!=='outro'&&!f.inicio?'<p class="note" style="margin:0">Informe desde quando a empresa está no regime (ou consulte o CNPJ) para o app listar as guias.</p>':''}
+    ${f.regime!=='outro'&&f.inicio?`<p class="hint" style="margin:0">Toque no mês para marcar a guia como paga ou parcelada. ${mei?`Guia do MEI em ${ano}: cerca de ${money(valorGuia(hoje.slice(0,7),f))} por mês.`:`Valor estimado: o que você recebeu no mês × ${fmtPct(S.empresa.imposto)} (imposto da aba Empresa).`}</p>
+    <div class="fx-anos">${meses}</div>
+    <div class="fx-leg"><i class="fx-m pago"></i>paga <i class="fx-m parcelado"></i>parcelada <i class="fx-m atr"></i>em atraso <i class="fx-m abe"></i>a vencer</div>`:''}
+  </section>
+  ${f.regime!=='outro'?`<section class="panel">
+    <h2 class="h2">Declarações</h2>
+    <div class="fx-ls">${an.length?an.slice().reverse().map(x=>lin(x,'anual',anualNome(f))).join(''):`<p class="hint" style="margin:0">A primeira ${anualNome(f)} será a de ${f.inicio?f.inicio.slice(0,4):ano}, entregue até ${f.inicio?dataBR(anualPrazo(f,+f.inicio.slice(0,4))):'o ano que vem'}.</p>`}</div>
+    <div class="fx-ls">${ir.slice().reverse().map(x=>lin(x,'irpf','Imposto de Renda')).join('')}</div>
+    ${mei?`<p class="hint" style="margin:0">Recebido pelo app em ${ano} até agora: ${money(rAno.total)} (${money(rAno.serv)} de mão de obra e ${money(rAno.com)} de material). Só conta o que foi registrado em "Pagamento". Na DASN-SIMEI, o valor do material entra como comércio se a sua atividade permitir; confirme com um contador.</p>`:''}
+  </section>`:''}
+  <section class="panel">
+    <h2 class="h2">Lembretes no celular</h2>
+    <p class="hint" style="margin:0">Cria avisos que se repetem sozinhos: todo dia 15 para pagar a guia, e uma vez por ano para as declarações.</p>
+    <div class="row" style="gap:6px">${lembretesFiscais(f).map((l,i)=>`<a class="btn sm" href="${esc(gcalURL(l))}" target="_blank" rel="noopener" data-fx-lemb="${i}">${['Guia do mês','Declaração anual','Imposto de Renda'][i]} no Google Agenda</a>`).join('')}<button class="btn sm" id="fx_ics">${svg(UI.dl)}Arquivo de agenda (iPhone)</button></div>
+  </section>
+  <section class="panel">
+    <h2 class="h2">Seu cadastro</h2>
+    <p class="hint" style="margin:0">Fica guardado só para você, junto com os dados da empresa. <b>Não anote aqui a senha do gov.br</b>: ninguém do governo pede a senha, e quem tem ela consegue mexer em tudo no seu nome.</p>
+    <div class="form">
+      <div class="field full"><label for="ft_nome">Nome completo</label><input id="ft_nome" value="${esc(t.nome||S.empresa.responsavel||'')}"></div>
+      <div class="field"><label for="ft_cpf">CPF</label><input id="ft_cpf" value="${esc(fmtCPF(t.cpf||''))}" inputmode="numeric"></div>
+      <div class="field"><label for="ft_nasc">Data de nascimento</label><input id="ft_nasc" type="date" value="${esc(t.nasc||'')}"></div>
+      <div class="field"><label for="ft_tit">Título de eleitor</label><input id="ft_tit" value="${esc(t.titulo||'')}" inputmode="numeric"><span class="hint">Alguns serviços da Receita pedem.</span></div>
+      <div class="field"><label for="ft_gov">Nível da conta gov.br</label><select id="ft_gov">${[['','Não sei'],['bronze','Bronze'],['prata','Prata'],['ouro','Ouro']].map(([k,l])=>`<option value="${k}" ${(t.gov||'')===k?'selected':''}>${l}</option>`).join('')}</select><span class="hint">Aparece no app gov.br, em "Nível da conta".</span></div>
+      <div class="field"><label for="ft_email">E-mail do gov.br</label><input id="ft_email" value="${esc(t.email||'')}" inputmode="email"></div>
+      <div class="field"><label for="ft_tel">Celular do gov.br</label><input id="ft_tel" value="${esc(t.tel||'')}" inputmode="tel"></div>
+      <div class="field"><label for="ft_cont">Contador (nome)</label><input id="ft_cont" value="${esc(t.contador||'')}" placeholder="Se tiver"></div>
+      <div class="field"><label for="ft_ctel">Contador (WhatsApp)</label><input id="ft_ctel" value="${esc(t.contadorTel||'')}" inputmode="tel"></div>
+    </div>
+    <div class="row" style="justify-content:flex-end">${soDig(t.contadorTel).length>=10?`<button class="btn" id="ft_wa">Mandar resumo ao contador</button>`:''}<button class="btn primary" id="ft_save">Salvar cadastro</button></div>
+  </section>`;
+  const $=id=>app.querySelector('#'+id),salva=async(m,msg)=>{try{await salvarFiscal(m);if(msg)toast(msg)}catch(e){toast('Não foi possível salvar. Tente de novo.')}};
+  $('fx_res').onclick=()=>copyText(textoFiscal(f));
+  $('fx_cons').onclick=async()=>{const b=$('fx_cons'),v=$('fx_cnpj').value;if(soDig(v).length!==14){toast('Digite os 14 números do CNPJ.');return}
+    b.disabled=true;b.textContent='Consultando…';
+    try{const j=resumoCNPJ(await consultaCNPJ(v)),m={consulta:j};
+      if(!f.inicio){const d=j.mei?j.meiDesde:j.simples?j.simplesDesde:'';if(d)m.inicio=d.slice(0,7);else if(j.abertura)m.inicio=j.abertura.slice(0,7)}
+      if(!S.empresa.fiscal||!S.empresa.fiscal.regime)m.regime=j.mei?'mei':j.simples?'simples':'outro';
+      if(!soDig(S.empresa.cnpj))S.empresa={...S.empresa,cnpj:fmtCNPJ(j.cnpj)};
+      await salvarFiscal(m);toast('CNPJ consultado')}
+    catch(e){b.disabled=false;b.innerHTML=svg(UI.search)+'Consultar';toast(e.message==='naoachou'?'CNPJ não encontrado na Receita. Confira os números.':'Não foi possível consultar agora. Confira a internet e tente de novo.')}};
+  $('fx_reg').onchange=e=>salva({regime:e.target.value});
+  if($('fx_ativ'))$('fx_ativ').onchange=e=>salva({ativ:e.target.value});
+  $('fx_ini').onchange=e=>{if(e.target.value)salva({inicio:e.target.value})};
+  app.querySelectorAll('[data-fx-g]').forEach(b=>b.onclick=()=>guiaSheet(r.gs.find(g=>g.ym===b.dataset.fxG),f));
+  app.querySelectorAll('[data-fx-ano]').forEach(b=>b.onclick=()=>{const a=b.dataset.fxAno,gs=r.gs.filter(g=>g.ym.startsWith(a)&&g.atr);
+    confirmSheet(`Marcar ${a} como pago?`,`As ${gs.length} guias em atraso de ${a} vão ficar como pagas. Faça isso só se o extrato do ${mei?'PGMEI':'Simples'} mostrar que estão quitadas.`,'Marcar como pagas',()=>{const das={...f.das};gs.forEach(g=>das[g.ym]={st:'pago'});return salva({das},'Guias marcadas como pagas')})});
+  app.querySelectorAll('[data-fx-anual]').forEach(s=>s.onchange=()=>{const anual={...f.anual};anual[s.dataset.fxAnual]={st:s.value,...(s.value==='entregue'?{data:hojeISO()}:{})};salva({anual})});
+  app.querySelectorAll('[data-fx-irpf]').forEach(s=>s.onchange=()=>{const irpf={...f.irpf};irpf[s.dataset.fxIrpf]={st:s.value,...(s.value==='entregue'?{data:hojeISO()}:{})};salva({irpf})});
+  app.querySelectorAll('[data-fx-passo]').forEach(b=>b.onclick=()=>{const p=+b.dataset.fxPasso;if(p===2)salva({extratoEm:hojeISO()},'Anotado. Agora marque os meses pagos.');else app.querySelector('#fx_ics').scrollIntoView({behavior:'smooth',block:'center'})});
+  app.querySelectorAll('[data-fx-lemb]').forEach(a=>a.addEventListener('click',()=>{if(!f.lembretes)salvarFiscal({lembretes:hojeISO()}).catch(()=>{})}));
+  $('fx_ics').onclick=async()=>{if(await baixar('lembretes-impostos.ics',icsFiscal(f),'text/calendar;charset=utf-8')){toast('Abra o arquivo para colocar os lembretes na agenda.');if(!f.lembretes)salvarFiscal({lembretes:hojeISO()}).catch(()=>{})}};
+  const lerT=()=>({nome:$('ft_nome').value.trim(),cpf:soDig($('ft_cpf').value),nasc:$('ft_nasc').value,titulo:$('ft_tit').value.trim(),gov:$('ft_gov').value,email:$('ft_email').value.trim(),tel:$('ft_tel').value.trim(),contador:$('ft_cont').value.trim(),contadorTel:$('ft_ctel').value.trim()});
+  $('ft_save').onclick=()=>salva({titular:lerT()},'Cadastro salvo');
+  $('ft_gov').onchange=()=>salva({titular:lerT()});
+  if($('ft_wa'))$('ft_wa').onclick=()=>{let n=soDig(t.contadorTel);if(n.length<=11)n='55'+n;window.open('https://wa.me/'+n+'?text='+encodeURIComponent(textoFiscal(f)),'_blank','noopener')};
 }
 function vProposta(app){
   const o=S.orcamentos.find(x=>x.id===view.id);
