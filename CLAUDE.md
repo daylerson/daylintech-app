@@ -92,7 +92,7 @@ O app foi feito como artefato do claude.ai e usa `window.claude.use(...)`. Fora 
 - OS avulsa: "Editar OS" (`agendar`) também edita tipo e motivo.
 
 ## Navegação
-- `NAV_MAIN` (Início, Orçamentos, Agenda, Financeiro, Catálogo, Mão de obra) fica na barra; o resto fica em "Mais" (`NAV_MAIS`, `abrirMais`, `data-act="mais"`). Quando a tela atual é do "Mais", o botão mostra o nome dela. Itens com 3º campo 1 são `internal` (somem no Modo cliente).
+- `NAV_MAIN` (Início, Orçamentos, Agenda, Financeiro, Catálogo) fica na barra; o resto fica em "Mais" (`NAV_MAIS`, `abrirMais`, `data-act="mais"`). Quando a tela atual é do "Mais", o botão mostra o nome dela. Itens com 3º campo 1 são `internal` (somem no Modo cliente).
 
 ## Aba Operacional (`vOperacional`: `vCarro` e `vCompras`)
 - Coleções novas: `veiculos`, `gastos` (do carro: tipo combustivel/manutencao/reforma/documento/seguro/multa/outro, `veiculoId`), `compras` (status pendente/comprado, prioridade urgente/normal/depois). Lista em `COLS`. O banco precisa do `supabase/financeiro.sql` (ou operacional.sql, mais antigo) para aceitar coleções novas; sem ele, `salvarOp` avisa. Depois do financeiro.sql, `docs.col` aceita qualquer nome `^[a-z_]{1,40}$`: coleção nova não precisa de SQL.

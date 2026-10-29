@@ -845,8 +845,8 @@ function confirmSheet(title,msg,okLabel,onOk){
 
 /* ---------- Navegação ---------- */
 const TABS=[['home','Início'],['inicio','Orçamentos'],['agenda','Agenda'],['garantias','Garantias'],['catalogo','Catálogo'],['maodeobra','Mão de obra'],['clientes','Clientes'],['impostos','Impostos'],['operacional','Operacional'],['ajustes','Empresa'],['financeiro','Financeiro']];
-const NAV_MAIN=['home','inicio','agenda','financeiro','catalogo','maodeobra'];
-const NAV_MAIS=[['clientes','Cadastro, endereço e histórico de cada cliente'],['garantias','Clientes na garantia e notas fiscais'],['operacional','Carro, combustível e lista de compras',1],['impostos','Guias, declarações e CNPJ',1],['ajustes','Dados, Pix, textos padrão e backup',1]];
+const NAV_MAIN=['home','inicio','agenda','financeiro','catalogo'];
+const NAV_MAIS=[['maodeobra','Serviços, preços e tempo de instalação'],['clientes','Cadastro, endereço e histórico de cada cliente'],['garantias','Clientes na garantia e notas fiscais'],['operacional','Carro, combustível e lista de compras',1],['impostos','Guias, declarações e CNPJ',1],['ajustes','Dados, Pix, textos padrão e backup',1]];
 const tabNome=k=>(TABS.find(t=>t[0]===k)||[k,k])[1];
 function abrirMais(){const cur=view.name;
   openSheet('Mais',`<div class="mais">${NAV_MAIS.map(([k,d,int])=>`<button class="mais-i ${int?'internal':''}" data-nav="${k}" ${cur===k?'aria-current="page"':''}>${svg(NAVI[k])}<span><b>${tabNome(k)}</b><span class="hint">${d}</span></span></button>`).join('')}</div>`)}
