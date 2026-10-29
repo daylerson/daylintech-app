@@ -107,3 +107,8 @@ O app foi feito como artefato do claude.ai e usa `window.claude.use(...)`. Fora 
 - Categorias `FIN_CATS`; `classificar()` grátis: mesmo CNPJ/fornecedor já usado → CNAE do CNPJ (`CNAE_CAT`) → palavras (`CAT_REGRAS`).
 - Importar nota (`importarNota`/`lerNota`): XML da NF-e (`xmlNota`), PDF (texto do DANFE + página 1 como foto), foto (QR Code via BarcodeDetector ou jsQR → chave de 44 dígitos; texto via Tesseract → `textoNota`). Consulta o CNPJ do emitente. Foto guardada no bucket os-fotos em `fin/` (`subirAnexos`). Nota de combustível/veículo pode ir direto para os gastos do carro.
 - Relatório do mês: `relatorioHTML` → PDF (`htmlPDF`, opção de incluir fotos das notas), planilha CSV (`;`, BOM) e "Enviar ao contador" (compartilhar ou WhatsApp do contador da aba Impostos).
+
+## Domínio próprio (planejado: app.daylintech.com.br)
+- O app não tem endereço fixo no código: links da proposta/OS usam `location.href`, o "esqueci a senha" usa `location.origin+location.pathname`, manifest e sw usam caminhos relativos.
+- Para ligar: DNS CNAME `app` → `daylerson.github.io`; depois commitar um arquivo `CNAME` na raiz com `app.daylintech.com.br` (Pages por branch lê esse arquivo) e marcar "Enforce HTTPS" em Settings → Pages. Não criar o CNAME antes do DNS existir: o github.io passaria a redirecionar para um endereço que não abre.
+- No Supabase (Authentication → URL Configuration): Site URL = `https://app.daylintech.com.br/` e incluir `https://app.daylintech.com.br/**` em Redirect URLs (manter o github.io também).
