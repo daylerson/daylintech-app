@@ -12,7 +12,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="DaylinTech">
 </head>
-<body>
+<body spellcheck="true">
 <title>DaylinTech Orçamentos</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -289,6 +289,10 @@ body.apresentacao .internal{display:none!important}
 .pix-box{flex-direction:row;align-items:center;gap:16px;padding:12px}
 .st-b{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
 .ag-list{display:flex;flex-direction:column;gap:10px}
+.corr-b{align-self:flex-start;font-size:12.5px;padding:2px 0}
+.corr{display:flex;flex-direction:column;gap:8px;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.corr-i{display:flex;flex-direction:column;gap:2px;border-top:1px solid var(--line);padding-top:8px}.corr-i s{color:var(--bad)}.corr-i .linkbtn{align-self:flex-start;font-size:12px;padding:0}
+.corr-s{border:1px solid var(--ok);background:var(--ok-soft);color:var(--ok);border-radius:999px;padding:2px 10px;font:inherit;font-weight:700;cursor:pointer;margin:2px 0}
 .fx-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
 .fx-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:12px 14px;display:flex;flex-direction:column;gap:2px;min-width:0}
 .fx-card>span{font-size:12.5px;color:var(--muted)}.fx-card>span:first-child{font-weight:700;text-transform:uppercase;letter-spacing:.04em;font-size:11px}
@@ -2255,9 +2259,12 @@ function prazoLimite(o){
 }
 function agendar(o){
   const cur=S.orcamentos.find(x=>x.id===o.id)||o,g=cur.agenda||{},c=S.clientes.find(x=>x.id===cur.clienteId)||{},lim=prazoLimite(cur),t=calc(cur);
-  openSheet(cur.agenda?'Editar agendamento':'Agendar instalação',`
+  const avulsa=cur.tipo==='os';
+  openSheet(avulsa?'Editar OS':cur.agenda?'Editar agendamento':'Agendar instalação',`
     ${lim?`<p class="note" style="margin-top:0">Prazo da proposta: <b>até ${esc(diaTxt(lim.iso,true))}</b> (${lim.n} dia${lim.n>1?'s':''}${lim.uteis?' úteis':''} após a aprovação).</p>`:''}
     <div class="form">
+      ${avulsa?`<div class="field full"><label for="ag_tipo">Tipo</label><select id="ag_tipo">${Object.entries(OS_TIPOS).map(([k,l])=>`<option value="${k}" ${cur.osTipo===k?'selected':''}>${l}</option>`).join('')}</select></div>
+      <div class="field full"><label for="ag_mot">Motivo / problema relatado</label><textarea id="ag_mot">${esc(cur.motivo||'')}</textarea></div>`:''}
       <div class="field"><label for="ag_data">Data</label><input id="ag_data" type="date" value="${esc(g.data||proxUtil())}"></div>
       <div class="field"><label for="ag_hora">Horário</label><input id="ag_hora" type="time" value="${esc(g.hora||'08:00')}"></div>
       <div class="field full"><label for="ag_end">Endereço da instalação</label><input id="ag_end" value="${esc(g.endereco||endCliente(c))}"></div>
@@ -2273,7 +2280,8 @@ function agendar(o){
       $('ag_ok').onclick=async()=>{const data=$('ag_data').value;if(!data){toast('Escolha a data.');return}
         const ag={...g,data,hora:$('ag_hora').value,endereco:$('ag_end').value.trim(),tecnico:$('ag_tec').value.trim(),duracao:$('ag_dur').value.trim(),obs:$('ag_obs').value.trim(),atualizadoEm:new Date().toISOString()};
         const mudou=!cur.agenda||cur.agenda.data!==ag.data||cur.agenda.hora!==ag.hora;
-        try{await store.save('orcamentos',{...cur,agenda:ag,atualizadoEm:new Date().toISOString()});closeSheet();render();toast('Instalação agendada');
+        const extra=avulsa?{osTipo:$('ag_tipo').value,titulo:OS_TIPOS[$('ag_tipo').value],motivo:$('ag_mot').value.trim()}:{};
+        try{await store.save('orcamentos',{...cur,...extra,agenda:ag,atualizadoEm:new Date().toISOString()});closeSheet();render();toast(avulsa?'OS salva':'Instalação agendada');
           if(mudou)verOS(S.orcamentos.find(x=>x.id===cur.id)||{...cur,agenda:ag},true)}catch(e){toast('Não foi possível salvar. Tente de novo.')}};
       if(cur.agenda)$('ag_del').onclick=async()=>{const n={...cur};delete n.agenda;try{await store.save('orcamentos',n);closeSheet();render();toast('Agendamento cancelado')}catch(e){toast('Não foi possível salvar.')}};
     });
@@ -2430,7 +2438,7 @@ function vOS(app){
   <div><div class="eyebrow">${o.tipo==='os'?esc(osTipoNome(o)):'Ordem de serviço'} · OS Nº ${nOrc(o.numero)}</div><h1 class="h1">${esc(c.nome)}</h1>${o.motivo?`<p style="margin:6px 0 0"><b>Motivo:</b> ${esc(o.motivo)}</p>`:''}
     <p class="muted" style="margin:6px 0 0">${esc(cap(diaTxt(g.data,true)))}${g.hora?` às ${esc(g.hora)}`:''}${g.endereco?` · ${esc(g.endereco)}`:''}</p>
     ${g.endereco?`<div class="row" style="gap:8px;margin-top:10px">${(e=>`<a class="btn sm" href="${esc(rotaURL(e))}" target="_blank" rel="noopener">Rota no Google Maps</a><a class="btn sm" href="${esc(rotaURL(e,'waze'))}" target="_blank" rel="noopener">Rota no Waze</a>`)([g.endereco,c.cep].filter(Boolean).join(', '))}</div>`:''}</div>
-  <section class="panel"><div class="spread" style="align-items:center"><h2 class="h2">Andamento</h2><button class="btn sm" id="ox_ed">Editar agendamento</button></div>
+  <section class="panel"><div class="spread" style="align-items:center"><h2 class="h2">Andamento</h2><button class="btn sm" id="ox_ed">${o.tipo==='os'?'Editar OS':'Editar agendamento'}</button></div>
     <div class="os-tempo"><div><span class="hint">Início</span><b>${g.inicio?hm(g.inicio):'—'}</b></div><div><span class="hint">Término</span><b>${g.fim?hm(g.fim):'—'}</b></div><div><span class="hint">${dur?'Duração':'Duração aproximada'}</span><b>${dur||esc(g.duracao||'—')}</b></div></div>
     <div class="row">${!g.inicio?`<button class="btn primary" id="os_ini">Iniciar serviço</button>`:!g.fim?`<button class="btn primary" id="os_fim">Finalizar serviço</button>`:''}${g.inicio?`<button class="btn ghost sm" id="os_hr">Corrigir horários</button>`:''}</div>
   </section>
@@ -2936,6 +2944,30 @@ document.addEventListener('input',e=>{
 document.addEventListener('change',e=>{
   if(e.target.dataset.qi!==undefined&&draft){const i=draft.itens[+e.target.dataset.qi];i.qtd=Math.max(0.01,num(e.target.value)||1);draft._dirty=true;renderEditorParts()}
 });
+
+/* Corretor de português: botão "Corrigir português" embaixo dos campos de texto (LanguageTool, grátis). */
+const CORR_URL='https://api.languagetool.org/v2/check';
+const corrigivel=el=>el&&!el.readOnly&&!el.disabled&&(el.tagName==='TEXTAREA'||el.tagName==='INPUT'&&(el.type==='text'||!el.getAttribute('type'))&&!el.getAttribute('inputmode')&&!el.closest('.row'))&&el.closest('.field');
+async function checarTexto(txt){const r=await fetch(CORR_URL,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({text:txt,language:'pt-BR'})});
+  if(!r.ok)throw new Error(r.status===429?'limite':'rede');return ((await r.json()).matches||[]).filter(m=>m.replacements&&m.replacements.length)}
+function aplicarCorr(el,trocas){let v=el.value;trocas.sort((a,b)=>b.offset-a.offset).forEach(t=>{v=v.slice(0,t.offset)+t.value+v.slice(t.offset+t.length)});el.value=v;el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}))}
+async function corrigir(el,box){const txt=el.value;if(!txt.trim()){toast('Escreva o texto primeiro.');return}
+  box.hidden=false;box.innerHTML='<span class="hint">Conferindo o português…</span>';
+  let ms;try{ms=await checarTexto(txt)}catch(e){box.innerHTML=`<span class="hint">${e.message==='limite'?'Muitas correções seguidas. Espere um minuto e tente de novo.':'Não foi possível conferir agora. Confira a internet.'}</span>`;return}
+  if(el.value!==txt){box.hidden=true;return}
+  if(!ms.length){box.innerHTML='<span class="hint" style="color:var(--ok)">✓ Nenhum erro encontrado.</span>';return}
+  const ignor=new Set(),mostra=()=>{const vis=ms.filter((m,i)=>!ignor.has(i));
+    if(!vis.length){box.hidden=true;return}
+    box.innerHTML=`<div class="spread" style="align-items:center"><b style="font-size:13px">${vis.length} sugest${vis.length>1?'ões':'ão'}</b><button type="button" class="btn sm primary" data-c-all>Corrigir tudo</button></div>`+
+      ms.map((m,i)=>ignor.has(i)?'':`<div class="corr-i"><span><s>${esc(txt.substr(m.offset,m.length))}</s> → ${m.replacements.slice(0,3).map((r,k)=>`<button type="button" class="corr-s" data-c="${i}:${k}">${esc(r.value)||'(apagar)'}</button>`).join(' ')}</span><span class="hint">${esc(m.message)}</span><button type="button" class="linkbtn" data-c-ign="${i}">Ignorar</button></div>`).join('');
+    box.querySelector('[data-c-all]').onclick=()=>{aplicarCorr(el,ms.filter((m,i)=>!ignor.has(i)).map(m=>({offset:m.offset,length:m.length,value:m.replacements[0].value})));box.hidden=true;toast('Texto corrigido')};
+    box.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{const [i,k]=b.dataset.c.split(':').map(Number),m=ms[i];aplicarCorr(el,[{offset:m.offset,length:m.length,value:m.replacements[k].value}]);corrigir(el,box)});
+    box.querySelectorAll('[data-c-ign]').forEach(b=>b.onclick=()=>{ignor.add(+b.dataset.cIgn);mostra()})};
+  mostra()}
+document.addEventListener('focusin',e=>{const el=e.target;if(!corrigivel(el)||el._corr)return;el._corr=1;
+  const bt=document.createElement('button'),box=document.createElement('div');bt.type='button';bt.className='linkbtn corr-b';bt.textContent='✓ Corrigir português';box.className='corr';box.hidden=true;
+  [bt,box].forEach(x=>x.addEventListener('mousedown',ev=>ev.preventDefault())); // o campo continua focado: não salva nem redesenha a tela no meio da correção
+  bt.onclick=()=>corrigir(el,box);el.after(bt,box)});
 
 /* Modo cliente */
 const pb=document.getElementById('presentBtn');

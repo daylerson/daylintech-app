@@ -85,3 +85,8 @@ O app foi feito como artefato do claude.ai e usa `window.claude.use(...)`. Fora 
 - Valor da guia MEI = 5% do salário mínimo do ano (`SAL_MIN`, atualizar todo janeiro) + ISS/ICMS (`MEI_ATIV`). Vence dia 20 do mês seguinte (`venceGuia`). Multa estimada 0,33%/dia até 20%, sem juros.
 - Avisos na página inicial: `avisosFiscais()`. Lembretes: links do Google Agenda com RRULE e arquivo .ics (`icsFiscal`).
 - A aba tem `class="internal"` (some no Modo cliente). A barra de baixo usa `grid-auto-flow:column`.
+
+## Corretor de português
+- `<body spellcheck="true">` liga o corretor do navegador/teclado em todos os campos.
+- Botão "✓ Corrigir português" aparece embaixo de textarea e input de texto dentro de `.field` (não em `.row`, nem com `inputmode`) ao focar (`corrigivel`, listener `focusin`). Usa a API grátis do LanguageTool (`CORR_URL`, pt-BR, ~20 pedidos/min). A troca dispara `input` e `change`, então os campos que salvam sozinhos salvam a correção. `mousedown` com preventDefault no botão e na caixa, para o campo não perder o foco (blur salvaria e redesenharia a tela no meio).
+- OS avulsa: "Editar OS" (`agendar`) também edita tipo e motivo.
