@@ -289,6 +289,11 @@ body.apresentacao .internal{display:none!important}
 .pix-box{flex-direction:row;align-items:center;gap:16px;padding:12px}
 .st-b{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
 .ag-list{display:flex;flex-direction:column;gap:10px}
+.op-foto{width:96px;height:72px;border-radius:10px;object-fit:cover;flex:none;cursor:zoom-in;background:var(--surface-2)}
+.op-foto.vazio{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:1.5px dashed var(--line);color:var(--brand);font:inherit;font-size:11.5px;font-weight:600;cursor:pointer}.op-foto.vazio svg{width:22px;height:22px}
+.campo-fotos{border-radius:12px;transition:background .15s}.campo-fotos.over{background:var(--brand-soft);outline:2px dashed var(--brand)}
+.lightbox{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.88);display:flex;align-items:center;justify-content:center;padding:16px;cursor:zoom-out}.lightbox img{max-width:100%;max-height:100%;border-radius:8px}
+.lightbox .iconbtn{position:absolute;top:12px;right:12px;background:rgba(255,255,255,.15);color:#fff}
 .fin-contas{display:flex;flex-wrap:wrap;gap:10px}.fin-saldo{flex:1 1 240px}.fin-saldo b{font-size:30px}.fin-saldo b.neg{color:var(--bad)}
 .fin-mes b{min-width:150px;text-align:center;font-size:16px}
 .fin-cats{display:flex;flex-direction:column;gap:8px}
@@ -2950,13 +2955,15 @@ function formVeic(v){const n=!v;v=v||{id:uid(),uf:'RJ',combustivel:'flex'};
     ${f('vc_ipv','IPVA: valor do ano (R$)',opV(v.ipvaValor),'inputmode="decimal"')}${f('vc_ipd','IPVA: vencimento (ou próxima parcela)',v.ipvaVence,'type="date"')}
     ${f('vc_seg','Seguradora',v.seguradora)}${f('vc_apo','Apólice',v.apolice,'inputmode="numeric"')}
     ${f('vc_sgd','Seguro vence em',v.seguroVence,'type="date"')}${f('vc_sgt','Assistência 24 h (telefone)',v.seguroTel,'inputmode="tel"')}
+    <div class="field full"><label>Foto do carro</label><div id="vc_foto"></div></div>
     <div class="field full"><label for="vc_obs">Observações</label><textarea id="vc_obs" placeholder="Ex.: pneu trocado em março; chave reserva no escritório.">${esc(v.obs||'')}</textarea></div>
   </div>`,`${n?'':'<button class="btn danger left" id="vc_del">Excluir</button>'}<button class="btn" data-act="close">Cancelar</button><button class="btn primary" id="vc_ok">Salvar</button>`,L=>{
-    const $=id=>L.querySelector('#'+id),t=id=>$(id).value.trim();
+    const $=id=>L.querySelector('#'+id),t=id=>$(id).value.trim(),wf=campoFotos($('vc_foto'),v.foto?[v.foto]:[],{max:1,rotulo:'Foto do carro'});
     $('vc_ok').onclick=async()=>{const o={...v,nome:t('vc_nome'),modelo:t('vc_mod'),ano:t('vc_ano'),placa:t('vc_placa').toUpperCase().replace(/[^A-Z0-9]/g,''),renavam:soDig(t('vc_ren')),chassi:t('vc_chassi').toUpperCase(),uf:$('vc_uf').value,combustivel:$('vc_comb').value,
       kmInicial:num(soDig(t('vc_km')))||'',licenciamento:$('vc_lic').value,ipvaValor:t('vc_ipv')?num(t('vc_ipv')):'',ipvaVence:$('vc_ipd').value,seguradora:t('vc_seg'),apolice:t('vc_apo'),seguroVence:$('vc_sgd').value,seguroTel:t('vc_sgt'),obs:t('vc_obs'),criadoEm:v.criadoEm||new Date().toISOString(),atualizadoEm:new Date().toISOString()};
       if(!o.nome&&!o.modelo&&!o.placa){toast('Informe pelo menos o apelido, o modelo ou a placa.');return}
-      if(await salvarOp('veiculos',o,'Carro salvo')){ui.veic=o.id;closeSheet();render()}};
+      const b=$('vc_ok');b.disabled=true;try{o.foto=(await wf.salvar(o.id,'carro'))[0]||null}catch(e){b.disabled=false;toast('Não foi possível enviar a foto. Confira a internet e tente de novo.');return}
+      if(await salvarOp('veiculos',o,'Carro salvo')){ui.veic=o.id;closeSheet();render()}else b.disabled=false};
     if(!n)$('vc_del').onclick=()=>{const gs=gastosDe(v);confirmSheet('Excluir carro?',`${esc(veicNome(v))} e ${gs.length} lançamento${gs.length===1?'':'s'} de gastos serão apagados.`,'Excluir',async()=>{try{for(const g of gs)await store.remove('gastos',g.id);await store.remove('veiculos',v.id);ui.veic='';render();toast('Carro excluído')}catch(e){toast('Não foi possível excluir.')}})};
   })}
 function formComb(v,g){const n=!g,ult=gastosDe(v).find(x=>x.tipo==='combustivel'),km=kmAtual(v);
@@ -2972,6 +2979,7 @@ function formComb(v,g){const n=!g,ult=gastosDe(v).find(x=>x.tipo==='combustivel'
     <div class="field full"><label for="ab_posto">Posto</label><input id="ab_posto" value="${esc(g.local||'')}" placeholder="Nome do posto">
       <div class="row" style="gap:6px;margin-top:6px"><button type="button" class="btn sm" id="ab_gps">${svg('<path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>')}Posto onde estou</button><span id="ab_map"></span></div>
       <div id="ab_ps" class="ab-ps"></div></div>
+    <div class="field full"><label>Fotos (nota, painel, bomba…)</label><div id="ab_fotos"></div></div>
     <p class="hint full" id="ab_av" style="margin:0"></p>
   </div>`,`${n?'':'<button class="btn danger left" id="ab_del">Excluir</button>'}<button class="btn" data-act="close">Cancelar</button><button class="btn primary" id="ab_ok">Salvar</button>`,L=>{
     const $=id=>L.querySelector('#'+id);let lat=g.lat,lon=g.lon,manual=!!g.litros&&!n;
@@ -2987,9 +2995,11 @@ function formComb(v,g){const n=!g,ult=gastosDe(v).find(x=>x.tipo==='combustivel'
         else{$('ab_ps').innerHTML=`<span class="hint">Não achei posto no mapa aqui perto. ${r.end?'Você está em: '+esc(r.end)+'. ':''}Digite o nome do posto.</span>`;if(!$('ab_posto').value.trim()&&r.end)$('ab_posto').value=r.end}}
       catch(e){toast(e&&e.code===1?'Permita a localização para o app achar o posto.':'Não foi possível pegar a localização. Digite o nome do posto.')}
       finally{b.disabled=false;b.innerHTML=txt}};
+    const wf=campoFotos($('ab_fotos'),g.anexos);
     $('ab_ok').onclick=async()=>{const vl=num($('ab_val').value);if(!(vl>0)){toast('Informe o valor pago.');return}
-      const o={...g,data:$('ab_data').value||hojeISO(),km:num(soDig($('ab_km').value))||'',comb:$('ab_comb').value,precoL:num($('ab_pl').value)||'',valor:vl,litros:num($('ab_l').value)||'',cheio:$('ab_ch').checked,local:$('ab_posto').value.trim(),lat:lat||'',lon:lon||'',atualizadoEm:new Date().toISOString()};
-      if(await salvarOp('gastos',o,'Abastecimento salvo'))closeSheet()};
+      const b=$('ab_ok');b.disabled=true;let anexos;try{anexos=await wf.salvar(g.id,'carro')}catch(e){b.disabled=false;toast('Não foi possível enviar a foto. Confira a internet e tente de novo.');return}
+      const o={...g,data:$('ab_data').value||hojeISO(),km:num(soDig($('ab_km').value))||'',comb:$('ab_comb').value,precoL:num($('ab_pl').value)||'',valor:vl,litros:num($('ab_l').value)||'',cheio:$('ab_ch').checked,local:$('ab_posto').value.trim(),lat:lat||'',lon:lon||'',anexos,atualizadoEm:new Date().toISOString()};
+      if(await salvarOp('gastos',o,'Abastecimento salvo'))closeSheet();else b.disabled=false};
     if(!n)$('ab_del').onclick=()=>confirmSheet('Excluir abastecimento?','Este lançamento será apagado.','Excluir',()=>store.remove('gastos',g.id).then(()=>toast('Excluído'),()=>toast('Não foi possível excluir.')));
   })}
 function formGasto(v,g,tipo){if(g&&g.tipo==='combustivel')return formComb(v,g);const n=!g,km=kmAtual(v);
@@ -3006,13 +3016,15 @@ function formGasto(v,g,tipo){if(g&&g.tipo==='combustivel')return formComb(v,g);c
     <div class="field" data-so="manutencao"><label for="gs_pd">ou na data</label><input id="gs_pd" type="date" value="${esc(g.proxData||'')}"></div>
     <div class="field" data-so="multa"><label for="gs_sit">Situação</label><select id="gs_sit"><option value="pendente" ${g.situacao==='pendente'?'selected':''}>Para pagar</option><option value="paga" ${g.situacao!=='pendente'?'selected':''}>Paga</option></select></div>
     <div class="field" data-so="multa"><label for="gs_vc">Vencimento</label><input id="gs_vc" type="date" value="${esc(g.vence||'')}"></div>
+    <div class="field full"><label>Fotos (nota, peça, serviço, multa…)</label><div id="gs_fotos"></div></div>
   </div>`,`${n?'':'<button class="btn danger left" id="gs_del">Excluir</button>'}<button class="btn" data-act="close">Cancelar</button><button class="btn primary" id="gs_ok">Salvar</button>`,L=>{
     const $=id=>L.querySelector('#'+id),mostra=()=>{const t=$('gs_tipo').value;L.querySelectorAll('[data-so]').forEach(x=>x.hidden=x.dataset.so!==t);$('gs_desc').placeholder=ph[t]||''};
-    $('gs_tipo').onchange=mostra;mostra();
+    $('gs_tipo').onchange=mostra;mostra();const wf=campoFotos($('gs_fotos'),g.anexos);
     $('gs_ok').onclick=async()=>{const t=$('gs_tipo').value,vl=num($('gs_val').value);if(!(vl>0)){toast('Informe o valor.');return}
+      const b=$('gs_ok');b.disabled=true;let anexos;try{anexos=await wf.salvar(g.id,'carro')}catch(e){b.disabled=false;toast('Não foi possível enviar a foto. Confira a internet e tente de novo.');return}
       const o={...g,tipo:t,desc:$('gs_desc').value.trim(),data:$('gs_data').value||hojeISO(),valor:vl,km:num(soDig($('gs_km').value))||'',local:$('gs_loc').value.trim(),
-        proxKm:t==='manutencao'?num(soDig($('gs_pk').value))||'':'',proxData:t==='manutencao'?$('gs_pd').value:'',situacao:t==='multa'?$('gs_sit').value:'',vence:t==='multa'?$('gs_vc').value:'',atualizadoEm:new Date().toISOString()};
-      if(await salvarOp('gastos',o,'Gasto salvo'))closeSheet()};
+        proxKm:t==='manutencao'?num(soDig($('gs_pk').value))||'':'',proxData:t==='manutencao'?$('gs_pd').value:'',situacao:t==='multa'?$('gs_sit').value:'',vence:t==='multa'?$('gs_vc').value:'',anexos,atualizadoEm:new Date().toISOString()};
+      if(await salvarOp('gastos',o,'Gasto salvo'))closeSheet();else b.disabled=false};
     if(!n)$('gs_del').onclick=()=>confirmSheet('Excluir gasto?','Este lançamento será apagado.','Excluir',()=>store.remove('gastos',g.id).then(()=>toast('Excluído'),()=>toast('Não foi possível excluir.')));
   })}
 function formCompra(c){const n=!c;c=c||{id:uid(),status:'pendente',prioridade:'normal',criadoEm:new Date().toISOString()};
@@ -3051,11 +3063,11 @@ function vCarro(el){
   const r=resumoCarro(v,ano),km=kmAtual(v),av=avisosCarro(v),mx=Math.max(...r.meses,1),todos=ui.opTodos;
   const lista=r.doAno.slice(0,todos?999:15);
   const item=g=>{const comb=g.tipo==='combustivel';return `<button class="li op-g" data-g="${g.id}"><span class="op-dot ${GASTO_GRUPO[g.tipo]}"></span><div><div class="t">${comb?`${COMB[g.comb]||'Combustível'}${g.litros?' · '+fmtL(g.litros):''}${g.precoL?' · '+money(g.precoL)+'/L':''}`:esc(GASTO_TIPOS[g.tipo].split(' (')[0])+(g.desc?': '+esc(g.desc):'')}${g.tipo==='multa'&&g.situacao==='pendente'?' <span class="pill fx-bad">para pagar</span>':''}</div>
-    <div class="d">${dataBR(g.data)}${g.km?' · '+fmtKm(g.km):''}${g.local?' · '+esc(g.local):''}</div></div><div class="r"><span class="num">${money(g.valor)}</span></div></button>`};
+    <div class="d">${dataBR(g.data)}${g.km?' · '+fmtKm(g.km):''}${g.local?' · '+esc(g.local):''}${g.anexos&&g.anexos.length?` · 📷 ${g.anexos.length}`:''}</div></div><div class="r"><span class="num">${money(g.valor)}</span></div></button>`};
   el.innerHTML=`
   ${vs.length>1?`<div class="chips">${vs.map(x=>`<button class="chip" data-veic="${x.id}" aria-pressed="${x.id===v.id}">${esc(veicNome(x))}</button>`).join('')}</div>`:''}
   <section class="panel op-car">
-    <div class="spread" style="align-items:flex-start"><div><h2 class="h2">${esc(veicNome(v))}</h2><span class="hint">${[v.nome&&v.modelo?esc(v.modelo):'',esc(v.ano||''),km?'Km atual: '+fmtKm(km):''].filter(Boolean).join(' · ')}</span></div>${v.placa?`<span class="placa"><i>BRASIL</i>${esc(v.placa)}</span>`:''}</div>
+    <div class="spread" style="align-items:flex-start;flex-wrap:nowrap;gap:12px">${v.foto?`<img class="op-foto" id="op_foto" alt="Foto do ${esc(veicNome(v))}">`:`<button class="op-foto vazio" id="op_semfoto" type="button">${svg(ICON_CAM)}<span>Pôr foto</span></button>`}<div style="flex:1;min-width:0"><h2 class="h2">${esc(veicNome(v))}</h2><span class="hint">${[v.nome&&v.modelo?esc(v.modelo):'',esc(v.ano||''),km?'Km atual: '+fmtKm(km):''].filter(Boolean).join(' · ')}</span></div>${v.placa?`<span class="placa"><i>BRASIL</i>${esc(v.placa)}</span>`:''}</div>
     <div class="row" style="gap:8px"><button class="btn primary" id="op_ab">${svg('<path d="M4 21V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16"/><path d="M3 21h12M6 9h6"/><path d="M14 10h2a2 2 0 0 1 2 2v5a1.5 1.5 0 0 0 3 0V8l-3-3"/>')}Abasteci</button><button class="btn" id="op_mec">${svg(ICON.servicos)}Mecânica</button><button class="btn" id="op_out">${svg(UI.plus)}Outro gasto</button><button class="btn ghost" id="op_ed">${svg(UI.edit)}Dados do carro</button></div>
     ${av.length?`<div class="ups">${av.map(a=>`<div class="up-i"><span class="up-dot ${a.cls}"></span><span><b>${esc(a.t)}</b><span class="hint">${esc(a.h)}</span></span></div>`).join('')}</div>`:''}
   </section>
@@ -3089,6 +3101,7 @@ function vCarro(el){
   if($('op_todos'))$('op_todos').onclick=()=>{ui.opTodos=true;render()};
   el.querySelectorAll('[data-veic]').forEach(b=>b.onclick=()=>{ui.veic=b.dataset.veic;render()});
   el.querySelectorAll('[data-g]').forEach(b=>b.onclick=()=>formGasto(v,S.gastos.find(g=>g.id===b.dataset.g)));
+  if($('op_foto')){fotoEm($('op_foto'),v.foto);$('op_foto').onclick=()=>verFoto($('op_foto').src)}if($('op_semfoto'))$('op_semfoto').onclick=()=>formVeic(v);
 }
 function vCompras(el){
   const st=ui.opCompra||'pendente',cs=S.compras||[],pend=cs.filter(c=>c.status!=='comprado'),comp=cs.filter(c=>c.status==='comprado');
@@ -3206,11 +3219,28 @@ async function lerNota(files,aviso){const r={blobs:[],itens:[]};let txt='';
   if(r.doc&&soDig(r.doc).length===14){aviso('Consultando o CNPJ do fornecedor…');try{const j=resumoCNPJ(await consultaCNPJ(r.doc));r.fornecedor=j.fantasia||(r.xml&&r.fornecedor)||j.razao||r.fornecedor;r.cnae=(j.cnae||'').split(' ')[0]}catch(e){}}
   r.desc=r.combustivel?cap(r.combustivel)+(r.litros?' · '+fmtL(r.litros):''):r.itens.length?r.itens.slice(0,3).map(i=>i.nome).join(', ')+(r.itens.length>3?'…':''):'';
   return r}
-async function subirAnexos(id,blobs){const out=[];
+async function subirAnexos(id,blobs,pasta='fin'){const out=[];
   for(const b of blobs){const j=await paraJpeg(b,sb?1600:1000);
-    if(sb){const p=`fin/${id}-${uid()}.jpg`,{error}=await sb.storage.from(FOTOS_BUCKET).upload(p,j,{contentType:'image/jpeg'});if(error)throw error;fotoCache[p]=await blobDataURL(j);out.push({p})}
+    if(sb){const p=`${pasta}/${id}-${uid()}.jpg`,{error}=await sb.storage.from(FOTOS_BUCKET).upload(p,j,{contentType:'image/jpeg'});if(error)throw error;fotoCache[p]=await blobDataURL(j);out.push({p})}
     else out.push({d:await blobDataURL(j)})}
   return out}
+// Fotos num formulário: arrastar, escolher arquivo ou tirar foto. Só envia ao salvar (salvar(id, pasta)).
+const ICON_CAM='<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>';
+const fotoEm=(img,a)=>{const s=fotoSync(a);if(s)img.src=s;else if(sb&&a&&a.p)fotoSrc(a).then(u=>img.src=u).catch(()=>{img.alt='Foto não carregou'})};
+function verFoto(src){if(!src)return;const d=document.createElement('div');d.className='lightbox';d.setAttribute('role','dialog');d.setAttribute('aria-label','Foto');d.innerHTML=`<img src="${src}" alt=""><button class="iconbtn" aria-label="Fechar">${svg(UI.x)}</button>`;d.onclick=()=>d.remove();document.body.appendChild(d)}
+function campoFotos(el,ax,{max=12,rotulo='Adicionar foto'}={}){ax=[...(ax||[])];const blobs=[];
+  const add=fs=>{[...fs].filter(f=>/^image\//.test(f.type)||/\.(jpe?g|png|webp|heic)$/i.test(f.name||'')).slice(0,Math.max(0,max-ax.length-blobs.length)).forEach(f=>blobs.push(f));desenha()};
+  const th=(i,t)=>`<div class="os-th"><img data-${t}="${i}" alt="Foto ${i+1}" style="cursor:zoom-in"><button type="button" class="iconbtn os-x" data-${t}r="${i}" aria-label="Remover foto">${svg(UI.x)}</button></div>`;
+  function desenha(){const livre=ax.length+blobs.length<max;
+    el.innerHTML=`<div class="os-fotos">${ax.map((a,i)=>th(i,'ax')).join('')}${blobs.map((b,i)=>th(i,'bl')).join('')}${livre?`<label class="os-add">${svg(UI.plus)}<span>${rotulo}</span><input type="file" accept="image/*" ${max>1?'multiple':''} hidden data-f></label>`:''}</div>
+      ${livre?`<div class="row" style="gap:8px;margin-top:6px;align-items:center"><label class="btn sm">${svg(ICON_CAM)}Tirar foto<input type="file" accept="image/*" capture="environment" hidden data-f></label><span class="hint">ou arraste a foto aqui</span></div>`:''}`;
+    el.querySelectorAll('[data-ax]').forEach(im=>fotoEm(im,ax[+im.dataset.ax]));el.querySelectorAll('[data-bl]').forEach(im=>{im.src=URL.createObjectURL(blobs[+im.dataset.bl])});
+    el.querySelectorAll('img').forEach(im=>im.onclick=()=>verFoto(im.src));
+    el.querySelectorAll('[data-axr]').forEach(b=>b.onclick=()=>{ax.splice(+b.dataset.axr,1);desenha()});el.querySelectorAll('[data-blr]').forEach(b=>b.onclick=()=>{blobs.splice(+b.dataset.blr,1);desenha()});
+    el.querySelectorAll('[data-f]').forEach(i=>i.onchange=()=>add(i.files))}
+  el.addEventListener('dragover',e=>{e.preventDefault();el.classList.add('over')});el.addEventListener('dragleave',()=>el.classList.remove('over'));el.addEventListener('drop',e=>{e.preventDefault();el.classList.remove('over');add(e.dataTransfer.files)});
+  el.classList.add('campo-fotos');desenha();
+  return {salvar:async(id,pasta)=>[...ax,...(blobs.length?await subirAnexos(id,blobs,pasta):[])]}}
 function importarNota(){
   openSheet('Importar nota fiscal',`<p class="muted" style="margin-top:0">Uma nota por vez. Pode ser a foto do cupom, o PDF ou o XML da nota (o XML é o mais certinho: vem no e-mail da loja).</p>
     <label class="drop" id="nf_drop"><input type="file" id="nf_file" accept="image/*,.pdf,.xml,application/pdf,text/xml" multiple hidden><b>Arraste a nota aqui</b><span class="hint">ou toque para escolher o arquivo</span></label>
