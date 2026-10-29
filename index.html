@@ -289,6 +289,16 @@ body.apresentacao .internal{display:none!important}
 .pix-box{flex-direction:row;align-items:center;gap:16px;padding:12px}
 .st-b{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
 .ag-list{display:flex;flex-direction:column;gap:10px}
+.fin-contas{display:flex;flex-wrap:wrap;gap:10px}.fin-saldo{flex:1 1 240px}.fin-saldo b{font-size:30px}.fin-saldo b.neg{color:var(--bad)}
+.fin-mes b{min-width:150px;text-align:center;font-size:16px}
+.fin-cats{display:flex;flex-direction:column;gap:8px}
+.fin-c{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,2fr) auto 38px;gap:10px;align-items:center;font-size:13.5px}
+.fin-c>i{display:block;height:10px;border-radius:9px;background:var(--neutral-soft);overflow:hidden}.fin-c>i>i{display:block;height:100%;background:var(--bad);border-radius:9px}
+.fin-c b{font-variant-numeric:tabular-nums;text-align:right}.fin-c .hint{text-align:right}
+@media (max-width:560px){.fin-c{grid-template-columns:minmax(0,1fr) auto 34px}.fin-c>i{grid-column:1/-1;grid-row:2}}
+.li.fin-m{grid-template-columns:auto minmax(0,1fr) auto;gap:4px 12px}
+.fin-s{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-weight:800}.fin-s.entrada{background:var(--ok-soft);color:var(--ok)}.fin-s.saida{background:var(--bad-soft);color:var(--bad)}
+.fin-src{font-weight:700;color:var(--brand)}
 .mais{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
 .mais-i{display:flex;gap:12px;align-items:center;text-align:left;padding:14px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);color:var(--ink);cursor:pointer;font:inherit}
 .mais-i>svg{width:30px;height:30px;flex:none;padding:6px;border-radius:10px;background:var(--brand-soft);color:var(--brand);box-sizing:content-box}
@@ -589,6 +599,7 @@ const NAVI={
   agenda:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M8 14h3v3H8z"/>',
   garantias:'<path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/>',
   mais:'<rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><circle cx="17" cy="17" r="3"/>',
+  financeiro:'<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M16 13.5h2"/><path d="M6 7l9-3.5L17 7"/><path d="M3 11h18"/>',
   operacional:'<path d="M4 16V12l2-5h12l2 5v4z"/><path d="M4 12h16"/><circle cx="8" cy="16.5" r="1.8"/><circle cx="16" cy="16.5" r="1.8"/>',
   impostos:'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h3"/>',
   maodeobra:'<path d="M14.5 5.5a4 4 0 0 0 4.9 4.9L11 18.8a2.1 2.1 0 0 1-3-3l8.4-8.4"/><path d="M14.5 5.5l2-2"/>',
@@ -642,8 +653,8 @@ function idadePill(d){return d==null?'':`<span class="pill ${d>30?'conf-baixa':'
 
 const DEF_EMPRESA={nome:'DaylinTech',slogan:'Tecnologia que protege',cnpj:'',telefone:'',email:'',endereco:'',margem:30,imposto:6,despesas:0,arredondar:1,descontoPix:5,cartaoMax:12,cartaoSemJuros:3,cartaoJuros:2.99,pixTipo:'cpf',pixChave:'',pixNome:'',cidade:'',whatsapp:'',linkPagamento:'',responsavel:'',assinatura:'',validade:15,pagamento:'Oferecemos 3 formas de pagamento:\n1) 50% na aprovação e 50% na conclusão do serviço (Pix ou transferência).\n2) Pix à vista com 5% de desconto.\n3) Cartão de crédito em até 3x sem juros ou em até 12x com juros da operadora.',garantia:'Equipamentos: 12 meses de garantia do fabricante (verificar com o fabricante). Nos primeiros 30 dias, qualquer defeito tem troca expressa. Após os 30 dias, o equipamento com defeito é retirado e enviado para a análise de garantia do fabricante; durante esse período, o cliente pode ficar sem o equipamento.\nInstalação: 90 dias (3 meses) de garantia total com a DaylinTech: qualquer problema na instalação é resolvido sem custo. Após os 90 dias, é cobrada visita técnica de R$ 130,00 para diagnóstico.',garantiaEquipMeses:12,garantiaServDias:90,prazo:'Início da instalação em até 5 dias úteis após a aprovação.'};
 
-const COLS=['produtos','clientes','orcamentos','veiculos','gastos','compras'];
-const S={produtos:[],clientes:[],orcamentos:[],veiculos:[],gastos:[],compras:[],empresa:{...DEF_EMPRESA},ready:{produtos:false,clientes:false,orcamentos:false,veiculos:false,gastos:false,compras:false,empresa:false}};
+const COLS=['produtos','clientes','orcamentos','veiculos','gastos','compras','lancamentos'];
+const S={produtos:[],clientes:[],orcamentos:[],veiculos:[],gastos:[],compras:[],lancamentos:[],empresa:{...DEF_EMPRESA},ready:{produtos:false,clientes:false,orcamentos:false,veiculos:false,gastos:false,compras:false,lancamentos:false,empresa:false}};
 let view={name:'home'};
 let ui={busca:'',cat:'todas',status:'todos',buscaCli:'',buscaMO:'',grupo:'todos'};
 let draft=null;
@@ -833,15 +844,15 @@ function confirmSheet(title,msg,okLabel,onOk){
 }
 
 /* ---------- Navegação ---------- */
-const TABS=[['home','Início'],['inicio','Orçamentos'],['agenda','Agenda'],['garantias','Garantias'],['catalogo','Catálogo'],['maodeobra','Mão de obra'],['clientes','Clientes'],['impostos','Impostos'],['operacional','Operacional'],['ajustes','Empresa']];
-const NAV_MAIN=['home','inicio','agenda','clientes','catalogo'];
-const NAV_MAIS=[['garantias','Clientes na garantia e notas fiscais'],['maodeobra','Serviços, preços e tempo de instalação'],['operacional','Carro, combustível e lista de compras',1],['impostos','Guias, declarações e CNPJ',1],['ajustes','Dados, Pix, textos padrão e backup',1]];
+const TABS=[['home','Início'],['inicio','Orçamentos'],['agenda','Agenda'],['garantias','Garantias'],['catalogo','Catálogo'],['maodeobra','Mão de obra'],['clientes','Clientes'],['impostos','Impostos'],['operacional','Operacional'],['ajustes','Empresa'],['financeiro','Financeiro']];
+const NAV_MAIN=['home','inicio','agenda','financeiro','catalogo','maodeobra'];
+const NAV_MAIS=[['clientes','Cadastro, endereço e histórico de cada cliente'],['garantias','Clientes na garantia e notas fiscais'],['operacional','Carro, combustível e lista de compras',1],['impostos','Guias, declarações e CNPJ',1],['ajustes','Dados, Pix, textos padrão e backup',1]];
 const tabNome=k=>(TABS.find(t=>t[0]===k)||[k,k])[1];
 function abrirMais(){const cur=view.name;
   openSheet('Mais',`<div class="mais">${NAV_MAIS.map(([k,d,int])=>`<button class="mais-i ${int?'internal':''}" data-nav="${k}" ${cur===k?'aria-current="page"':''}>${svg(NAVI[k])}<span><b>${tabNome(k)}</b><span class="hint">${d}</span></span></button>`).join('')}</div>`)}
 function renderNav(){
   const cur=['editor','proposta'].includes(view.name)?'inicio':view.name==='os'?'agenda':view.name;
-  const mais=NAV_MAIS.find(x=>x[0]===cur),bt=(k,ic)=>`<button data-nav="${k}" ${cur===k?'aria-current="page"':''}>${ic?svg(NAVI[k]):''}${tabNome(k)}</button>`;
+  const mais=NAV_MAIS.find(x=>x[0]===cur),bt=(k,ic)=>`<button data-nav="${k}" ${k==='financeiro'?'class="internal"':''} ${cur===k?'aria-current="page"':''}>${ic?svg(NAVI[k]):''}${tabNome(k)}</button>`;
   const mb=ic=>`<button data-act="mais" class="nav-mais" ${mais?'aria-current="page"':''} aria-haspopup="dialog">${ic?svg(mais?NAVI[cur]:NAVI.mais):''}${mais?tabNome(cur):'Mais'}${ic?'':' ▾'}</button>`;
   document.getElementById('toptabs').innerHTML=NAV_MAIN.map(k=>bt(k)).join('')+mb();
   document.getElementById('bottomnav').innerHTML=NAV_MAIN.map(k=>bt(k,1)).join('')+mb(1);
@@ -863,7 +874,7 @@ function render(fromSnap){
   if(fromSnap&&view.name==='editor'){renderEditorParts();return}
   const active=document.activeElement&&document.activeElement.id;
   const pos=document.activeElement&&document.activeElement.selectionStart;
-  ({home:vHome,inicio:vInicio,catalogo:vCatalogo,maodeobra:vMaoDeObra,clientes:vClientes,ajustes:vAjustes,editor:vEditor,proposta:vProposta,agenda:vAgenda,os:vOS,garantias:vGarantias,impostos:vImpostos,operacional:vOperacional}[view.name]||vHome)(app);
+  ({home:vHome,inicio:vInicio,catalogo:vCatalogo,maodeobra:vMaoDeObra,clientes:vClientes,ajustes:vAjustes,editor:vEditor,proposta:vProposta,agenda:vAgenda,os:vOS,garantias:vGarantias,impostos:vImpostos,operacional:vOperacional,financeiro:vFinanceiro}[view.name]||vHome)(app);
   if(active){const el=document.getElementById(active);if(el&&el.tagName==='INPUT'&&el.type==='search'){el.focus();try{el.setSelectionRange(pos,pos)}catch(e){}}}
 }
 
@@ -932,7 +943,7 @@ function vHome(app){
       <div class="fin-r"><span class="fin-ic up">${svg('<path d="M12 19V5M6 11l6-6 6 6"/>')}</span><b class="v ok">${money(vendMes)}</b><span class="muted">vendido</span></div>
       <div class="fin-r"><span class="fin-ic down">${svg('<path d="M12 5v14M6 13l6 6 6-6"/>')}</span><b class="v warn">${money(custos)}</b><span class="muted">custos e impostos</span></div>
       <div class="fin-r tot"><span class="fin-ic brand">${svg('<path d="M12 3v18M16.5 7.5c0-1.9-2-3-4.5-3s-4.5 1.2-4.5 3.2c0 4.6 9 2.4 9 7.1 0 2-2 3.2-4.5 3.2s-4.5-1.2-4.5-3"/>')}</span><b class="v">${money(lucro)}</b><span class="muted">lucro líquido</span></div>
-      <div class="hint">${aprov.length} orçamento${aprov.length===1?'':'s'} aprovado${aprov.length===1?'':'s'} no mês · ${money(recebido)} recebido · ${money(vAberto)} em aberto</div>
+      <div class="hint">${aprov.length} orçamento${aprov.length===1?'':'s'} aprovado${aprov.length===1?'':'s'} no mês · ${money(recebido)} recebido · ${money(vAberto)} em aberto${finCfg().contas.length?` · saldo em conta ${money(finCfg().contas.reduce((t,c)=>t+saldoConta(c,hojeISO()),0))}`:''}</div>
     </div>
     <div class="fin-g">${pct===null?`<button class="linkbtn" data-nav="ajustes">Definir meta de vendas do mês</button>`:`${gauge(pct)}<span class="muted">da meta de ${money(meta)}</span>`}</div>
   </div></section>
@@ -3102,6 +3113,248 @@ function vCompras(el){
   el.querySelectorAll('[data-cp-ed]').forEach(b=>b.onclick=()=>formCompra(pega(b.dataset.cpEd)));
   el.querySelectorAll('[data-cp-ok]').forEach(b=>b.onclick=()=>compreiSheet(pega(b.dataset.cpOk)));
   el.querySelectorAll('[data-cp-volta]').forEach(b=>b.onclick=()=>{const c={...pega(b.dataset.cpVolta),status:'pendente'};delete c.compradoEm;delete c.valorPago;salvarOp('compras',c,'Voltou para a lista')});
+}
+/* ---------- Financeiro ---------- */
+// Lançamentos manuais ficam em "lancamentos". Pagamentos de orçamentos/OS, gastos do carro, compras e guias pagas
+// entram sozinhos (lidos de onde já estão), para não ter dois registros da mesma coisa.
+const FIN_CATS={servicos:['Serviços e vendas','e'],outras_ent:['Outras entradas','e'],aporte:['Dinheiro do dono (aporte)','e'],
+  material:['Material para obras','s'],ferramentas:['Ferramentas e equipamentos','s'],combustivel:['Combustível','s'],veiculo:['Veículo (mecânica, IPVA, seguro, multas)','s'],
+  impostos:['Impostos e taxas','s'],alimentacao:['Alimentação','s'],telefone:['Telefone e internet','s'],marketing:['Marketing e anúncios','s'],contador:['Contador','s'],
+  tarifas:['Tarifas do banco e maquininha','s'],escritorio:['Escritório, aluguel e contas','s'],retirada:['Retirada do dono (pró-labore)','s'],outros:['Outras despesas','s'],ajuste:['Ajuste de saldo','x']};
+const FIN_FORMAS={pix:'Pix',dinheiro:'Dinheiro',debito:'Cartão de débito',credito:'Cartão de crédito',boleto:'Boleto',transferencia:'Transferência'};
+const catNomeFin=k=>(FIN_CATS[k]||FIN_CATS.outros)[0];
+// Classificação automática grátis: primeiro o que você já usou para o mesmo fornecedor, depois a atividade do CNPJ, depois palavras.
+const CAT_REGRAS=[['tarifas',/\b(tarifa|maquininha|mercado ?pago|pagseguro|pagbank|stone|cielo|sumup|infinitepay|iof|juros|anuidade)/],
+  ['combustivel',/\b(gasolina|etanol|alcool|diesel|gnv|combustive|posto|shell|ipiranga|petrobras|br mania|raizen)/],
+  ['impostos',/\b(das|simples nacional|imposto|receita federal|iss|darf|inss|alvara|taxa municipal|pgmei)\b/],
+  ['veiculo',/\b(oficina|mecanic|pneu|borracharia|ipva|licenciamento|detran|seguro auto|multa|lava ?jato|lavagem|estacionamento|pedagio|auto ?pecas|alinhamento)/],
+  ['ferramentas',/\b(ferramenta|alicate|furadeira|parafusadeira|escada|multimetro|testador|serra|makita|bosch|dewalt|vonder|tramontina|esmerilhadeira|maleta)/],
+  ['material',/\b(intelbras|hikvision|hilook|giga|jfl|ppa|garen|rcg|cabo|conector|fonte|camera|dvr|nvr|sensor|fechadura|interfone|eletroima|tomada|disjuntor|fio|eletroduto|canaleta|parafuso|bucha|abracadeira|material eletrico|eletrica|ferragens|leroy|telhanorte|balun|rack|hd)/],
+  ['alimentacao',/\b(restaurante|lanchonete|lanche|padaria|mercado|supermercado|ifood|almoco|refeicao|pizzaria|acai|cafe|marmita)/],
+  ['telefone',/\b(vivo|claro|tim|oi|internet|telefone|celular|recarga|chip)\b/],
+  ['marketing',/\b(facebook|meta|google ads|instagram|anuncio|grafica|panfleto|cartao de visita|adesivo|dominio|hostinger|registro\.br|canva)/],
+  ['contador',/\b(contab|contador|honorario)/],
+  ['escritorio',/\b(aluguel|condominio|energia|light|enel|cemig|cedae|agua|papelaria|kalunga|escritorio)/]];
+const CNAE_CAT=[[/^473/,'combustivel'],[/^452|^453|^454/,'veiculo'],[/^474|^475|^4672|^4673|^4679|^4651|^4652/,'material'],[/^561|^562|^4711|^4712|^4721/,'alimentacao'],[/^611|^612|^613|^619/,'telefone'],[/^6920/,'contador'],[/^731/,'marketing'],[/^64|^66/,'tarifas']];
+function classificar(x){const doc=soDig(x.doc),txt=normNome([x.fornecedor,x.desc,...(x.itens||[]).map(i=>i.nome)].join(' '));
+  const ant=(S.lancamentos||[]).filter(l=>l.cat&&l.cat!=='ajuste'&&l.tipo==='saida').sort((a,b)=>String(b.data).localeCompare(String(a.data)));
+  if(doc){const m=ant.find(l=>soDig(l.doc)===doc);if(m)return m.cat}
+  const forn=normNome(x.fornecedor);if(forn){const m=ant.find(l=>normNome(l.fornecedor)===forn);if(m)return m.cat}
+  if(x.cnae){const c=CNAE_CAT.find(([re])=>re.test(String(x.cnae).replace(/\D/g,'')));if(c)return c[1]}
+  const r=CAT_REGRAS.find(([,re])=>re.test(txt));if(r)return r[0];
+  const p=txt.split(' ').find(w=>w.length>3);if(p){const m=ant.find(l=>normNome(l.desc).split(' ').includes(p));if(m)return m.cat}
+  return ''}
+const finCfg=()=>{const f=S.empresa.financeiro||{};return {contas:[],...f}};
+async function salvarFinCfg(m){const f={...finCfg(),...m};S.empresa={...S.empresa,financeiro:f};await store.saveEmpresa(S.empresa);render()}
+const contaPadrao=()=>{const c=finCfg().contas;return c[0]?c[0].id:''};
+// Todos os lançamentos, manuais e automáticos, no mesmo formato.
+function movimentos(){const out=[],cp=contaPadrao();
+  (S.lancamentos||[]).forEach(l=>out.push({...l,src:'fin',contaId:l.contaId||cp}));
+  S.orcamentos.forEach(o=>{const p=o.pgto;if(!p||!(num(p.valor)>0))return;out.push({id:'orc-'+o.id,src:'orc',ref:o.id,tipo:'entrada',data:String(p.data||'').slice(0,10),valor:num(p.valor),cat:'servicos',contaId:cp,
+    desc:`${o.tipo==='os'?osTipoNome(o)+' · OS':'Orçamento'} Nº ${nOrc(o.numero)} · ${cliNome(o)}${p.tipo==='parcial'?' (parcial)':''}`,forma:p.forma==='cartao'?'credito':p.forma,fornecedor:p.nome||cliNome(o)})});
+  (S.gastos||[]).forEach(g=>{const v=(S.veiculos||[]).find(x=>x.id===g.veiculoId);out.push({id:'car-'+g.id,src:'carro',ref:g.id,tipo:'saida',data:g.data,valor:num(g.valor),cat:g.tipo==='combustivel'?'combustivel':'veiculo',contaId:g.contaId||cp,
+    desc:(g.tipo==='combustivel'?`${COMB[g.comb]||'Combustível'}${g.litros?' · '+fmtL(g.litros):''}`:`${GASTO_TIPOS[g.tipo].split(' (')[0]}${g.desc?': '+g.desc:''}`)+(v?' · '+veicNome(v):''),fornecedor:g.local||'',nf:g.nf,anexos:g.anexos,pendente:g.tipo==='multa'&&g.situacao==='pendente'})});
+  (S.compras||[]).forEach(c=>{if(c.status!=='comprado'||!(num(c.valorPago)>0))return;out.push({id:'cmp-'+c.id,src:'compra',ref:c.id,tipo:'saida',data:c.compradoEm,valor:num(c.valorPago),cat:'ferramentas',contaId:cp,desc:c.nome,fornecedor:c.onde||dominio(c.link)})});
+  const f=S.empresa.fiscal||{};Object.entries(f.das||{}).forEach(([ym,r])=>{if(r.st!=='pago'||!r.data)return;const vl=r.valor!=null&&r.valor!==''?num(r.valor):valorGuia(ym,fiscal());
+    out.push({id:'das-'+ym,src:'das',ref:ym,tipo:'saida',data:r.data,valor:vl,cat:'impostos',contaId:cp,desc:`Guia de imposto (DAS) de ${ymTxt(ym)}`,fornecedor:'Receita Federal'})});
+  return out.filter(m=>m.data&&m.valor>0).sort((a,b)=>String(b.data).localeCompare(String(a.data))||String(b.criadoEm||'').localeCompare(String(a.criadoEm||'')))}
+const sinal=m=>m.tipo==='entrada'?1:-1;
+function saldoConta(c,ate,ms){ms=ms||movimentos();return num(c.saldoIni)+ms.filter(m=>m.contaId===c.id&&m.data>=c.dataIni&&(!ate||m.data<=ate)).reduce((t,m)=>t+sinal(m)*m.valor,0)}
+const SRC_NOME={orc:'Orçamento',carro:'Carro',compra:'Compras',das:'Impostos',fin:''};
+// Nota fiscal: XML da NF-e, PDF do DANFE ou foto do cupom (QR Code + leitura do texto).
+const JSQR_SRC='https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js';
+async function lerCodigos(blob){const out=[];
+  try{if('BarcodeDetector' in window){const d=new window.BarcodeDetector({formats:['qr_code','code_128']}),r=await d.detect(await createImageBitmap(blob));r.forEach(x=>out.push(x.rawValue))}}catch(e){}
+  if(!out.length)try{await loadScript(JSQR_SRC);const bmp=await createImageBitmap(blob),k=Math.min(1,1600/Math.max(bmp.width,bmp.height)),c=document.createElement('canvas');c.width=Math.round(bmp.width*k);c.height=Math.round(bmp.height*k);
+    const x=c.getContext('2d');x.drawImage(bmp,0,0,c.width,c.height);const q=window.jsQR(x.getImageData(0,0,c.width,c.height).data,c.width,c.height);if(q&&q.data)out.push(q.data)}catch(e){}
+  return out}
+function infoChave(ch){ch=soDig(ch);if(ch.length!==44)return null;return {chave:ch,doc:ch.slice(6,20),modelo:ch.slice(20,22),numero:String(+ch.slice(25,34)),aamm:ch.slice(2,6)}}
+function dadosQR(txt){const r={},ch=(String(txt).match(/\d{44}/)||[])[0];if(ch)Object.assign(r,infoChave(ch));
+  const p=(String(txt).match(/[?&]p=([^&]+)/)||[])[1];if(p){const ps=decodeURIComponent(p).split('|');if(ps.length>=7&&num(ps[4])>0){r.valor=num(ps[4]);if(r.aamm&&/^\d{1,2}$/.test(ps[3]))r.data=`20${r.aamm.slice(0,2)}-${r.aamm.slice(2)}-${ps[3].padStart(2,'0')}`}}
+  const v=(String(txt).match(/[?&]vNF=([\d.]+)/i)||[])[1];if(v)r.valor=parseFloat(v);return r}
+function textoNota(t){const r={},L=t.split('\n').map(x=>x.trim()).filter(Boolean),dig=t.replace(/[ .\-\/]/g,'');
+  const ch=(dig.match(/\d{44}/)||[])[0];if(ch)Object.assign(r,infoChave(ch));
+  const cnpj=t.match(/\b\d{2}[.\s]?\d{3}[.\s]?\d{3}\s?\/?\s?\d{4}[-\s]?\d{2}\b/);if(cnpj&&!r.doc)r.doc=soDig(cnpj[0]);
+  const hoje=hojeISO();for(const m of t.matchAll(/\b(\d{2})\/(\d{2})\/(\d{2,4})\b/g)){const a=m[3].length===2?'20'+m[3]:m[3],iso=`${a}-${m[2]}-${m[1]}`;if(+m[2]>=1&&+m[2]<=12&&+m[1]>=1&&+m[1]<=31&&iso<=hoje&&a>='2015'){r.data=iso;break}}
+  const nums=s=>[...s.matchAll(/\d{1,3}(?:\.\d{3})*,\d{2}\b|\d+\.\d{2}\b/g)].map(m=>num(m[0])).filter(v=>v>0);
+  for(const re of [/valor\s*(a\s*)?pag[oa]r?/i,/valor\s*total\s*(da\s*nota|r\$|nf)?/i,/total\s*(geral|a\s*pagar|r\$|da\s*nota)/i,/\btotal\b/i]){
+    const i=L.findIndex(l=>re.test(l)&&!/tribut|imposto|desconto|aprox|itens|qtd/i.test(l));if(i<0)continue;const v=nums(L[i]).concat(nums(L[i+1]||'').slice(0,1));if(v.length){r.valor=v[v.length===1?0:nums(L[i]).length?nums(L[i]).length-1:0];break}}
+  if(!r.valor){const all=nums(t.replace(/\d{44}/g,''));if(all.length)r.valor=Math.max(...all.filter(v=>v<100000))}
+  const nf=t.match(/(?:n[ºo°.]?\s*|n[uú]mero\s*|nf-?e?\s*n?[ºo°.]?\s*|cupom\s*)(\d{3}[.\d]{0,8})/i);if(nf&&!r.numero)r.numero=nf[1].replace(/\D/g,'').replace(/^0+/,'');
+  const ruim=/danfe|documento|nota fiscal|consumidor|cnpj|cpf|ie[: ]|inscri|endere|rua |av[. ]|fone|tel|emiss|serie|chave|protocolo|www|http|auxiliar/i;
+  const ci=cnpj?L.findIndex(l=>l.includes(cnpj[0])):-1,cand=(ci>0?L.slice(Math.max(0,ci-3),ci).reverse():[]).concat(L.slice(0,6));
+  const nm=cand.find(l=>(l.match(/[A-Za-zÀ-ú]/g)||[]).length>=4&&!ruim.test(l)&&!/\d{4,}/.test(l));if(nm)r.fornecedor=nm.replace(/\s{2,}/g,' ');
+  if(/gasolina|etanol|diesel|alcool|álcool/i.test(t)){r.combustivel=(t.match(/gasolina|etanol|diesel/i)||['gasolina'])[0].toLowerCase();
+    const lx=t.match(/(\d+[.,]\d{2,3})\s*l\w{0,2}\s*x\s*(\d+[.,]\d{2,3})/i);if(lx){r.litros=num(lx[1]);r.precoL=num(lx[2])}
+    const l=!lx&&t.match(/(\d+[.,]\d{2,3})\s*(?:l\b|lt|lts|litros)/i);if(l)r.litros=num(l[1]);const pl=t.match(/(?:vl\.?\s*unit\.?|pre[cç]o\s*\/?\s*l|r\$\s*\/\s*l|unit[aá]rio)[^\d]{0,12}(\d+[.,]\d{2,3})/i);if(pl&&!r.precoL)r.precoL=num(pl[1])}
+  return r}
+function xmlNota(txt){const d=new DOMParser().parseFromString(txt,'text/xml'),q=(s,el=d)=>{const n=el.getElementsByTagName(s)[0];return n?n.textContent.trim():''};
+  if(!d.getElementsByTagName('infNFe').length)return null;const emit=d.getElementsByTagName('emit')[0]||d,inf=d.getElementsByTagName('infNFe')[0];
+  return {xml:true,chave:soDig(inf.getAttribute('Id')||'')||'',fornecedor:q('xFant',emit)||q('xNome',emit),doc:q('CNPJ',emit)||q('CPF',emit),numero:q('nNF'),data:(q('dhEmi')||q('dEmi')).slice(0,10),valor:num(q('vNF').replace('.',',')),
+    itens:[...d.getElementsByTagName('det')].map(x=>({nome:q('xProd',x),qtd:num(q('qCom',x).replace('.',',')),valor:num(q('vProd',x).replace('.',','))})),
+    combustivel:[...d.getElementsByTagName('xProd')].map(x=>x.textContent).join(' ').match(/gasolina|etanol|diesel/i)?.[0]?.toLowerCase()}}
+async function pdfPagina(file){await loadScript(PDFW);await loadScript(PDFJS);const doc=await window.pdfjsLib.getDocument({data:new Uint8Array(await file.arrayBuffer()),isEvalSupported:false}).promise;
+  const pg=await doc.getPage(1),vp=pg.getViewport({scale:2}),c=document.createElement('canvas');c.width=vp.width;c.height=vp.height;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);
+  await pg.render({canvasContext:x,viewport:vp}).promise;return new Promise(r=>c.toBlob(r,'image/jpeg',.88))}
+async function lerNota(files,aviso){const r={blobs:[],itens:[]};let txt='';
+  for(const f of files){const nome=(f.name||'').toLowerCase();
+    if(/xml/.test(f.type)||nome.endsWith('.xml')){const x=xmlNota(await f.text());if(x)Object.assign(r,x);continue}
+    if(f.type==='application/pdf'||nome.endsWith('.pdf')){aviso('Lendo o PDF…');const p=await pdfLer(f,1);const img=await pdfPagina(f);r.blobs.push(img);
+      if(p.text)txt+='\n'+p.text;else{const q=await lerCodigos(img);q.forEach(c=>Object.assign(r,dadosQR(c)));txt+='\n'+await ocrImagens([img],aviso)}continue}
+    if(/^image\//.test(f.type)||/\.(jpe?g|png|webp|heic)$/.test(nome)){r.blobs.push(f);aviso('Procurando o QR Code…');(await lerCodigos(f)).forEach(c=>Object.assign(r,{...dadosQR(c),...r}));txt+='\n'+await ocrImagens([f],aviso)}}
+  if(txt.trim()){const t=textoNota(txt);for(const [k,v] of Object.entries(t))if(r[k]==null||r[k]==='')r[k]=v}
+  if(r.doc&&soDig(r.doc).length===14){aviso('Consultando o CNPJ do fornecedor…');try{const j=resumoCNPJ(await consultaCNPJ(r.doc));r.fornecedor=j.fantasia||(r.xml&&r.fornecedor)||j.razao||r.fornecedor;r.cnae=(j.cnae||'').split(' ')[0]}catch(e){}}
+  r.desc=r.combustivel?cap(r.combustivel)+(r.litros?' · '+fmtL(r.litros):''):r.itens.length?r.itens.slice(0,3).map(i=>i.nome).join(', ')+(r.itens.length>3?'…':''):'';
+  return r}
+async function subirAnexos(id,blobs){const out=[];
+  for(const b of blobs){const j=await paraJpeg(b,sb?1600:1000);
+    if(sb){const p=`fin/${id}-${uid()}.jpg`,{error}=await sb.storage.from(FOTOS_BUCKET).upload(p,j,{contentType:'image/jpeg'});if(error)throw error;fotoCache[p]=await blobDataURL(j);out.push({p})}
+    else out.push({d:await blobDataURL(j)})}
+  return out}
+function importarNota(){
+  openSheet('Importar nota fiscal',`<p class="muted" style="margin-top:0">Uma nota por vez. Pode ser a foto do cupom, o PDF ou o XML da nota (o XML é o mais certinho: vem no e-mail da loja).</p>
+    <label class="drop" id="nf_drop"><input type="file" id="nf_file" accept="image/*,.pdf,.xml,application/pdf,text/xml" multiple hidden><b>Arraste a nota aqui</b><span class="hint">ou toque para escolher o arquivo</span></label>
+    <div class="row" style="gap:8px"><label class="btn primary">${svg('<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>')}Tirar foto<input type="file" id="nf_cam" accept="image/*" capture="environment" hidden></label></div>
+    <p class="hint" id="nf_st" style="margin:0" aria-live="polite"></p>`,`<button class="btn" data-act="close">Cancelar</button>`,L=>{
+    const $=id=>L.querySelector('#'+id),vai=async fs=>{fs=[...fs];if(!fs.length)return;$('nf_st').textContent='Lendo a nota…';L.querySelectorAll('input').forEach(i=>i.disabled=true);
+      let r;try{r=await lerNota(fs,t=>{const s=$('nf_st');if(s)s.textContent=t})}catch(e){r={blobs:fs.filter(f=>/^image\//.test(f.type)),itens:[]}}
+      formLanc(null,{...r,tipo:'saida',lida:true})};
+    $('nf_file').onchange=e=>vai(e.target.files);$('nf_cam').onchange=e=>vai(e.target.files);
+    const d=$('nf_drop');d.addEventListener('dragover',e=>{e.preventDefault();d.classList.add('over')});d.addEventListener('dragleave',()=>d.classList.remove('over'));d.addEventListener('drop',e=>{e.preventDefault();d.classList.remove('over');vai(e.dataTransfer.files)});
+  })}
+function formLanc(l,pre={}){const n=!l,cfg=finCfg();l=l||{id:uid(),tipo:pre.tipo||'saida',data:pre.data||hojeISO(),valor:pre.valor||'',desc:pre.desc||'',fornecedor:pre.fornecedor||'',doc:pre.doc||'',forma:'pix',contaId:contaPadrao(),
+    nf:pre.chave||pre.numero?{numero:pre.numero||'',chave:pre.chave||''}:null,itens:pre.itens&&pre.itens.length?pre.itens:undefined,criadoEm:new Date().toISOString()};
+  let blobs=[...(pre.blobs||[])],cat=l.cat||classificar({...l,cnae:pre.cnae}),manual=!!l.cat;const vs=veiculos();
+  const achou=pre.lida?[pre.valor?'valor':'',pre.data?'data':'',pre.fornecedor?'fornecedor':'',pre.chave||pre.numero?'número da nota':''].filter(Boolean):null;
+  const opts=t=>Object.entries(FIN_CATS).filter(([,v])=>v[1]===(t==='entrada'?'e':'s')).map(([k,[nm]])=>`<option value="${k}" ${cat===k?'selected':''}>${nm}</option>`).join('');
+  openSheet(n?(pre.lida?'Conferir nota':'Novo lançamento'):'Editar lançamento',`
+    ${achou?`<p class="note" style="margin-top:0">${achou.length?`Li ${achou.join(', ')}. Confira antes de salvar.`:'Não consegui ler os dados da nota. Preencha à mão; a foto fica guardada junto.'}</p>`:''}
+    <div class="seg" role="radiogroup" aria-label="Tipo">${[['saida','Saída (gasto)'],['entrada','Entrada']].map(([k,t])=>`<label><input type="radio" name="lc_t" value="${k}" ${l.tipo===k?'checked':''}><span>${t}</span></label>`).join('')}</div>
+    <div class="form">
+      <div class="field"><label for="lc_v">Valor (R$)</label><input id="lc_v" inputmode="decimal" value="${l.valor!==''&&l.valor!=null?num(l.valor).toFixed(2).replace('.',','):''}"></div>
+      <div class="field"><label for="lc_d">Data</label><input id="lc_d" type="date" value="${esc(l.data)}"></div>
+      <div class="field full"><label for="lc_ds">Descrição</label><input id="lc_ds" value="${esc(l.desc)}" placeholder="Ex.: gasolina, cabo de rede, almoço"></div>
+      <div class="field"><label for="lc_f">Fornecedor ou cliente</label><input id="lc_f" value="${esc(l.fornecedor||'')}"></div>
+      <div class="field"><label for="lc_doc">CNPJ ou CPF</label><input id="lc_doc" inputmode="numeric" value="${esc(soDig(l.doc).length===14?fmtCNPJ(l.doc):l.doc||'')}"></div>
+      <div class="field"><label for="lc_c">Categoria <span class="hint" id="lc_auto"></span></label><select id="lc_c"><option value="">Escolha…</option>${opts(l.tipo)}</select></div>
+      <div class="field"><label for="lc_fm">Forma de pagamento</label><select id="lc_fm">${Object.entries(FIN_FORMAS).map(([k,t])=>`<option value="${k}" ${l.forma===k?'selected':''}>${t}</option>`).join('')}</select></div>
+      ${cfg.contas.length>1?`<div class="field"><label for="lc_ct">Conta</label><select id="lc_ct">${cfg.contas.map(c=>`<option value="${c.id}" ${l.contaId===c.id?'selected':''}>${esc(c.nome)}</option>`).join('')}</select></div>`:''}
+      <div class="field"><label for="lc_nf">Nº da nota fiscal</label><input id="lc_nf" inputmode="numeric" value="${esc((l.nf&&l.nf.numero)||'')}" placeholder="Se tiver"></div>
+      ${l.nf&&l.nf.chave?`<p class="hint full" style="margin:0">Chave da nota: <span class="mono">${esc(l.nf.chave.replace(/(\d{4})/g,'$1 ').trim())}</span></p>`:''}
+      ${l.itens&&l.itens.length?`<details class="full"><summary class="hint">${l.itens.length} ite${l.itens.length>1?'ns':'m'} na nota</summary><ul class="hint" style="margin:6px 0 0;padding-left:18px">${l.itens.map(i=>`<li>${esc(i.nome)}${i.valor?' · '+money(i.valor):''}</li>`).join('')}</ul></details>`:''}
+      ${vs.length&&n?`<label class="field full chk" id="lc_carw" hidden><input type="checkbox" id="lc_car" checked> <span>Registrar também no carro (${esc(veicNome(vs[0]))})<span class="hint"> · entra no consumo e nos gastos do carro</span></span></label>`:''}
+      <div class="full"><span class="hint">Foto da nota ou comprovante</span><div class="os-fotos" id="lc_ax"></div></div>
+    </div>`,`${n?'':'<button class="btn danger left" id="lc_del">Excluir</button>'}<button class="btn" data-act="close">Cancelar</button><button class="btn primary" id="lc_ok">Salvar</button>`,L=>{
+    const $=id=>L.querySelector('#'+id),tipo=()=>L.querySelector('input[name=lc_t]:checked').value,ax=[...(l.anexos||[])];
+    const desenha=()=>{$('lc_ax').innerHTML=ax.map((a,i)=>`<div class="os-th"><img data-ax="${i}" alt="Nota ${i+1}"><button type="button" class="iconbtn os-x" data-axr="${i}" aria-label="Remover">${svg(UI.x)}</button></div>`).join('')+blobs.map((b,i)=>`<div class="os-th"><img data-bl="${i}" alt="Nota nova ${i+1}"><button type="button" class="iconbtn os-x" data-blr="${i}" aria-label="Remover">${svg(UI.x)}</button></div>`).join('')+
+        `<label class="os-add">${svg(UI.plus)}<span>Adicionar foto</span><input type="file" accept="image/*" multiple hidden id="lc_add"></label>`;
+      $('lc_ax').querySelectorAll('[data-ax]').forEach(im=>{const a=ax[+im.dataset.ax];const s=fotoSync(a);if(s)im.src=s;else if(sb&&a.p)fotoSrc(a).then(u=>im.src=u).catch(()=>{})});
+      $('lc_ax').querySelectorAll('[data-bl]').forEach(im=>{im.src=URL.createObjectURL(blobs[+im.dataset.bl])});
+      $('lc_ax').querySelectorAll('[data-axr]').forEach(b=>b.onclick=()=>{ax.splice(+b.dataset.axr,1);desenha()});$('lc_ax').querySelectorAll('[data-blr]').forEach(b=>b.onclick=()=>{blobs.splice(+b.dataset.blr,1);desenha()});
+      $('lc_add').onchange=e=>{blobs.push(...e.target.files);desenha()}};desenha();
+    const sugere=()=>{if(manual)return;const c=classificar({fornecedor:$('lc_f').value,desc:$('lc_ds').value,doc:$('lc_doc').value,cnae:pre.cnae,itens:l.itens});if(c&&FIN_CATS[c][1]===(tipo()==='entrada'?'e':'s')){$('lc_c').value=c;$('lc_auto').textContent='· sugerida'}carro()};
+    const carro=()=>{if($('lc_carw'))$('lc_carw').hidden=!(tipo()==='saida'&&['combustivel','veiculo'].includes($('lc_c').value))};
+    L.querySelectorAll('input[name=lc_t]').forEach(r=>r.onchange=()=>{$('lc_c').innerHTML='<option value="">Escolha…</option>'+opts(tipo());if(tipo()==='entrada'&&!manual)$('lc_c').value='servicos';sugere();carro()});
+    ['lc_f','lc_ds'].forEach(i=>$(i).addEventListener('change',sugere));$('lc_c').onchange=()=>{manual=true;$('lc_auto').textContent='';carro()};
+    if(cat&&!l.cat)$('lc_auto').textContent='· sugerida';carro();
+    $('lc_ok').onclick=async()=>{const vl=num($('lc_v').value);if(!(vl>0)){toast('Informe o valor.');return}const c=$('lc_c').value;if(!c){toast('Escolha a categoria.');return}
+      const b=$('lc_ok');b.disabled=true;b.textContent='Salvando…';
+      const nfN=$('lc_nf').value.trim(),nf=nfN||(l.nf&&l.nf.chave)?{...(l.nf||{}),numero:nfN}:null,doc=soDig($('lc_doc').value)||$('lc_doc').value.trim();
+      try{const novos=blobs.length?await subirAnexos(l.id,blobs):[],anexos=[...ax,...novos];
+        if($('lc_car')&&!$('lc_carw').hidden&&$('lc_car').checked){const v=vs[0],comb=c==='combustivel';
+          const g={id:uid(),veiculoId:v.id,tipo:comb?'combustivel':'manutencao',data:$('lc_d').value||hojeISO(),valor:vl,local:$('lc_f').value.trim(),desc:comb?'':$('lc_ds').value.trim(),comb:pre.combustivel&&COMB[pre.combustivel]?pre.combustivel:'gasolina',litros:pre.litros||'',precoL:pre.precoL||'',cheio:false,nf,doc,anexos,atualizadoEm:new Date().toISOString()};
+          if(await salvarOp('gastos',g,comb?'Abastecimento salvo no carro. Complete o km lá para calcular o consumo.':'Gasto salvo no carro'))closeSheet();else{b.disabled=false;b.textContent='Salvar'}return}
+        const o={...l,tipo:tipo(),valor:vl,data:$('lc_d').value||hojeISO(),desc:$('lc_ds').value.trim(),fornecedor:$('lc_f').value.trim(),doc,cat:c,forma:$('lc_fm').value,contaId:$('lc_ct')?$('lc_ct').value:l.contaId||contaPadrao(),nf,anexos,atualizadoEm:new Date().toISOString()};
+        if(await salvarOp('lancamentos',o,'Lançamento salvo'))closeSheet();else{b.disabled=false;b.textContent='Salvar'}}
+      catch(e){b.disabled=false;b.textContent='Salvar';toast('Não foi possível enviar a foto da nota. Confira a internet e tente de novo.')}};
+    if(!n)$('lc_del').onclick=()=>confirmSheet('Excluir lançamento?','Este lançamento será apagado.','Excluir',async()=>{try{await store.remove('lancamentos',l.id);(l.anexos||[]).forEach(a=>{if(a.p&&sb)sb.storage.from(FOTOS_BUCKET).remove([a.p]).catch(()=>{})});toast('Excluído')}catch(e){toast('Não foi possível excluir.')}});
+  })}
+function contaSheet(c){const n=!c;c=c||{id:uid(),nome:finCfg().contas.length?'Dinheiro (caixa)':'Conta da empresa',dataIni:hojeISO()};
+  openSheet(n?'Saldo da conta':'Editar conta',`<p class="muted" style="margin-top:0">Informe quanto tem hoje na conta. A partir daí o app soma as entradas e tira as saídas sozinho.</p><div class="form">
+    <div class="field full"><label for="ct_n">Nome da conta</label><input id="ct_n" value="${esc(c.nome)}" placeholder="Ex.: Nubank, Inter, Dinheiro"></div>
+    <div class="field"><label for="ct_s">Saldo (R$)</label><input id="ct_s" inputmode="decimal" value="${esc(opV(c.saldoIni))}" placeholder="Ex.: 500,00"></div>
+    <div class="field"><label for="ct_d">Saldo do dia</label><input id="ct_d" type="date" value="${esc(c.dataIni)}"><span class="hint">Lançamentos antes desse dia não mudam o saldo.</span></div></div>`,
+  `${n||finCfg().contas.length<2?'':'<button class="btn danger left" id="ct_del">Excluir conta</button>'}<button class="btn" data-act="close">Cancelar</button><button class="btn primary" id="ct_ok">Salvar</button>`,L=>{const $=id=>L.querySelector('#'+id);
+    $('ct_ok').onclick=async()=>{const o={...c,nome:$('ct_n').value.trim()||'Conta',saldoIni:num($('ct_s').value),dataIni:$('ct_d').value||hojeISO()},cs=finCfg().contas.filter(x=>x.id!==c.id);
+      try{await salvarFinCfg({contas:n?[...finCfg().contas,o]:finCfg().contas.map(x=>x.id===c.id?o:x)});closeSheet();toast('Saldo salvo')}catch(e){toast('Não foi possível salvar.')}};
+    if($('ct_del'))$('ct_del').onclick=()=>confirmSheet('Excluir conta?',`A conta ${esc(c.nome)} sai do financeiro. Os lançamentos continuam.`,'Excluir',()=>salvarFinCfg({contas:finCfg().contas.filter(x=>x.id!==c.id)}))})}
+function conferirSaldo(c){const atual=saldoConta(c,hojeISO());
+  openSheet('Conferir saldo',`<p style="margin-top:0">O app calcula <b>${money(atual)}</b> em ${esc(c.nome)}. Quanto aparece no banco agora?</p><div class="form"><div class="field full"><label for="cf_v">Saldo no banco (R$)</label><input id="cf_v" inputmode="decimal"></div></div>
+    <p class="hint" style="margin:0">Se tiver diferença, o app cria um "Ajuste de saldo" com o valor que faltou ou sobrou. Antes, veja se esqueceu de lançar algum gasto.</p>`,
+  `<button class="btn" data-act="close">Cancelar</button><button class="btn primary" id="cf_ok">Acertar</button>`,L=>{L.querySelector('#cf_ok').onclick=async()=>{const real=num(L.querySelector('#cf_v').value),dif=Math.round((real-atual)*100)/100;
+    if(!L.querySelector('#cf_v').value.trim()){toast('Informe o saldo do banco.');return}if(!dif){closeSheet();toast('Saldo certinho!');return}
+    if(await salvarOp('lancamentos',{id:uid(),tipo:dif>0?'entrada':'saida',valor:Math.abs(dif),data:hojeISO(),desc:'Ajuste de saldo (conferência com o banco)',cat:'ajuste',contaId:c.id,criadoEm:new Date().toISOString()},'Saldo acertado'))closeSheet()}})}
+const mesNomeFin=ym=>cap(new Date(+ym.slice(0,4),+ym.slice(5,7)-1,15).toLocaleDateString('pt-BR',{month:'long',year:'numeric'}));
+function resumoMes(ym,ms){ms=ms||movimentos();const doMes=ms.filter(m=>m.data.startsWith(ym)),sem=doMes.filter(m=>m.cat!=='ajuste');
+  const ent=sem.filter(m=>m.tipo==='entrada'),sai=sem.filter(m=>m.tipo==='saida'),soma=l=>l.reduce((t,m)=>t+m.valor,0);
+  const porCat=l=>Object.entries(l.reduce((a,m)=>{a[m.cat]=(a[m.cat]||0)+m.valor;return a},{})).sort((a,b)=>b[1]-a[1]);
+  return {doMes,ent:soma(ent),sai:soma(sai),catE:porCat(ent),catS:porCat(sai),semNota:sai.filter(m=>!(m.anexos&&m.anexos.length)&&!(m.nf&&(m.nf.numero||m.nf.chave))&&m.src!=='das')}}
+function relatorioHTML(ym,comFotos){const e=S.empresa,ms=movimentos(),r=resumoMes(ym,ms),cs=finCfg().contas,fim=ym+'-31',ini=ymMais(ym,-1)+'-31';
+  const linha=m=>`<tr><td>${dataBR(m.data)}</td><td><div style="font-weight:600">${esc(m.desc||catNomeFin(m.cat))}</div><div class="desc">${esc([catNomeFin(m.cat),m.fornecedor,m.doc&&soDig(m.doc).length===14?'CNPJ '+fmtCNPJ(m.doc):'',m.nf&&m.nf.numero?'NF '+m.nf.numero:'',FIN_FORMAS[m.forma]||''].filter(Boolean).join(' · '))}</div></td><td class="v" style="color:${m.tipo==='entrada'?'#1a7f45':'#b42318'}">${m.tipo==='entrada'?'+':'−'} ${money(m.valor)}</td></tr>`;
+  const cat=(t,l,tot)=>l.length?`<div><div class="pp-cat">${t}</div><table class="pp-table"><tbody>${l.map(([k,v])=>`<tr><td>${esc(catNomeFin(k))}</td><td class="v">${money(v)}</td><td class="v" style="width:60px">${tot?Math.round(v/tot*100):0}%</td></tr>`).join('')}</tbody></table></div>`:'';
+  const fotos=comFotos?r.doMes.flatMap(m=>(m.anexos||[]).map(a=>({m,s:fotoSync(a)}))).filter(x=>x.s):[];
+  return `<div class="paper"><div class="pp-band"><div class="pp-id"><img class="pp-logo2" src="${LOGO}" alt="${esc(e.nome)}"></div><div class="pp-num"><div class="k">Relatório financeiro</div><div class="n">${esc(mesNomeFin(ym))}</div></div></div><div class="pp-stripe"></div>
+    <div class="pp-body">
+      <div class="pp-cond">${cs.length?`<div><b>Saldo no início do mês</b><br>${money(cs.reduce((t,c)=>t+saldoConta(c,ini,ms),0))}</div><div><b>Saldo no fim do mês</b><br>${money(cs.reduce((t,c)=>t+saldoConta(c,fim,ms),0))}</div>`:''}
+        <div><b>Entradas</b><br>${money(r.ent)}</div><div><b>Saídas</b><br>${money(r.sai)}</div><div><b>Resultado do mês</b><br>${money(r.ent-r.sai)}</div><div><b>Empresa</b><br>${esc(e.nome)}${e.cnpj?' · CNPJ '+esc(e.cnpj):''}</div></div>
+      ${cat('Entradas por categoria',r.catE,r.ent)}${cat('Saídas por categoria',r.catS,r.sai)}
+      <div><div class="pp-cat">Lançamentos do mês (${r.doMes.length})</div><table class="pp-table"><tbody>${[...r.doMes].reverse().map(linha).join('')||'<tr><td>Nenhum lançamento.</td></tr>'}</tbody></table></div>
+      ${r.semNota.length?`<p class="desc">${r.semNota.length} saída${r.semNota.length>1?'s':''} sem nota fiscal anotada.</p>`:''}
+      ${fotos.map(x=>`<div><div class="pp-cat">Nota: ${esc(x.m.desc||catNomeFin(x.m.cat))} · ${dataBR(x.m.data)} · ${money(x.m.valor)}</div><img src="${x.s}" alt="" style="max-width:100%;max-height:900px;display:block;margin:0 auto"></div>`).join('')}
+      <p class="desc">Gerado pelo app DaylinTech em ${new Date().toLocaleDateString('pt-BR')}.</p>
+    </div></div>`}
+function csvMes(ym){const r=resumoMes(ym),q=s=>'"'+String(s??'').replace(/"/g,'""')+'"';
+  return '﻿'+[['Data','Tipo','Valor','Categoria','Descrição','Fornecedor/cliente','CNPJ/CPF','Nota fiscal','Chave da nota','Forma','Origem'].join(';'),
+    ...[...r.doMes].reverse().map(m=>[dataBR(m.data),m.tipo==='entrada'?'Entrada':'Saída',(m.tipo==='entrada'?'':'-')+m.valor.toFixed(2).replace('.',','),catNomeFin(m.cat),m.desc,m.fornecedor,m.doc,m.nf&&m.nf.numero,m.nf&&m.nf.chave,FIN_FORMAS[m.forma]||'',SRC_NOME[m.src]||'Financeiro'].map(q).join(';'))].join('\r\n')}
+async function relatorioMes(ym){const r=resumoMes(ym),temFoto=r.doMes.some(m=>m.anexos&&m.anexos.length),nome=`Financeiro-${ym}-${arqNome(S.empresa.nome||'DaylinTech')}.pdf`;
+  openSheet('Relatório de '+mesNomeFin(ym),`${temFoto?`<label class="chk" style="display:flex"><input type="checkbox" id="rl_f" checked> <span>Incluir as fotos das notas no PDF</span></label>`:''}<div class="paper-wrap" id="rl_w">${relatorioHTML(ym,false)}</div>`,
+    `<button class="btn left" id="rl_csv">${svg(UI.dl)}Planilha</button><button class="btn" id="rl_dl">${svg(UI.dl)}PDF</button><button class="btn primary" id="rl_env">Enviar ao contador</button>`,L=>{L.querySelector('.sheet').style.maxWidth='860px';
+    const gera=async()=>{const f=L.querySelector('#rl_f');if(f&&f.checked){toast('Carregando as fotos das notas…');await Promise.all(r.doMes.flatMap(m=>m.anexos||[]).map(a=>fotoSrc(a).catch(()=>null)))}
+      return new File([await htmlPDF(relatorioHTML(ym,!!(f&&f.checked)))],nome,{type:'application/pdf'})};
+    L.querySelector('#rl_csv').onclick=()=>baixar(`Financeiro-${ym}.csv`,csvMes(ym),'text/csv;charset=utf-8').then(ok=>ok&&toast('Planilha salva. Abre no Excel ou no Google Planilhas.'));
+    L.querySelector('#rl_dl').onclick=async e=>{const b=e.currentTarget;b.disabled=true;try{const f=await gera();await baixar(nome,f,'application/pdf');toast('Relatório em PDF salvo.')}catch(x){toast('Não foi possível gerar o PDF.')}b.disabled=false};
+    L.querySelector('#rl_env').onclick=async e=>{const b=e.currentTarget;b.disabled=true;let f;try{f=await gera()}catch(x){b.disabled=false;toast('Não foi possível gerar o PDF.');return}b.disabled=false;
+      const csv=new File([csvMes(ym)],`Financeiro-${ym}.csv`,{type:'text/csv'}),txt=`Relatório financeiro de ${mesNomeFin(ym)} — ${S.empresa.nome||'DaylinTech'}.\nEntradas: ${money(r.ent)} · Saídas: ${money(r.sai)} · Resultado: ${money(r.ent-r.sai)}`;
+      if(navigator.canShare&&navigator.canShare({files:[f,csv]})){try{await navigator.share({files:[f,csv],title:'Relatório financeiro',text:txt});return}catch(x){if(x&&x.name==='AbortError')return}}
+      await baixar(nome,f,'application/pdf');const t=(fiscal().titular||{}).contadorTel;let num_=soDig(t);if(num_.length>=10){if(num_.length<=11)num_='55'+num_;window.open('https://wa.me/'+num_+'?text='+encodeURIComponent(txt+'\n(PDF em anexo)'),'_blank','noopener')}
+      toast('PDF salvo. Anexe na conversa com o contador.')};
+  })}
+function vFinanceiro(app){
+  const ms=movimentos(),cfg=finCfg(),ym=ui.finMes||ymHoje(),r=resumoMes(ym,ms),fil=ui.finFil||'todos',hoje=hojeISO();
+  const lista=r.doMes.filter(m=>fil==='todos'||fil==='semnota'?(fil==='todos'||r.semNota.includes(m)):m.tipo===fil);
+  const mx=Math.max(...r.catS.map(x=>x[1]),1);
+  const item=m=>`<div class="li fin-m" data-mv="${esc(m.id)}" tabindex="0" role="button"><span class="fin-s ${m.tipo}">${m.tipo==='entrada'?'+':'−'}</span><div><div class="t">${esc(m.desc||catNomeFin(m.cat))}${m.pendente?' <span class="pill fx-bad">para pagar</span>':''}</div>
+    <div class="d">${dataBR(m.data)} · ${esc(catNomeFin(m.cat))}${SRC_NOME[m.src]?` · <span class="fin-src">${SRC_NOME[m.src]}</span>`:''}${m.fornecedor?' · '+esc(m.fornecedor):''}${m.nf&&m.nf.numero?' · NF '+esc(m.nf.numero):''}${m.anexos&&m.anexos.length?' · 📎 nota':''}</div></div>
+    <div class="r"><span class="num" style="color:var(--${m.tipo==='entrada'?'ok':'bad'})">${m.tipo==='entrada'?'+':'−'} ${money(m.valor)}</span></div></div>`;
+  app.innerHTML=`
+  <div class="spread"><div><div class="eyebrow">Dinheiro da empresa</div><h1 class="h1">Financeiro</h1></div>
+    <div class="row" style="gap:8px"><button class="btn primary" id="fn_nf">${svg('<path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/><path d="M10 13h5M10 17h3"/>')}Importar nota</button><button class="btn" id="fn_novo">${svg(UI.plus)}Lançamento</button></div></div>
+  <div class="fin-contas">${cfg.contas.length?cfg.contas.map(c=>`<div class="fx-card fin-saldo"><span>${esc(c.nome)}</span><b class="${saldoConta(c,hoje,ms)<0?'neg':''}">${money(saldoConta(c,hoje,ms))}</b><span>saldo hoje · <button class="linkbtn" data-cf="${c.id}">conferir com o banco</button> · <button class="linkbtn" data-ce="${c.id}">editar</button></span></div>`).join('')+`<button class="btn ghost sm" id="fn_conta" style="align-self:center">${svg(UI.plus)}Outra conta</button>`
+    :`<div class="fx-card fin-saldo"><span>Saldo da conta</span><b>—</b><span>Informe quanto tem no banco hoje para o app acompanhar o saldo.</span><button class="btn primary sm" id="fn_conta" style="align-self:flex-start;margin-top:6px">Informar saldo</button></div>`}</div>
+  <div class="spread" style="align-items:center"><div class="row fin-mes" style="gap:6px;flex-wrap:nowrap"><button class="iconbtn" id="fn_ant" aria-label="Mês anterior">${svg(UI.back)}</button><b>${esc(mesNomeFin(ym))}</b><button class="iconbtn" id="fn_prox" aria-label="Próximo mês" ${ym>=ymHoje()?'disabled':''} style="transform:scaleX(-1)">${svg(UI.back)}</button></div>
+    <button class="btn" id="fn_rel">${svg(UI.dl)}Relatório do mês</button></div>
+  <div class="fx-cards">
+    <div class="fx-card ok"><span>Entradas</span><b>${money(r.ent)}</b><span>${r.catE.map(([k,v])=>esc(catNomeFin(k))+' '+money(v)).slice(0,2).join(' · ')||'—'}</span></div>
+    <div class="fx-card bad"><span>Saídas</span><b>${money(r.sai)}</b><span>${r.doMes.filter(m=>m.tipo==='saida'&&m.cat!=='ajuste').length} lançamentos</span></div>
+    <div class="fx-card ${r.ent-r.sai<0?'bad':'ok'}"><span>Resultado do mês</span><b>${money(r.ent-r.sai)}</b><span>${r.ent?`Sobrou ${Math.round((r.ent-r.sai)/r.ent*100)}% do que entrou`:'Entradas menos saídas'}</span></div>
+  </div>
+  ${r.catS.length?`<section class="panel"><h2 class="h2">Para onde foi o dinheiro</h2><div class="fin-cats">${r.catS.map(([k,v])=>`<div class="fin-c"><span>${esc(catNomeFin(k))}</span><i><i style="width:${v/mx*100}%"></i></i><b>${money(v)}</b><span class="hint">${Math.round(v/r.sai*100)}%</span></div>`).join('')}</div></section>`:''}
+  <div class="spread" style="align-items:center"><div class="chips">${[['todos','Todos'],['entrada','Entradas'],['saida','Saídas'],['semnota',`Sem nota (${r.semNota.length})`]].map(([k,l])=>`<button class="chip" data-ff="${k}" aria-pressed="${fil===k}">${l}</button>`).join('')}</div></div>
+  ${lista.length?`<div class="list">${lista.map(item).join('')}</div>`:`<div class="empty" style="padding:18px">${r.doMes.length?'Nada neste filtro.':`Nenhum lançamento em ${esc(mesNomeFin(ym).toLowerCase())}. Pagamentos de orçamentos, gastos do carro, compras e guias pagas aparecem aqui sozinhos.`}</div>`}
+  <p class="hint" style="margin:0">Entram sozinhos: pagamentos registrados nos orçamentos e OS, gastos do carro, compras marcadas como "Comprei" e guias de imposto pagas. A categoria das notas é sugerida pelo fornecedor, pelo tipo de empresa do CNPJ e pelas palavras da nota, e o app aprende com as suas escolhas.</p>`;
+  const $=id=>app.querySelector('#'+id);
+  $('fn_nf').onclick=importarNota;$('fn_novo').onclick=()=>formLanc();$('fn_conta').onclick=()=>contaSheet();
+  app.querySelectorAll('[data-cf]').forEach(b=>b.onclick=e=>{e.stopPropagation();conferirSaldo(cfg.contas.find(c=>c.id===b.dataset.cf))});
+  app.querySelectorAll('[data-ce]').forEach(b=>b.onclick=e=>{e.stopPropagation();contaSheet(cfg.contas.find(c=>c.id===b.dataset.ce))});
+  $('fn_ant').onclick=()=>{ui.finMes=ymMais(ym,-1);render()};$('fn_prox').onclick=()=>{ui.finMes=ymMais(ym,1);render()};
+  $('fn_rel').onclick=()=>relatorioMes(ym);
+  app.querySelectorAll('[data-ff]').forEach(b=>b.onclick=()=>{ui.finFil=b.dataset.ff;render()});
+  app.querySelectorAll('[data-mv]').forEach(b=>b.onclick=()=>{const m=ms.find(x=>x.id===b.dataset.mv);if(!m)return;
+    if(m.src==='fin')formLanc(S.lancamentos.find(l=>l.id===m.id));
+    else if(m.src==='orc'){const o=S.orcamentos.find(x=>x.id===m.ref);go(o&&o.tipo==='os'&&o.agenda?'os':'proposta',{id:m.ref})}
+    else if(m.src==='carro'){const g=S.gastos.find(x=>x.id===m.ref),v=g&&S.veiculos.find(x=>x.id===g.veiculoId);if(g&&v)formGasto(v,g)}
+    else if(m.src==='compra')formCompra(S.compras.find(x=>x.id===m.ref));
+    else if(m.src==='das')go('impostos')});
 }
 function vProposta(app){
   const o=S.orcamentos.find(x=>x.id===view.id);

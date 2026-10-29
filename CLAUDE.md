@@ -92,11 +92,18 @@ O app foi feito como artefato do claude.ai e usa `window.claude.use(...)`. Fora 
 - OS avulsa: "Editar OS" (`agendar`) também edita tipo e motivo.
 
 ## Navegação
-- `NAV_MAIN` (Início, Orçamentos, Agenda, Clientes, Catálogo) fica na barra; o resto fica em "Mais" (`NAV_MAIS`, `abrirMais`, `data-act="mais"`). Quando a tela atual é do "Mais", o botão mostra o nome dela. Itens com 3º campo 1 são `internal` (somem no Modo cliente).
+- `NAV_MAIN` (Início, Orçamentos, Agenda, Financeiro, Catálogo, Mão de obra) fica na barra; o resto fica em "Mais" (`NAV_MAIS`, `abrirMais`, `data-act="mais"`). Quando a tela atual é do "Mais", o botão mostra o nome dela. Itens com 3º campo 1 são `internal` (somem no Modo cliente).
 
 ## Aba Operacional (`vOperacional`: `vCarro` e `vCompras`)
-- Coleções novas: `veiculos`, `gastos` (do carro: tipo combustivel/manutencao/reforma/documento/seguro/multa/outro, `veiculoId`), `compras` (status pendente/comprado, prioridade urgente/normal/depois). Lista em `COLS`. O banco precisa do `supabase/operacional.sql` (amplia o check de `docs.col`); sem ele, `salvarOp` avisa.
+- Coleções novas: `veiculos`, `gastos` (do carro: tipo combustivel/manutencao/reforma/documento/seguro/multa/outro, `veiculoId`), `compras` (status pendente/comprado, prioridade urgente/normal/depois). Lista em `COLS`. O banco precisa do `supabase/financeiro.sql` (ou operacional.sql, mais antigo) para aceitar coleções novas; sem ele, `salvarOp` avisa. Depois do financeiro.sql, `docs.col` aceita qualquer nome `^[a-z_]{1,40}$`: coleção nova não precisa de SQL.
 - Backup: exporta todas as `COLS`; ao restaurar, coleção ausente no arquivo (backup antigo) fica como está.
 - Consumo: `trechosConsumo` (km entre tanques cheios ÷ litros colocados depois do anterior).
 - "Posto onde estou": geolocalização + Overpass API (amenity=fuel, 800 m); sem posto, endereço pelo Nominatim.
 - Avisos de licenciamento/IPVA/seguro (≤30 dias), próxima revisão (≤500 km ou 15 dias), multas a pagar e compras urgentes vão para a página inicial (`avisosOperacionais`).
+
+## Aba Financeiro (`vFinanceiro`)
+- Coleção `lancamentos` (manuais e notas importadas). `movimentos()` junta com o que entra sozinho, sem duplicar: `o.pgto` dos orçamentos/OS (entrada), `gastos` do carro, `compras` compradas e guias DAS pagas (`fiscal.das`). Cada movimento tem `src` (fin/orc/carro/compra/das); clicar abre a origem.
+- Contas e saldo em `S.empresa.financeiro.contas` ([{id,nome,saldoIni,dataIni}]); `saldoConta`. "Conferir com o banco" cria lançamento `cat:'ajuste'` (fora dos totais por categoria).
+- Categorias `FIN_CATS`; `classificar()` grátis: mesmo CNPJ/fornecedor já usado → CNAE do CNPJ (`CNAE_CAT`) → palavras (`CAT_REGRAS`).
+- Importar nota (`importarNota`/`lerNota`): XML da NF-e (`xmlNota`), PDF (texto do DANFE + página 1 como foto), foto (QR Code via BarcodeDetector ou jsQR → chave de 44 dígitos; texto via Tesseract → `textoNota`). Consulta o CNPJ do emitente. Foto guardada no bucket os-fotos em `fin/` (`subirAnexos`). Nota de combustível/veículo pode ir direto para os gastos do carro.
+- Relatório do mês: `relatorioHTML` → PDF (`htmlPDF`, opção de incluir fotos das notas), planilha CSV (`;`, BOM) e "Enviar ao contador" (compartilhar ou WhatsApp do contador da aba Impostos).
