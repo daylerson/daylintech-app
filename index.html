@@ -289,6 +289,9 @@ body.apresentacao .internal{display:none!important}
 .pix-box{flex-direction:row;align-items:center;gap:16px;padding:12px}
 .st-b{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
 .ag-list{display:flex;flex-direction:column;gap:10px}
+.nf-ls{display:flex;flex-direction:column}.nf-l{display:grid;grid-template-columns:110px minmax(0,1fr) auto;gap:2px 10px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}.nf-ls .nf-l:first-child{border-top:0}
+.nf-l b{font-weight:600;overflow-wrap:anywhere}.nf-l>.hint:nth-child(3){grid-column:2}.nf-l>.btn{grid-row:1;grid-column:3}
+@media (max-width:560px){.nf-l{grid-template-columns:minmax(0,1fr) auto}.nf-l>.hint:first-child{grid-column:1/-1}.nf-l>b{grid-column:1}.nf-l>.hint:nth-child(3){grid-column:1}.nf-l>.btn{grid-column:2;grid-row:2}}
 .gal-pastas{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
 .gal-pc{display:flex;flex-direction:column;padding:0;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);color:var(--ink);overflow:hidden;cursor:pointer;text-align:left;font:inherit;box-shadow:var(--shadow)}
 .gal-pc>img,.gal-pc-v{width:100%;aspect-ratio:4/3;object-fit:cover;display:grid;place-items:center;background:var(--brand-soft);color:var(--brand)}.gal-pc-v svg{width:34px;height:34px}
@@ -949,7 +952,7 @@ function vHome(app){
   if(antigos.length)upd.push(`<button class="up-i internal" data-nav="catalogo"><span class="up-dot warn"></span><span><b>${antigos.length} preço${antigos.length===1?'':'s'} com mais de 30 dias</b><span class="hint">${esc(antigos.slice(0,3).map(p=>p.nome).join(', '))}${antigos.length>3?'…':''}. Peça uma cotação nova.</span></span></button>`);
   if(semLoja.length)upd.push(`<button class="up-i internal" data-nav="catalogo"><span class="up-dot muted"></span><span><b>${semLoja.length} produto${semLoja.length===1?'':'s'} sem loja cadastrada</b><span class="hint">Cadastre onde comprar para comparar preços.</span></span></button>`);
   recentes.forEach(p=>{const ef=fornEf(p);upd.push(`<button class="up-i internal" data-edit-prod="${p.id}"><span class="up-dot brand"></span><span><b>Preço atualizado: ${esc(p.nome)}</b><span class="hint">${money(p.custo)}${ef?` na ${esc(ef.f.nome)}`:''} · ${fmtDate(dataPreco(p))}</span></span></button>`)});
-  [...avisosFinanceiros().map(a=>({...a,nav:'financeiro'})),...avisosFiscais(),...avisosOperacionais().map(a=>({...a,nav:'operacional'}))].forEach(a=>{const h=`<button class="up-i internal" data-nav="${a.nav||'impostos'}"><span class="up-dot ${a.cls}"></span><span><b>${esc(a.t)}</b><span class="hint">${esc(a.h)}</span></span></button>`;if(a.cls==='warn')upd.unshift(h);else upd.push(h)});
+  [...avisosNota(),...avisosFinanceiros().map(a=>({...a,nav:'financeiro'})),...avisosFiscais(),...avisosOperacionais().map(a=>({...a,nav:'operacional'}))].forEach(a=>{const h=`<button class="up-i internal" ${a.orc?`data-open-orc="${a.orc}"`:`data-nav="${a.nav||'impostos'}"`}><span class="up-dot ${a.cls}"></span><span><b>${esc(a.t)}</b><span class="hint">${esc(a.h)}</span></span></button>`;if(a.cls==='warn')upd.unshift(h);else upd.push(h)});
   const ult=[...os].sort((a,b)=>(b.criadoEm||'').localeCompare(a.criadoEm||'')).slice(0,3);
   const tile=(nav,icon,label,cls='')=>`<button class="tile ${cls}" ${nav}>${svg(icon)}<span>${label}</span></button>`;
   app.innerHTML=`
@@ -2538,7 +2541,7 @@ function vOS(app){
   ${o.tipo==='os'?(()=>{const t=calc(o),its=o.itens||[];return `<section class="panel"><div class="spread" style="align-items:center"><h2 class="h2">Cobrança</h2><span class="hint">opcional</span></div>
     ${its.length?`<div class="list">${its.map(i=>`<div class="li"><div><div class="t">${esc(i.nome)}</div><div class="d">${String(num(i.qtd)).replace('.',',')} × ${money(i.preco)}</div></div><div class="r"><span class="num">${money(num(i.preco)*num(i.qtd))}</span></div></div>`).join('')}</div><div class="spread"><b>Total</b><b>${money(t.total)}</b></div>`
       :`<p class="muted" style="margin:0">${o.osTipo==='garantia'?'Atendimento em garantia: sem custo para o cliente.':'Sem cobrança. Se for cobrar a visita, materiais ou mão de obra, adicione aqui.'}</p>`}
-    <div class="row"><button class="btn ${its.length?'':'primary'}" id="ox_cob">${its.length?'Editar valores':'Cobrar: adicionar materiais e mão de obra'}</button>${t.total>0?`<button class="btn" id="ox_pg">${o.pgto?'Editar pagamento':'Registrar pagamento'}</button>${o.pgto?`<button class="btn" id="ox_rc">Recibo</button>`:''}`:''}</div>
+    <div class="row"><button class="btn ${its.length?'':'primary'}" id="ox_cob">${its.length?'Editar valores':'Cobrar: adicionar materiais e mão de obra'}</button>${t.total>0?`<button class="btn" id="ox_pg">${o.pgto?'Editar pagamento':'Registrar pagamento'}</button>${o.pgto?`<button class="btn" id="ox_rc">Recibo</button><button class="btn" id="ox_nf">${o.nfse?'Nota ✓':'Emitir nota'}</button>`:''}`:''}</div>
     ${t.total>0&&!o.pgto?`<div class="field"><label for="ox_lk">Link de pagamento do cartão</label><input id="ox_lk" inputmode="url" value="${esc(o.linkPagamento||'')}" placeholder="https://…"><span class="hint">Gere na maquininha com o valor de ${money(t.total)} e cole aqui antes de enviar. O cliente recebe o link da OS com "Copiar código Pix" e "Pagar com cartão".</span></div>`:''}</section>`})():''}
   <section class="panel"><h2 class="h2">Fotos antes do serviço</h2>${grade('antes')}</section>
   <section class="panel"><h2 class="h2">Fotos depois do serviço</h2>${grade('depois')}</section>
@@ -2557,7 +2560,7 @@ function vOS(app){
   $('ox_ed').onclick=()=>agendar(o);
   if($('ox_cob'))$('ox_cob').onclick=()=>editarOrc(o);
   if($('ox_lk'))$('ox_lk').addEventListener('change',e=>{const v=normUrl(e.target.value);
-    store.save('orcamentos',{...(S.orcamentos.find(x=>x.id===o.id)||o),linkPagamento:v,atualizadoEm:new Date().toISOString()}).then(()=>toast(v?'Link do cartão salvo':'Link removido'),erro)});if($('ox_pg'))$('ox_pg').onclick=()=>registrarPagamento(o);if($('ox_rc'))$('ox_rc').onclick=()=>verRecibo(o.id);
+    store.save('orcamentos',{...(S.orcamentos.find(x=>x.id===o.id)||o),linkPagamento:v,atualizadoEm:new Date().toISOString()}).then(()=>toast(v?'Link do cartão salvo':'Link removido'),erro)});if($('ox_pg'))$('ox_pg').onclick=()=>registrarPagamento(o);if($('ox_rc'))$('ox_rc').onclick=()=>verRecibo(o.id);if($('ox_nf'))$('ox_nf').onclick=()=>nfseSheet(o);
   if($('os_ini'))$('os_ini').onclick=()=>salvarAgenda(o,{inicio:new Date().toISOString()}).then(()=>toast('Serviço iniciado'),erro);
   if($('os_fim'))$('os_fim').onclick=()=>salvarAgenda(o,{fim:new Date().toISOString()}).then(()=>toast('Serviço finalizado'),erro);
   if($('os_hr'))$('os_hr').onclick=()=>horariosSheet(o);
@@ -3208,7 +3211,7 @@ const contaPadrao=()=>{const c=finCfg().contas;return c[0]?c[0].id:''};
 function movimentos(){const out=[],cp=contaPadrao();
   (S.lancamentos||[]).forEach(l=>out.push({...l,src:'fin',contaId:l.contaId||cp}));
   S.orcamentos.forEach(o=>{const p=o.pgto;if(!p||!(num(p.valor)>0))return;out.push({id:'orc-'+o.id,src:'orc',ref:o.id,tipo:'entrada',data:String(p.data||'').slice(0,10),valor:num(p.valor),cat:'servicos',contaId:cp,
-    desc:`${o.tipo==='os'?osTipoNome(o)+' · OS':'Orçamento'} Nº ${nOrc(o.numero)} · ${cliNome(o)}${p.tipo==='parcial'?' (parcial)':''}`,forma:p.forma==='cartao'?'credito':p.forma,fornecedor:p.nome||cliNome(o)})});
+    desc:`${o.tipo==='os'?osTipoNome(o)+' · OS':'Orçamento'} Nº ${nOrc(o.numero)} · ${cliNome(o)}${p.tipo==='parcial'?' (parcial)':''}`,forma:p.forma==='cartao'?'credito':p.forma,fornecedor:p.nome||cliNome(o),doc:p.doc,nf:o.nfse?{numero:o.nfse.numero,chave:o.nfse.chave}:null})});
   (S.gastos||[]).forEach(g=>{const v=(S.veiculos||[]).find(x=>x.id===g.veiculoId);out.push({id:'car-'+g.id,src:'carro',ref:g.id,tipo:'saida',data:g.data,valor:num(g.valor),cat:g.tipo==='combustivel'?'combustivel':'veiculo',contaId:g.contaId||cp,
     desc:(g.tipo==='combustivel'?`${COMB[g.comb]||'Combustível'}${g.litros?' · '+fmtL(g.litros):''}`:`${GASTO_TIPOS[g.tipo].split(' (')[0]}${g.desc?': '+g.desc:''}`)+(v?' · '+veicNome(v):''),fornecedor:g.local||'',nf:g.nf,anexos:g.anexos,pendente:g.tipo==='multa'&&g.situacao==='pendente'})});
   (S.compras||[]).forEach(c=>{if(c.status!=='comprado'||!(num(c.valorPago)>0))return;out.push({id:'cmp-'+c.id,src:'compra',ref:c.id,tipo:'saida',data:c.compradoEm,valor:num(c.valorPago),cat:'ferramentas',contaId:cp,desc:c.nome,fornecedor:c.onde||dominio(c.link)})});
@@ -3755,6 +3758,37 @@ function vGaleria(app){const atual=galPasta(ui.galPasta)?ui.galPasta:'';if(atual
   if($('gl_dels'))$('gl_dels').onclick=()=>{const l=sel();confirmSheet(`Apagar ${l.length} ${l.length===1?'item':'itens'}?`,'Saem da galeria e não dá para desfazer.','Apagar',async()=>{for(const x of l){await store.remove('galeria',x.id);galApagarArq(x)}galSel=null;render();toast('Apagado')})};
   if($('gl_mv'))$('gl_mv').onclick=()=>{const l=sel();openSheet(`Mover ${l.length} ${l.length===1?'item':'itens'}`,`<div class="field"><label for="gm_p">Para a pasta</label><select id="gm_p">${galOpcoesPasta(atual)}</select></div>`,`<button class="btn" data-act="close">Cancelar</button><button class="btn primary" id="gm_ok">Mover</button>`,L=>{L.querySelector('#gm_ok').onclick=async()=>{const pd=L.querySelector('#gm_p').value;for(const x of l)await salvarOp('galeria',{...x,pasta:pd});galSel=null;closeSheet();render();toast('Movido')}})};
 }
+/* ---------- Nota fiscal de serviço (NFS-e do MEI) ---------- */
+// O MEI emite a NFS-e no Emissor Nacional (login gov.br ou CNPJ e senha). O site não aceita dados vindos de fora,
+// então o app abre o emissor e mostra tudo o que a nota pede com botão de copiar. Depois guarda número e data em o.nfse.
+const NFSE_URL='https://www.nfse.gov.br/EmissorNacional';
+function descNota(o){const its=o.itens||[],mos=its.filter(isMO),mats=its.filter(i=>!isMO(i)),q=i=>{const n=num(i.qtd);return n>1?`${String(n).replace('.',',')} ${i.unidade&&i.unidade!=='un'?i.unidade+' ':''}`:''};
+  const base=o.tipo==='os'?`${osTipoNome(o)}${o.motivo?': '+o.motivo:''}`:(o.titulo||'Serviço de instalação');
+  return [`${base}.`,mos.length?`Serviços: ${mos.map(i=>q(i)+i.nome).join('; ')}.`:'',mats.length?`Materiais: ${mats.map(i=>q(i)+i.nome).join('; ')}.`:'',`Referente ${o.tipo==='os'?'à OS':'ao orçamento'} Nº ${nOrc(o.numero)}.`].filter(Boolean).join(' ')}
+function nfseSheet(o){const cur=S.orcamentos.find(x=>x.id===o.id)||o,c=S.clientes.find(x=>x.id===cur.clienteId)||{},p=cur.pgto||{},a=cur.aceite||{},t=calc(cur),nf=cur.nfse||{},e=S.empresa;
+  const doc=soDig(p.doc||c.documento||a.doc||''),docF=doc.length===14?fmtCNPJ(doc):doc.length===11?fmtCPF(doc):doc;
+  const end=[c.endereco,c.bairro,c.cidade].filter(Boolean).join(', '),valor=num(p.valor)||t.total,desc=(e.nfseDescFim?descNota(cur)+' '+e.nfseDescFim:descNota(cur));
+  const linha=(rot,val,extra='')=>val?`<div class="nf-l"><span class="hint">${rot}</span><b>${esc(val)}</b>${extra}<button type="button" class="btn sm" data-copy="${esc(val)}">${svg(UI.copy)}Copiar</button></div>`:'';
+  openSheet('Nota fiscal de serviço',`
+    ${nf.numero?`<p class="note" style="margin-top:0;color:var(--ok)"><b>Nota emitida:</b> Nº ${esc(nf.numero)}${nf.data?' em '+dataBR(nf.data):''}.</p>`:`<p class="muted" style="margin-top:0">Toque em <b>Abrir o Emissor Nacional</b>, entre com seu gov.br e, em "Emitir NFS-e", copie daqui o que a nota pede.</p>`}
+    <a class="btn primary" href="${NFSE_URL}" target="_blank" rel="noopener" style="align-self:flex-start">${svg(NAVI.inicio)}Abrir o Emissor Nacional</a>
+    <div class="sec-k">Tomador (cliente)</div>
+    <div class="nf-ls">${linha(doc.length===14?'CNPJ':'CPF',docF)||'<p class="hint" style="margin:0;color:var(--bad)">Cliente sem CPF/CNPJ. Pergunte e preencha no cadastro dele.</p>'}${linha('Nome',p.nome||c.nome||a.nome)}${linha('E-mail',c.email)}${linha('Telefone',c.telefone)}${linha('CEP',c.cep)}${linha('Endereço',end)}</div>
+    <div class="sec-k">Serviço</div>
+    <div class="nf-ls">${linha('Descrição',desc)}${linha('Valor do serviço',valor.toFixed(2).replace('.',','),`<span class="hint">${money(valor)}${t.mat>0&&t.mo>0?` · só mão de obra: ${money(t.mo)}`:''}</span>`)}${linha('Data da prestação',dataBR((cur.agenda&&(cur.agenda.fim||cur.agenda.data))||p.data||hojeISO()))}</div>
+    <p class="hint" style="margin:0">No MEI não tem imposto destacado na nota: o DAS do mês já paga. Escolha o código do serviço no próprio emissor (ele lembra o último usado). Na dúvida entre pôr o valor total ou só a mão de obra, confirme com o contador.</p>
+    <div class="sec-k">Depois de emitir</div>
+    <div class="form"><div class="field"><label for="nf_n">Número da nota</label><input id="nf_n" inputmode="numeric" value="${esc(nf.numero||'')}"></div>
+      <div class="field"><label for="nf_d">Data de emissão</label><input id="nf_d" type="date" value="${esc(nf.data||hojeISO())}"></div>
+      <div class="field full"><label for="nf_k">Chave de acesso ou link da nota (opcional)</label><input id="nf_k" value="${esc(nf.chave||'')}" placeholder="Para achar a nota depois"></div></div>`,
+  `${nf.numero?'<button class="btn danger left" id="nf_del">Apagar registro</button>':''}<button class="btn" data-act="close">Fechar</button><button class="btn primary" id="nf_ok">${nf.numero?'Salvar':'Já emiti, salvar'}</button>`,L=>{const $=id=>L.querySelector('#'+id);
+    $('nf_ok').onclick=async()=>{const n=$('nf_n').value.trim();if(!n){toast('Digite o número da nota que o emissor gerou.');return}
+      const x=S.orcamentos.find(y=>y.id===cur.id)||cur;try{await store.save('orcamentos',{...x,nfse:{numero:n,data:$('nf_d').value||hojeISO(),chave:$('nf_k').value.trim()},atualizadoEm:new Date().toISOString()});closeSheet();render();toast('Nota fiscal anotada')}catch(e){toast('Não foi possível salvar.')}};
+    if($('nf_del'))$('nf_del').onclick=async()=>{const x={...(S.orcamentos.find(y=>y.id===cur.id)||cur)};delete x.nfse;try{await store.save('orcamentos',x);closeSheet();render();toast('Registro apagado')}catch(e){toast('Não foi possível salvar.')}};
+  })}
+// Aviso: cliente empresa (CNPJ) pagou e ainda não tem nota. O MEI é obrigado a emitir para empresa.
+function avisosNota(){const sem=S.orcamentos.filter(o=>o.pgto&&!o.nfse&&String(o.pgto.data||'')>=ymMais(ymHoje(),-2)).filter(o=>{const c=S.clientes.find(x=>x.id===o.clienteId)||{};return soDig(o.pgto.doc||c.documento).length===14||c.tipo==='PJ'});
+  return sem.slice(0,3).map(o=>({cls:'warn',t:`Emitir nota fiscal: ${cliNome(o)}`,h:`Pagou ${money(o.pgto.valor)} em ${dataBR(o.pgto.data)}. Para empresa, o MEI precisa emitir a nota.`,orc:o.id}))}
 function vProposta(app){
   const o=S.orcamentos.find(x=>x.id===view.id);
   if(!o){app.innerHTML=`<div class="empty"><b>Orçamento não encontrado</b><button class="btn" data-nav="inicio">Voltar</button></div>`;return}
@@ -3776,7 +3810,7 @@ function vProposta(app){
     <div class="steps">
       <div class="step ${a?'done':''}"><span class="st-n">${a?'✓':'1'}</span><div class="st-t"><b>Aceite do cliente</b><span class="hint">${a?`${esc(a.nome)} aceitou em ${fmtDT(a.data)} · ${esc(formaTxt(a))}${a.valor?` · ${money(a.valor)}`:''}`:(sb?'Mande o link da proposta: o aceite do cliente aparece aqui sozinho.':'Quando o cliente aceitar pelo WhatsApp, cole a mensagem aqui.')}</span></div><div class="st-b">${a?`<button class="btn sm primary" id="fx_msg">Mensagem</button>`:''}<button class="btn sm ${a?'':'primary'}" id="fx_ac">${a?'Editar':'Registrar aceite'}</button></div></div>
       <div class="step ${p?'done':''}"><span class="st-n">${p?'✓':'2'}</span><div class="st-t"><b>Pagamento</b><span class="hint">${p?`${money(p.valor)} via ${esc(formaTxt(p))} em ${fmtDate(p.data+'T12:00:00')}${p.tipo==='parcial'?' · parcial':''}`:'Registre quando o dinheiro entrar.'}</span></div><button class="btn sm ${a&&!p?'primary':''}" id="fx_pg">${p?'Editar':'Registrar pagamento'}</button></div>
-      <div class="step"><span class="st-n">3</span><div class="st-t"><b>Recibo</b><span class="hint">${p?'Pronto, com sua assinatura.':'Liberado depois do pagamento.'}</span></div><button class="btn sm ${p?'primary':''}" id="fx_rc" ${p?'':'disabled'}>Ver recibo</button></div>
+      <div class="step"><span class="st-n">3</span><div class="st-t"><b>Recibo</b><span class="hint">${p?`Pronto, com sua assinatura.${o.nfse?` · Nota fiscal Nº ${esc(o.nfse.numero)}`:''}`:'Liberado depois do pagamento.'}</span></div><div class="st-b"><button class="btn sm ${p?'primary':''}" id="fx_rc" ${p?'':'disabled'}>Ver recibo</button><button class="btn sm internal" id="fx_nf" ${p?'':'disabled'}>${o.nfse?'Nota ✓':'Emitir nota'}</button></div></div>
       <div class="step ${o.agenda?'done':''}"><span class="st-n">${o.agenda?'✓':'4'}</span><div class="st-t"><b>Agendamento</b><span class="hint">${o.agenda?`${esc(cap(diaTxt(o.agenda.data,true)))}${o.agenda.hora?` às ${esc(o.agenda.hora)}`:''}${o.status==='concluido'?' · concluído':''}`:(()=>{const l=prazoLimite(o);return a||vendido(o)?(l?`Prazo da proposta: até ${diaTxt(l.iso)}.`:'Marque a data da instalação.'):'Liberado depois do aceite.'})()}</span></div>
         <div class="st-b">${o.agenda?`<button class="btn sm" id="fx_ag">Editar</button><button class="btn sm primary" id="fx_os">Ver OS</button>`:`<button class="btn sm ${a||vendido(o)?'primary':''}" id="fx_ag">Agendar</button>`}</div></div>
       ${(()=>{const gi=garantiaInfo(o),ok=gi.inst&&(!gi.mats.length||gi.mats.every(x=>gi.notas[x.ix]&&gi.notas[x.ix].nf));return `<div class="step ${ok?'done':''}"><span class="st-n">${ok?'✓':'5'}</span><div class="st-t"><b>Compras e garantia</b><span class="hint">${gi.inst?`${gi.ativa?`Em garantia até ${dataBR(gi.ate)}`:'Garantia vencida'}${gi.mats.some(x=>!(gi.notas[x.ix]&&gi.notas[x.ix].nf))?' · falta anotar nota fiscal':''}`:'Notas fiscais dos materiais e prazo da garantia.'}</span></div>
@@ -3802,7 +3836,7 @@ function vProposta(app){
   $('fx_ag').onclick=()=>agendar(o);if(o.agenda)$('fx_os').onclick=()=>go('os',{id:o.id});
   if(sb)$('pp_link').onclick=async()=>{const b=$('pp_link');b.disabled=true;try{await linkProposta(o)}catch(e){toast('Não foi possível criar o link. Confira a internet e tente de novo.')}finally{b.disabled=false}};
   $('fx_pg').onclick=()=>registrarPagamento(o);
-  $('fx_rc').onclick=()=>verRecibo(o.id);
+  $('fx_rc').onclick=()=>verRecibo(o.id);$('fx_nf').onclick=()=>nfseSheet(o);
   $('pp_copy').onclick=()=>copyText(propostaTexto(o));
   $('pp_buy').onclick=()=>listaCompras(o.id);
   $('pp_edit').onclick=()=>editarOrc(o);
