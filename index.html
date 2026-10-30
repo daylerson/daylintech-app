@@ -2294,7 +2294,7 @@ async function htmlPDF(html){
     const el=box.firstElementChild;el.style.boxShadow='none';el.style.margin='0';el.style.maxWidth='none';
     try{await document.fonts.ready}catch(e){}
     await Promise.all([...box.querySelectorAll('img')].map(i=>(i.decode?i.decode():new Promise(r=>{i.onload=i.onerror=r})).catch(()=>{})));
-    const top0=el.getBoundingClientRect().top,cortes=[...el.querySelectorAll('.pp-body > *, .pp-table tr')].filter(x=>!x.closest('.os-cob')||x.classList.contains('os-cob')).map(x=>Math.round((x.getBoundingClientRect().top-top0)*2)).sort((a,b)=>a-b);
+    const top0=el.getBoundingClientRect().top,cortes=[...el.querySelectorAll('.pp-body > *, .pp-table tr:not(:first-child)')].filter(x=>!x.closest('.os-cob')||x.classList.contains('os-cob')).map(x=>Math.round((x.getBoundingClientRect().top-top0)*2)).sort((a,b)=>a-b);
     const cv=await window.html2canvas(el,{scale:2,backgroundColor:'#ffffff',logging:false});
     const pdf=new window.jspdf.jsPDF({unit:'mm',format:'a4'}),pw=190,pxMm=cv.width/pw,pag=Math.floor(277*pxMm);
     for(let y=0,n=0,hp;y<cv.height;y+=hp,n++){hp=Math.min(pag,cv.height-y);

@@ -40,6 +40,41 @@ body{margin:0;background:#EEF2F7;color:#0B1A33;font:15px/1.5 Barlow,system-ui,-a
   raiz.innerHTML=P.corpo;
   document.title=(D.tipo==='os'?'OS Nº ':'Proposta Nº ')+D.num+' — '+D.emp;
 
+  // Baixar e enviar em PDF: monta uma cópia da proposta sem os botões e o aceite, e transforma em PDF A4.
+  var nomePDF=(D.tipo==='os'?'OS-':'Proposta-')+D.num+'-'+String(D.emp||'DaylinTech').replace(/[^\w\-À-ú ]/g,'').trim().replace(/\s+/g,'-')+'.pdf';
+  var caixa=document.createElement('div');caixa.className='pdf-box';
+  caixa.innerHTML='<b>'+(D.tipo==='os'?'Guardar esta OS':'Guardar ou enviar esta proposta')+'</b><span>Em PDF, para guardar ou mandar para outra pessoa.</span><div class="pdf-bts"><button type="button" id="pdf_dl">Baixar PDF</button><button type="button" id="pdf_sh" class="pri">Enviar PDF</button></div><span id="pdf_st" class="pdf-st" aria-live="polite"></span>';
+  raiz.appendChild(caixa);
+  var est=document.createElement('style');est.textContent='.pdf-box{max-width:760px;margin:0 auto 24px;background:#fff;border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:6px;box-shadow:0 1px 3px rgba(11,26,51,.12);font-family:Barlow,system-ui,sans-serif;color:#0B1A33}.pdf-box>span{color:#5B6A80;font-size:14px}.pdf-bts{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}.pdf-bts button{flex:1;min-width:140px;padding:12px 14px;border-radius:10px;border:1px solid #CBD5E1;background:#fff;color:#0B1A33;font:600 15px Barlow,system-ui,sans-serif;cursor:pointer}.pdf-bts button.pri{background:#0A1C3D;border-color:#0A1C3D;color:#fff}.pdf-bts button:disabled{opacity:.6}.pdf-st{font-size:13px}@media print{.pdf-box{display:none}}';
+  document.head.appendChild(est);
+  function carregar(src){return new Promise(function(ok,erro){if(document.querySelector('script[src="'+src+'"]')&&carregar[src]){ok();return}var e=document.createElement('script');e.src=src;e.onload=function(){carregar[src]=1;ok()};e.onerror=erro;document.head.appendChild(e)})}
+  var pdfPronto=null;
+  function gerarPDF(){if(pdfPronto)return pdfPronto;pdfPronto=(async function(){
+    await carregar('vendor/html2canvas-1.4.1.min.js');await carregar('vendor/jspdf-4.2.1.umd.min.js');
+    var box=document.createElement('div');box.style.cssText='position:fixed;left:-10000px;top:0;width:720px;background:#fff;color-scheme:light';
+    raiz.querySelectorAll('.paper').forEach(function(pp){var c=pp.cloneNode(true);c.querySelectorAll('.acc,button,form,input,.pdf-box').forEach(function(x){x.remove()});c.style.boxShadow='none';c.style.margin='0 0 16px';c.style.maxWidth='none';box.appendChild(c)});
+    document.body.appendChild(box);
+    try{try{await document.fonts.ready}catch(e){}
+      await Promise.all([].map.call(box.querySelectorAll('img'),function(i){return(i.decode?i.decode():Promise.resolve()).catch(function(){})}));
+      var top0=box.getBoundingClientRect().top,cortes=[].map.call(box.querySelectorAll('.paper, .pp-body > *, .pp-table tr:not(:first-child)'),function(x){return Math.round((x.getBoundingClientRect().top-top0)*2)}).sort(function(a,b){return a-b});
+      var cv=await window.html2canvas(box,{scale:2,backgroundColor:'#ffffff',logging:false});
+      var pdf=new window.jspdf.jsPDF({unit:'mm',format:'a4'}),pw=190,pxMm=cv.width/pw,pag=Math.floor(277*pxMm);
+      for(var y=0,n=0,hp;y<cv.height;y+=hp,n++){hp=Math.min(pag,cv.height-y);
+        if(y+hp<cv.height){var cs=cortes.filter(function(v){return v>y+pag*0.4&&v<=y+pag});if(cs.length)hp=cs[cs.length-1]-y}
+        var c2=document.createElement('canvas');c2.width=cv.width;c2.height=hp;var x=c2.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c2.width,hp);x.drawImage(cv,0,y,cv.width,hp,0,0,cv.width,hp);
+        if(n)pdf.addPage();pdf.addImage(c2.toDataURL('image/jpeg',0.9),'JPEG',10,10,pw,hp/pxMm)}
+      return new File([pdf.output('blob')],nomePDF,{type:'application/pdf'})}
+    finally{box.remove()}})();pdfPronto.catch(function(){pdfPronto=null});return pdfPronto}
+  function stPDF(t){$('pdf_st').textContent=t}
+  function baixarPDF(f){var u=URL.createObjectURL(f),a=document.createElement('a');a.href=u;a.download=f.name;document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(u)},4000)}
+  $('pdf_dl').onclick=async function(){var b=this;b.disabled=true;stPDF('Gerando o PDF…');try{baixarPDF(await gerarPDF());stPDF('PDF baixado.')}catch(e){stPDF('Não foi possível gerar o PDF. Tente de novo.')}b.disabled=false};
+  $('pdf_sh').onclick=async function(){var b=this,f;b.disabled=true;stPDF('Gerando o PDF…');try{f=await gerarPDF()}catch(e){b.disabled=false;stPDF('Não foi possível gerar o PDF. Tente de novo.');return}b.disabled=false;stPDF('');
+    var txt=(D.tipo==='os'?'OS Nº ':'Proposta Nº ')+D.num+' — '+D.emp+'\n'+location.href;
+    if(navigator.canShare&&navigator.canShare({files:[f]})){try{await navigator.share({files:[f],title:f.name,text:txt});return}catch(e){if(e&&e.name==='AbortError')return;if(e&&e.name==='NotAllowedError'){stPDF('PDF pronto. Toque de novo em "Enviar PDF".');return}}}
+    baixarPDF(f);stPDF('Este aparelho não envia arquivo direto: o PDF foi baixado para você anexar.')};
+  // Prepara o PDF em segundo plano, para o toque em "Enviar" não perder a permissão de compartilhar.
+  setTimeout(function(){gerarPDF().catch(function(){})},1500);
+
   document.addEventListener('click',function(e){var c=e.target.closest&&e.target.closest('[data-copy]');if(!c)return;var t=c.getAttribute('data-copy');function ok(){c.textContent='Código copiado!'}
     function fb(){var a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();try{document.execCommand('copy');ok()}catch(x){}a.remove()}
     if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(ok,fb);else fb()});
