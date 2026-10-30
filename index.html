@@ -1580,6 +1580,9 @@ const endRota=c=>[c.endereco,c.bairro,c.cidade,c.cep].filter(Boolean).join(', ')
 const fmtCEP=v=>{const d=soDig(v).slice(0,8);return d.length>5?d.slice(0,5)+'-'+d.slice(5):d};
 async function buscaCEP(cep){const d=soDig(cep);if(d.length!==8)throw new Error('formato');
   const r=await fetch(`https://viacep.com.br/ws/${d}/json/`);if(!r.ok)throw new Error('rede');const j=await r.json();if(j.erro)throw new Error('naoachou');return j}
+const cpfValido=c=>{c=soDig(c);if(c.length!==11||/^(\d)\1+$/.test(c))return false;const dv=n=>{let s=0;for(let i=0;i<n;i++)s+=+c[i]*(n+1-i);const r=s*10%11;return r===10?0:r};return dv(9)===+c[9]&&dv(10)===+c[10]};
+// "CONDOMINIO DO EDIFICIO SOL LTDA" → "Condominio do Edificio Sol LTDA"
+const nomeEmpresa=t=>String(t||'').toLowerCase().replace(/(^|[\s\-\/(])([a-zà-ú])/g,(m,a,b)=>a+b.toUpperCase()).replace(/\b(Da|De|Do|Das|Dos|E)\b/g,m=>m.toLowerCase()).replace(/\b(Ltda|Me|Epp|Eireli|S\.?a\.?|Mei)\b/gi,m=>m.toUpperCase()).replace(/^./,m=>m.toUpperCase());
 function formCli(c,onSaved){
   const isNew=!c;c=c||{id:uid(),nome:'',tipo:'PF',documento:'',telefone:'',email:'',cep:'',endereco:'',bairro:'',cidade:'',obs:''};
   const os=isNew?[]:S.orcamentos.filter(o=>o.clienteId===c.id).sort((a,b)=>(b.criadoEm||'').localeCompare(a.criadoEm||''));
@@ -1587,7 +1590,7 @@ function formCli(c,onSaved){
    <div class="form">
     <div class="field full"><label for="c_nome">Nome ou razão social</label><input id="c_nome" value="${esc(c.nome)}"></div>
     <div class="field"><label for="c_tipo">Tipo</label><select id="c_tipo"><option value="PF" ${c.tipo==='PF'?'selected':''}>Pessoa física</option><option value="PJ" ${c.tipo==='PJ'?'selected':''}>Empresa / condomínio</option></select></div>
-    <div class="field"><label for="c_doc">CPF ou CNPJ</label><input id="c_doc" value="${esc(c.documento)}" inputmode="numeric"></div>
+    <div class="field"><label for="c_doc">CPF ou CNPJ</label><div class="row" style="gap:6px;flex-wrap:nowrap"><input id="c_doc" value="${esc(c.documento)}" inputmode="numeric" style="flex:1;min-width:0"><button class="btn" type="button" id="c_docb">Buscar</button></div><span class="hint" id="c_doch">Com CNPJ, os dados da empresa são preenchidos sozinhos.</span></div>
     <div class="field"><label for="c_tel">Telefone / WhatsApp</label><input id="c_tel" value="${esc(c.telefone)}" inputmode="tel" placeholder="(11) 90000-0000"></div>
     <div class="field"><label for="c_email">E-mail</label><input id="c_email" value="${esc(c.email)}" inputmode="email"></div>
     <div class="field"><label for="c_cep">CEP</label><div class="row" style="gap:6px;flex-wrap:nowrap"><input id="c_cep" value="${esc(fmtCEP(c.cep||''))}" inputmode="numeric" autocomplete="postal-code" placeholder="00000-000" style="flex:1;min-width:0"><button class="btn" type="button" id="c_cepb">Buscar</button></div><span class="hint" id="c_ceph">Digite o CEP e o endereço é preenchido sozinho.</span></div>
@@ -1620,6 +1623,24 @@ function formCli(c,onSaved){
          end.focus();const n=end.value.length;try{end.setSelectionRange(n,n)}catch(e){}}
        catch(e){h.textContent=e.message==='naoachou'?'CEP não encontrado. Confira os números.':'Não consegui buscar agora. Confira a internet ou preencha à mão.'}
        finally{buscando=''}};
+     // CNPJ: dados públicos da Receita (consultaCNPJ, a mesma da aba Impostos). CPF: só confere se o número é válido.
+     let ultimoDoc=soDig(c.documento||'');
+     const buscarDoc=async()=>{const d=soDig($('c_doc').value),h=$('c_doch');
+       if(d.length===11){$('c_tipo').value='PF';h.innerHTML=cpfValido(d)?'CPF válido. A Receita não libera os dados de pessoa física para consulta: preencha nome e endereço.':'<b style="color:var(--bad)">Esse CPF tem número errado. Confira os dígitos.</b>';ultimoDoc=d;return}
+       if(d.length!==14){h.textContent='Digite os 11 números do CPF ou os 14 do CNPJ.';return}
+       h.textContent='Buscando o CNPJ…';$('c_docb').disabled=true;
+       try{const j=await consultaCNPJ(d),vazio=id=>!$(id).value.trim(),put=(id,v)=>{if(v&&vazio(id))$(id).value=v};ultimoDoc=d;
+         $('c_tipo').value='PJ';$('c_doc').value=fmtCNPJ(d);put('c_nome',nomeEmpresa(j.razao_social||j.nome_fantasia||''));
+         const tel=soDig(j.ddd_telefone_1||'');put('c_tel',tel.length>=10?`(${tel.slice(0,2)}) ${tel.slice(2,-4)}-${tel.slice(-4)}`:'');put('c_email',String(j.email||'').toLowerCase());
+         if(j.cep&&vazio('c_cep'))$('c_cep').value=fmtCEP(String(j.cep));
+         put('c_end',[[j.descricao_tipo_de_logradouro,j.logradouro].filter(Boolean).map(nomeEmpresa).join(' '),j.numero&&j.numero!=='S/N'?j.numero:'',nomeEmpresa(j.complemento||'')].filter(Boolean).join(', '));
+         put('c_bairro',nomeEmpresa(j.bairro||''));put('c_cid',j.municipio?nomeEmpresa(j.municipio)+(j.uf?' - '+j.uf:''):'');
+         if(j.nome_fantasia&&normNome(j.nome_fantasia)!==normNome(j.razao_social)&&!normNome($('c_obs').value).includes(normNome(j.nome_fantasia)))$('c_obs').value=[$('c_obs').value.trim(),'Nome fantasia: '+nomeEmpresa(j.nome_fantasia)].filter(Boolean).join('\n');
+         rotas();const sit=j.descricao_situacao_cadastral||'';h.innerHTML=/ATIVA/i.test(sit)&&!/INAPTA/i.test(sit)||!sit?'Dados da empresa preenchidos. Confira o endereço da instalação.':`<b style="color:var(--bad)">Atenção: CNPJ com situação ${esc(sit)} na Receita.</b>`}
+       catch(e){h.textContent=e.message==='naoachou'?'CNPJ não encontrado na Receita. Confira os números.':'Não consegui buscar agora. Confira a internet ou preencha à mão.'}
+       finally{$('c_docb').disabled=false}};
+     $('c_docb').onclick=buscarDoc;
+     $('c_doc').addEventListener('input',()=>{const d=soDig($('c_doc').value);if((d.length===14||d.length===11)&&d!==ultimoDoc)buscarDoc()});
      $('c_cep').addEventListener('input',()=>{const el=$('c_cep'),f=fmtCEP(el.value);if(el.value!==f)el.value=f;const d=soDig(f);if(d.length===8&&d!==ultimoCEP)preencher()});
      $('c_cepb').onclick=preencher;
      $('c_save').onclick=async()=>{const o=read();if(!o.nome){toast('Informe o nome do cliente.');$('c_nome').focus();return}
