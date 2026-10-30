@@ -289,6 +289,18 @@ body.apresentacao .internal{display:none!important}
 .pix-box{flex-direction:row;align-items:center;gap:16px;padding:12px}
 .st-b{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
 .ag-list{display:flex;flex-direction:column;gap:10px}
+.gal-pastas{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.gal-pc{display:flex;flex-direction:column;padding:0;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);color:var(--ink);overflow:hidden;cursor:pointer;text-align:left;font:inherit;box-shadow:var(--shadow)}
+.gal-pc>img,.gal-pc-v{width:100%;aspect-ratio:4/3;object-fit:cover;display:grid;place-items:center;background:var(--brand-soft);color:var(--brand)}.gal-pc-v svg{width:34px;height:34px}
+.gal-pc-t{display:flex;flex-direction:column;padding:8px 10px}.gal-pc-t span{font-size:12px;color:var(--muted)}.gal-pc.nova{border-style:dashed;box-shadow:none}.gal-pc.nova .gal-pc-v{background:var(--surface-2)}
+.gal-drop{border:1.5px dashed var(--line);border-radius:var(--r);padding:12px;transition:background .15s}.gal-drop.over{background:var(--brand-soft);border-color:var(--brand)}
+.gal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(108px,1fr));gap:6px}
+.gal-it{position:relative;aspect-ratio:1;padding:0;border:0;border-radius:8px;overflow:hidden;background:var(--surface-2);cursor:pointer}.gal-it img{width:100%;height:100%;object-fit:cover;display:block}
+.gal-it.sel{outline:3px solid var(--brand);outline-offset:-3px}.gal-sem{display:grid;place-items:center;height:100%;color:var(--muted);font-size:12px}
+.gal-play{position:absolute;inset:auto auto 6px 6px;background:rgba(0,0,0,.6);color:#fff;border-radius:999px;width:26px;height:26px;display:grid;place-items:center;font-style:normal;font-size:11px}
+.gal-ck{position:absolute;top:6px;right:6px;width:24px;height:24px;border-radius:50%;border:2px solid #fff;background:rgba(0,0,0,.35);color:#fff;display:grid;place-items:center;font-style:normal;font-weight:800}.gal-it.sel .gal-ck{background:var(--brand);border-color:var(--brand)}
+.gal-ver{position:relative;background:#111;border-radius:10px;display:grid;place-items:center;min-height:240px}.gal-ver img,.gal-ver video{max-width:100%;max-height:65vh;display:block;border-radius:10px}
+.gal-nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.5);color:#fff}.gal-nav.ant{left:8px}.gal-nav.prox{right:8px;transform:translateY(-50%) scaleX(-1)}
 .pv-res{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.pv-res>div{display:flex;flex-direction:column;gap:2px;background:var(--surface-2);border-radius:10px;padding:10px 12px;min-width:0}
 .pv-res span{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}.pv-res b{font-size:18px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
 .pv-res .pv-fim{background:var(--brand-soft)}.pv-res .pv-fim b{color:var(--brand);font-size:20px}.pv-res b.neg{color:var(--bad)!important}
@@ -612,6 +624,7 @@ const NAVI={
   agenda:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M8 14h3v3H8z"/>',
   garantias:'<path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/>',
   mais:'<rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><circle cx="17" cy="17" r="3"/>',
+  galeria:'<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5-5-8 8"/>',
   financeiro:'<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M16 13.5h2"/><path d="M6 7l9-3.5L17 7"/><path d="M3 11h18"/>',
   operacional:'<path d="M4 16V12l2-5h12l2 5v4z"/><path d="M4 12h16"/><circle cx="8" cy="16.5" r="1.8"/><circle cx="16" cy="16.5" r="1.8"/>',
   impostos:'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h3"/>',
@@ -666,8 +679,8 @@ function idadePill(d){return d==null?'':`<span class="pill ${d>30?'conf-baixa':'
 
 const DEF_EMPRESA={nome:'DaylinTech',slogan:'Tecnologia que protege',cnpj:'',telefone:'',email:'',endereco:'',margem:30,imposto:6,despesas:0,arredondar:1,descontoPix:5,cartaoMax:12,cartaoSemJuros:3,cartaoJuros:2.99,pixTipo:'cpf',pixChave:'',pixNome:'',cidade:'',whatsapp:'',linkPagamento:'',responsavel:'',assinatura:'',validade:15,pagamento:'Oferecemos 3 formas de pagamento:\n1) 50% na aprovação e 50% na conclusão do serviço (Pix ou transferência).\n2) Pix à vista com 5% de desconto.\n3) Cartão de crédito em até 3x sem juros ou em até 12x com juros da operadora.',garantia:'Equipamentos: 12 meses de garantia do fabricante (verificar com o fabricante). Nos primeiros 30 dias, qualquer defeito tem troca expressa. Após os 30 dias, o equipamento com defeito é retirado e enviado para a análise de garantia do fabricante; durante esse período, o cliente pode ficar sem o equipamento.\nInstalação: 90 dias (3 meses) de garantia total com a DaylinTech: qualquer problema na instalação é resolvido sem custo. Após os 90 dias, é cobrada visita técnica de R$ 130,00 para diagnóstico.',garantiaEquipMeses:12,garantiaServDias:90,prazo:'Início da instalação em até 5 dias úteis após a aprovação.'};
 
-const COLS=['produtos','clientes','orcamentos','veiculos','gastos','compras','lancamentos','contasfixas'];
-const S={produtos:[],clientes:[],orcamentos:[],veiculos:[],gastos:[],compras:[],lancamentos:[],contasfixas:[],empresa:{...DEF_EMPRESA},ready:{produtos:false,clientes:false,orcamentos:false,veiculos:false,gastos:false,compras:false,lancamentos:false,contasfixas:false,empresa:false}};
+const COLS=['produtos','clientes','orcamentos','veiculos','gastos','compras','lancamentos','contasfixas','galeria'];
+const S={produtos:[],clientes:[],orcamentos:[],veiculos:[],gastos:[],compras:[],lancamentos:[],contasfixas:[],galeria:[],empresa:{...DEF_EMPRESA},ready:{produtos:false,clientes:false,orcamentos:false,veiculos:false,gastos:false,compras:false,lancamentos:false,contasfixas:false,galeria:false,empresa:false}};
 let view={name:'home'};
 let ui={busca:'',cat:'todas',status:'todos',buscaCli:'',buscaMO:'',grupo:'todos'};
 let draft=null;
@@ -857,9 +870,9 @@ function confirmSheet(title,msg,okLabel,onOk){
 }
 
 /* ---------- Navegação ---------- */
-const TABS=[['home','Início'],['inicio','Orçamentos'],['agenda','Agenda'],['garantias','Garantias'],['catalogo','Catálogo'],['maodeobra','Mão de obra'],['clientes','Clientes'],['impostos','Impostos'],['operacional','Operacional'],['ajustes','Empresa'],['financeiro','Financeiro']];
+const TABS=[['home','Início'],['inicio','Orçamentos'],['agenda','Agenda'],['garantias','Garantias'],['catalogo','Catálogo'],['maodeobra','Mão de obra'],['clientes','Clientes'],['impostos','Impostos'],['operacional','Operacional'],['ajustes','Empresa'],['financeiro','Financeiro'],['galeria','Galeria']];
 const NAV_MAIN=['home','inicio','agenda','financeiro','catalogo'];
-const NAV_MAIS=[['maodeobra','Serviços, preços e tempo de instalação'],['clientes','Cadastro, endereço e histórico de cada cliente'],['garantias','Clientes na garantia e notas fiscais'],['operacional','Carro, combustível e lista de compras',1],['impostos','Guias, declarações e CNPJ',1],['ajustes','Dados, Pix, textos padrão e backup',1]];
+const NAV_MAIS=[['galeria','Fotos e vídeos dos serviços, por pasta'],['maodeobra','Serviços, preços e tempo de instalação'],['clientes','Cadastro, endereço e histórico de cada cliente'],['garantias','Clientes na garantia e notas fiscais'],['operacional','Carro, combustível e lista de compras',1],['impostos','Guias, declarações e CNPJ',1],['ajustes','Dados, Pix, textos padrão e backup',1]];
 const tabNome=k=>(TABS.find(t=>t[0]===k)||[k,k])[1];
 function abrirMais(){const cur=view.name;
   openSheet('Mais',`<div class="mais">${NAV_MAIS.map(([k,d,int])=>`<button class="mais-i ${int?'internal':''}" data-nav="${k}" ${cur===k?'aria-current="page"':''}>${svg(NAVI[k])}<span><b>${tabNome(k)}</b><span class="hint">${d}</span></span></button>`).join('')}</div>`)}
@@ -888,7 +901,7 @@ function render(fromSnap){
   if(fromSnap&&view.name==='editor'){if(!autoQuieto)renderEditorParts();return}
   const active=document.activeElement&&document.activeElement.id;
   const pos=document.activeElement&&document.activeElement.selectionStart;
-  ({home:vHome,inicio:vInicio,catalogo:vCatalogo,maodeobra:vMaoDeObra,clientes:vClientes,ajustes:vAjustes,editor:vEditor,proposta:vProposta,agenda:vAgenda,os:vOS,garantias:vGarantias,impostos:vImpostos,operacional:vOperacional,financeiro:vFinanceiro}[view.name]||vHome)(app);
+  ({home:vHome,inicio:vInicio,catalogo:vCatalogo,maodeobra:vMaoDeObra,clientes:vClientes,ajustes:vAjustes,editor:vEditor,proposta:vProposta,agenda:vAgenda,os:vOS,garantias:vGarantias,impostos:vImpostos,operacional:vOperacional,financeiro:vFinanceiro,galeria:vGaleria}[view.name]||vHome)(app);
   agendarSync();
   if(active){const el=document.getElementById(active);if(el&&el.tagName==='INPUT'&&el.type==='search'){el.focus();try{el.setSelectionRange(pos,pos)}catch(e){}}}
 }
@@ -3618,6 +3631,130 @@ function abrirLink(){if(!linkPendente||!allReady()||tela)return;const h=linkPend
   if(h==='#fin'){ui.finAba='geral';go('financeiro',{force:true})}else if(h==='#carro'){ui.opAba='carro';go('operacional',{force:true})}else if(h==='#impostos')go('impostos',{force:true})}
 addEventListener('hashchange',()=>{const h=(location.hash.match(/^#(os|orc)=([\w-]+)$|^#(fin|carro|impostos)$/)||[])[0];if(h){linkPendente=h;abrirLink()}});
 setInterval(abrirLink,700);
+/* ---------- Galeria: fotos e vídeos dos serviços ---------- */
+// Arquivos no bucket privado "galeria" do Supabase (supabase/galeria.sql): foto em JPEG (até 1600 px) + miniatura (420 px);
+// vídeo como veio (até 50 MB, limite do plano grátis) + miniatura tirada de um quadro. Cada item é um documento da coleção "galeria".
+// Pastas em S.empresa.galeria.pastas ([{id, nome, pai, drive}]): dois níveis (ex.: Fechaduras › Embutir).
+const GAL_BUCKET='galeria',GAL_MAX_VIDEO=50*1024*1024;
+const GAL_PADRAO=[{id:'cameras',nome:'Câmeras'},{id:'cam-bullet',nome:'Bullet',pai:'cameras'},{id:'cam-dome',nome:'Dome',pai:'cameras'},{id:'cam-dvr',nome:'DVR e NVR',pai:'cameras'},
+  {id:'alarmes',nome:'Alarmes'},{id:'interfones',nome:'Interfones e telefones'},{id:'fechaduras',nome:'Fechaduras'},{id:'fech-embutir',nome:'Embutir',pai:'fechaduras'},{id:'fech-sobrepor',nome:'Sobrepor',pai:'fechaduras'},{id:'fech-digital',nome:'Digital',pai:'fechaduras'},
+  {id:'eletrica',nome:'Elétrica'},{id:'outros',nome:'Outros'}];
+const galPastas=()=>(S.empresa.galeria&&S.empresa.galeria.pastas)||GAL_PADRAO;
+const galPasta=id=>galPastas().find(p=>p.id===id);
+async function salvarPastas(pastas){S.empresa={...S.empresa,galeria:{...(S.empresa.galeria||{}),pastas}};await store.saveEmpresa(S.empresa);render()}
+const galItens=pasta=>(S.galeria||[]).filter(x=>x.pasta===pasta).sort((a,b)=>String(b.criadoEm).localeCompare(String(a.criadoEm)));
+const galTodos=pasta=>(S.galeria||[]).filter(x=>x.pasta===pasta||(galPasta(x.pasta)||{}).pai===pasta);
+const galCaminho=id=>{const p=galPasta(id);if(!p)return 'Sem pasta';const pai=p.pai&&galPasta(p.pai);return pai?`${pai.nome} › ${p.nome}`:p.nome};
+async function galSrc(path){if(!path)return '';if(/^data:/.test(path))return path;const k='g:'+path;if(fotoCache[k])return fotoCache[k];
+  const {data,error}=await sb.storage.from(GAL_BUCKET).download(path);if(error)throw error;return fotoCache[k]=await blobDataURL(data)}
+const galImg=(img,path)=>{const k='g:'+path;if(/^data:/.test(path||''))img.src=path;else if(fotoCache[k])img.src=fotoCache[k];else if(sb&&path)galSrc(path).then(u=>img.src=u).catch(()=>{img.alt='Não carregou'})};
+function quadroVideo(file){return new Promise(res=>{const v=document.createElement('video'),url=URL.createObjectURL(file);v.muted=true;v.playsInline=true;v.preload='auto';v.src=url;
+  const fim=b=>{URL.revokeObjectURL(url);res(b)};v.onerror=()=>fim(null);v.onloadeddata=()=>{v.currentTime=Math.min(1,(v.duration||2)/3)};
+  v.onseeked=()=>{const k=Math.min(1,420/Math.max(v.videoWidth,v.videoHeight)),c=document.createElement('canvas');c.width=Math.round(v.videoWidth*k)||420;c.height=Math.round(v.videoHeight*k)||315;c.getContext('2d').drawImage(v,0,0,c.width,c.height);c.toBlob(b=>fim(b),'image/jpeg',.8)};
+  setTimeout(()=>fim(null),8000)})}
+async function galSubir(path,blob,tipo){const {error}=await sb.storage.from(GAL_BUCKET).upload(path,blob,{contentType:tipo,upsert:true});if(error)throw error;if(tipo==='image/jpeg')fotoCache['g:'+path]=await blobDataURL(blob);else delete fotoCache['g:'+path]}
+// Monta (ou substitui) os arquivos de um item a partir de um arquivo do aparelho.
+async function galArquivos(id,pasta,file){const video=/^video\//.test(file.type)||/\.(mp4|mov|webm|3gp)$/i.test(file.name||'');
+  if(video){if(!sb)throw new Error('video-local');if(file.size>GAL_MAX_VIDEO)throw new Error('video-grande');
+    const ext=(file.name.match(/\.(\w+)$/)||[,'mp4'])[1].toLowerCase(),p=`${pasta}/${id}-${uid()}.${ext}`,t=`${pasta}/${id}-${uid()}-t.jpg`,th=await quadroVideo(file);
+    await galSubir(p,file,file.type||'video/mp4');if(th)await galSubir(t,th,'image/jpeg');return {tipo:'video',p,t:th?t:'',mime:file.type||'video/mp4',bytes:file.size}}
+  const full=await paraJpeg(file,sb?1600:1000),th=await paraJpeg(file,420);
+  if(!sb)return {tipo:'foto',p:await blobDataURL(full),t:await blobDataURL(th),mime:'image/jpeg',bytes:full.size};
+  const p=`${pasta}/${id}-${uid()}.jpg`,t=`${pasta}/${id}-${uid()}-t.jpg`;await galSubir(p,full,'image/jpeg');await galSubir(t,th,'image/jpeg');return {tipo:'foto',p,t,mime:'image/jpeg',bytes:full.size}}
+const galApagarArq=x=>{if(sb){const ps=[x.p,x.t].filter(p=>p&&!/^data:/.test(p));if(ps.length)sb.storage.from(GAL_BUCKET).remove(ps).catch(()=>{})}};
+const galErro=e=>toast(e&&e.message==='video-grande'?'Vídeo maior que 50 MB. Grave mais curto ou coloque no Google Drive e use o link da pasta.':e&&e.message==='video-local'?'Vídeo só funciona com a nuvem ligada.':e&&(e.statusCode==='404'||/bucket/i.test(e.message||''))?'Falta criar a pasta da galeria no Supabase: rode o arquivo galeria.sql.':'Não foi possível enviar. Confira a internet e tente de novo.');
+async function galAdicionar(files,pasta,aviso){files=[...files].filter(f=>/^(image|video)\//.test(f.type)||/\.(jpe?g|png|webp|heic|mp4|mov|webm|3gp)$/i.test(f.name||''));if(!files.length)return 0;let ok=0;
+  for(let i=0;i<files.length;i++){aviso&&aviso(`Enviando ${i+1} de ${files.length}…`);const id=uid();
+    try{const a=await galArquivos(id,pasta,files[i]);const nome=String(files[i].name||'').replace(/\.\w+$/,'').replace(/^(IMG|VID|PXL|DSC)[_-]?/i,'').replace(/[_-]+/g,' ').trim();
+      if(!await salvarOp('galeria',{id,pasta,...a,nome:/^\d[\d\s]*$/.test(nome)?'':nome,criadoEm:new Date().toISOString()}))break;ok++}
+    catch(e){galErro(e);break}}
+  return ok}
+async function galArquivo(x){const nome=(x.nome||'foto-'+x.id).replace(/[^\wÀ-ú -]/g,'').trim()||'foto',ext=x.tipo==='video'?((x.p.match(/\.(\w+)$/)||[,'mp4'])[1]):'jpg';
+  let blob;if(/^data:/.test(x.p))blob=await (await fetch(x.p)).blob();else{const {data,error}=await sb.storage.from(GAL_BUCKET).download(x.p);if(error)throw error;blob=data}
+  return new File([blob],`${nome}.${ext}`,{type:x.mime||blob.type})}
+async function galCompartilhar(itens){if(!itens.length)return;toast(itens.length>1?`Preparando ${itens.length} arquivos…`:'Preparando…');
+  let fs;try{fs=await Promise.all(itens.map(galArquivo))}catch(e){toast('Não foi possível baixar os arquivos. Confira a internet.');return}
+  if(navigator.canShare&&navigator.canShare({files:fs})){try{await navigator.share({files:fs,title:'DaylinTech'});return}catch(e){if(e&&e.name==='AbortError')return}}
+  for(const f of fs)await baixar(f.name,f,f.type);toast(fs.length>1?'Arquivos baixados. Anexe na conversa do cliente.':'Arquivo baixado. Anexe na conversa do cliente.')}
+async function galGirar(x){if(x.tipo!=='foto')return;const src=await galSrc(x.p),im=new Image();await new Promise((r,j)=>{im.onload=r;im.onerror=j;im.src=src});
+  const c=document.createElement('canvas');c.width=im.height;c.height=im.width;const g=c.getContext('2d');g.translate(c.width,0);g.rotate(Math.PI/2);g.drawImage(im,0,0);
+  const full=await new Promise(r=>c.toBlob(r,'image/jpeg',.9)),th=await paraJpeg(full,420),n={...x,atualizadoEm:new Date().toISOString()};
+  if(sb){const p=`${x.pasta}/${x.id}-${uid()}.jpg`,t=`${x.pasta}/${x.id}-${uid()}-t.jpg`;await galSubir(p,full,'image/jpeg');await galSubir(t,th,'image/jpeg');galApagarArq(x);n.p=p;n.t=t}
+  else{n.p=await blobDataURL(full);n.t=await blobDataURL(th)}
+  return (await salvarOp("galeria",n))?n:x}
+function galVer(lista,i){const x=lista[i];if(!x)return;const temOutro=lista.length>1;
+  openSheet(x.nome||galCaminho(x.pasta),`<div class="gal-ver">${x.tipo==='video'?`<video id="gv_m" controls playsinline preload="metadata"></video>`:`<img id="gv_m" alt="${esc(x.nome||'Foto')}">`}
+      ${temOutro?`<button class="iconbtn gal-nav ant" id="gv_ant" aria-label="Anterior">${svg(UI.back)}</button><button class="iconbtn gal-nav prox" id="gv_prox" aria-label="Próxima">${svg(UI.back)}</button>`:''}</div>
+    <p class="hint" style="margin:6px 0 0">${esc(galCaminho(x.pasta))} · ${fmtDate(x.criadoEm)}${x.clienteId?` · ${esc((S.clientes.find(c=>c.id===x.clienteId)||{}).nome||'')}`:''}${temOutro?` · ${i+1} de ${lista.length}`:''}</p>${x.desc?`<p style="margin:4px 0 0">${esc(x.desc)}</p>`:''}`,
+    `<button class="btn danger left internal" id="gv_del">${svg(UI.trash)}</button><button class="btn internal" id="gv_ed">${svg(UI.edit)}Editar</button>${x.tipo==='foto'?`<button class="btn internal" id="gv_rot" aria-label="Girar">↻ Girar</button>`:''}<button class="btn" id="gv_dl">${svg(UI.dl)}Baixar</button><button class="btn primary" id="gv_sh">Compartilhar</button>`,L=>{
+    L.querySelector('.sheet').style.maxWidth='900px';const $=id=>L.querySelector('#'+id),m=$('gv_m');
+    if(x.tipo==='video'){if(/^data:/.test(x.p))m.src=x.p;else sb.storage.from(GAL_BUCKET).createSignedUrl(x.p,3600).then(({data})=>{if(data)m.src=data.signedUrl});galImg({set src(u){m.poster=u}},x.t)}
+    else{galImg(m,x.t);galSrc(x.p).then(u=>m.src=u).catch(()=>{});m.onclick=()=>verFoto(m.src)}
+    if(temOutro){$('gv_ant').onclick=()=>galVer(lista,(i-1+lista.length)%lista.length);$('gv_prox').onclick=()=>galVer(lista,(i+1)%lista.length)}
+    $('gv_sh').onclick=()=>galCompartilhar([x]);$('gv_dl').onclick=async()=>{try{const f=await galArquivo(x);await baixar(f.name,f,f.type)}catch(e){toast('Não foi possível baixar.')}};
+    $('gv_ed').onclick=()=>galEditar(x,()=>galVer(galLista(),Math.max(0,galLista().findIndex(y=>y.id===x.id))));
+    if($('gv_rot'))$('gv_rot').onclick=async()=>{const b=$('gv_rot');b.disabled=true;b.textContent='Girando…';try{await galGirar(x);const l=galLista();galVer(l,Math.max(0,l.findIndex(y=>y.id===x.id)))}catch(e){b.disabled=false;b.textContent='↻ Girar';toast('Não foi possível girar.')}};
+    $('gv_del').onclick=()=>confirmSheet(x.tipo==='video'?'Apagar vídeo?':'Apagar foto?','Ela sai da galeria e não dá para desfazer.','Apagar',async()=>{try{await store.remove('galeria',x.id);galApagarArq(x);toast('Apagado')}catch(e){toast('Não foi possível apagar.')}});
+    L.addEventListener('keydown',e=>{if(!temOutro)return;if(e.key==='ArrowLeft')$('gv_ant').click();if(e.key==='ArrowRight')$('gv_prox').click()});
+  })}
+const galLista=()=>galItens(ui.galPasta||'');
+function galOpcoesPasta(sel){return galPastas().filter(p=>!p.pai).map(p=>`<option value="${p.id}" ${sel===p.id?'selected':''}>${esc(p.nome)}</option>${galPastas().filter(s=>s.pai===p.id).map(s=>`<option value="${s.id}" ${sel===s.id?'selected':''}>   ${esc(p.nome)} › ${esc(s.nome)}</option>`).join('')}`).join('')}
+function galEditar(x,depois){const cs=[...S.clientes].sort((a,b)=>a.nome.localeCompare(b.nome));
+  openSheet('Editar',`<div class="form">
+    <div class="field full"><label for="ge_n">Nome</label><input id="ge_n" value="${esc(x.nome||'')}" placeholder="Ex.: Fechadura de embutir na porta de madeira"></div>
+    <div class="field full"><label for="ge_d">Descrição</label><textarea id="ge_d" placeholder="Ex.: modelo, cliente, observações">${esc(x.desc||'')}</textarea></div>
+    <div class="field"><label for="ge_p">Pasta</label><select id="ge_p">${galOpcoesPasta(x.pasta)}</select></div>
+    <div class="field"><label for="ge_c">Cliente (opcional)</label><select id="ge_c"><option value="">Nenhum</option>${cs.map(c=>`<option value="${c.id}" ${x.clienteId===c.id?'selected':''}>${esc(c.nome)}</option>`).join('')}</select></div>
+    <div class="field full"><label>Substituir o arquivo</label><div class="row" style="gap:8px"><label class="btn sm">${svg(UI.up)}Escolher outro<input type="file" accept="image/*,video/*" hidden id="ge_f"></label><label class="btn sm">${svg(ICON_CAM)}Tirar outra<input type="file" accept="image/*" capture="environment" hidden id="ge_cam"></label><span class="hint" id="ge_fs"></span></div></div>
+  </div>`,`<button class="btn" id="ge_x">Cancelar</button><button class="btn primary" id="ge_ok">Salvar</button>`,L=>{const $=id=>L.querySelector('#'+id);let novo=null;
+    ['ge_f','ge_cam'].forEach(i=>$(i).onchange=e=>{novo=e.target.files[0]||null;$('ge_fs').textContent=novo?'Novo arquivo escolhido: '+novo.name:''});
+    $('ge_x').onclick=()=>{closeSheet();depois&&depois()};
+    $('ge_ok').onclick=async()=>{const b=$('ge_ok');b.disabled=true;b.textContent='Salvando…';let n={...x,nome:$('ge_n').value.trim(),desc:$('ge_d').value.trim(),pasta:$('ge_p').value,clienteId:$('ge_c').value,atualizadoEm:new Date().toISOString()};
+      try{if(novo){const a=await galArquivos(x.id,n.pasta,novo);galApagarArq(x);n={...n,...a}}}catch(e){b.disabled=false;b.textContent='Salvar';galErro(e);return}
+      if(await salvarOp('galeria',n,'Salvo')){closeSheet();if(n.pasta===(ui.galPasta||''))depois&&depois()}else{b.disabled=false;b.textContent='Salvar'}};
+  })}
+function galPastaSheet(p,pai){const n=!p;p=p||{id:'p'+uid(),nome:'',pai:pai||''};const qtd=galTodos(p.id).length,filhas=galPastas().filter(s=>s.pai===p.id).length;
+  openSheet(n?(pai?'Nova subpasta':'Nova pasta'):'Editar pasta',`<div class="form">
+    <div class="field full"><label for="gp_n">Nome</label><input id="gp_n" value="${esc(p.nome)}" placeholder="${pai?'Ex.: Sobrepor':'Ex.: Portão eletrônico'}"></div>
+    <div class="field full"><label for="gp_d">Pasta no Google Drive (opcional)</label><input id="gp_d" inputmode="url" value="${esc(p.drive||'')}" placeholder="https://drive.google.com/drive/folders/…"><span class="hint">Para vídeos grandes e arquivos antigos. No Drive, abra a pasta → Compartilhar → Copiar link.</span></div>
+  </div>`,`${n?'':`<button class="btn danger left" id="gp_del" ${qtd||filhas?'disabled title="Esvazie a pasta antes"':''}>Excluir</button>`}<button class="btn" data-act="close">Cancelar</button><button class="btn primary" id="gp_ok">Salvar</button>`,L=>{const $=id=>L.querySelector('#'+id);
+    $('gp_ok').onclick=async()=>{const nome=$('gp_n').value.trim();if(!nome){toast('Dê um nome para a pasta.');return}const o={...p,nome,drive:normUrl($('gp_d').value)},ps=galPastas();
+      try{await salvarPastas(n?[...ps,o]:ps.map(x=>x.id===p.id?o:x));closeSheet();toast('Pasta salva');if(n){ui.galPasta=o.id;render()}}catch(e){toast('Não foi possível salvar.')}};
+    if($('gp_del'))$('gp_del').onclick=()=>{if(qtd||filhas){toast('Mova ou apague as fotos e subpastas antes.');return}confirmSheet('Excluir pasta?',`A pasta ${esc(p.nome)} sai da galeria.`,'Excluir',async()=>{await salvarPastas(galPastas().filter(x=>x.id!==p.id));ui.galPasta=p.pai||'';render()})};
+  })}
+function galCapa(pid){const it=[...galTodos(pid)].sort((a,b)=>String(b.criadoEm).localeCompare(String(a.criadoEm)))[0];return it?it.t||it.p:''}
+let galSel=null;
+function vGaleria(app){const atual=galPasta(ui.galPasta)?ui.galPasta:'';if(atual!==ui.galPasta)ui.galPasta=atual;
+  const p=galPasta(atual),pai=p&&p.pai&&galPasta(p.pai),subs=galPastas().filter(s=>(s.pai||'')===atual),itens=atual?galItens(atual):[];
+  const q=normNome(ui.galBusca||''),achados=q?(S.galeria||[]).filter(x=>normNome([x.nome,x.desc,galCaminho(x.pasta),(S.clientes.find(c=>c.id===x.clienteId)||{}).nome].join(' ')).includes(q)):null;
+  const card=s=>{const n=galTodos(s.id).length,cap=galCapa(s.id);return `<button class="gal-pc" data-gp="${s.id}">${cap?`<img data-gimg="${esc(cap)}" alt="">`:`<span class="gal-pc-v">${svg(ICON[s.id]||(s.pai?NAVI.galeria:ICON[s.pai]||NAVI.galeria))}</span>`}<span class="gal-pc-t"><b>${esc(s.nome)}</b><span>${n} ${n===1?'item':'itens'}</span></span></button>`};
+  const grade=l=>`<div class="gal-grid">${l.map(x=>`<button class="gal-it ${galSel&&galSel.has(x.id)?'sel':''}" data-gi="${x.id}" aria-label="${esc(x.nome||(x.tipo==='video'?'Vídeo':'Foto'))}">${x.t||x.p&&x.tipo==='foto'?`<img data-gimg="${esc(x.t||x.p)}" alt="">`:'<span class="gal-sem">vídeo</span>'}${x.tipo==='video'?'<i class="gal-play">▶</i>':''}${galSel?`<i class="gal-ck">${galSel.has(x.id)?'✓':''}</i>`:''}</button>`).join('')}</div>`;
+  app.innerHTML=`
+  <div class="spread"><div><div class="eyebrow">${atual?`<button class="linkbtn" data-gp="">Galeria</button>${pai?` › <button class="linkbtn" data-gp="${pai.id}">${esc(pai.nome)}</button>`:''}`:'Fotos e vídeos dos serviços'}</div><h1 class="h1">${atual?esc(p.nome):'Galeria'}</h1></div>
+    <div class="row" style="gap:8px">${atual&&p.drive?`<a class="btn" href="${esc(p.drive)}" target="_blank" rel="noopener">Abrir no Drive</a>`:''}${atual?`<button class="btn internal" id="gl_ped">${svg(UI.edit)}Pasta</button>`:''}</div></div>
+  ${atual?'':`<label class="search">${svg(UI.search)}<input type="search" id="gl_q" placeholder="Buscar foto, cliente ou pasta" value="${esc(ui.galBusca||'')}" aria-label="Buscar"></label>`}
+  ${achados?(achados.length?grade(achados):`<div class="empty" style="padding:18px">Nada encontrado.</div>`):`
+  ${subs.length||!p||!p.pai?`<div class="gal-pastas">${subs.map(card).join('')}${!p||!p.pai?`<button class="gal-pc nova internal" id="gl_np"><span class="gal-pc-v">${svg(UI.plus)}</span><span class="gal-pc-t"><b>${atual?'Nova subpasta':'Nova pasta'}</b><span>${atual?'Ex.: Sobrepor':'Ex.: Portão'}</span></span></button>`:''}</div>`:''}
+  ${atual?`<div class="gal-drop internal" id="gl_drop"><div class="row" style="gap:8px;align-items:center"><label class="btn primary">${svg(UI.plus)}Adicionar fotos e vídeos<input type="file" accept="image/*,video/*" multiple hidden id="gl_f"></label><label class="btn">${svg(ICON_CAM)}Tirar foto<input type="file" accept="image/*" capture="environment" hidden id="gl_cam"></label><label class="btn">▶ Gravar vídeo<input type="file" accept="video/*" capture="environment" hidden id="gl_vid"></label><span class="hint" id="gl_st">ou arraste para cá</span></div></div>
+    ${itens.length?`<div class="spread" style="align-items:center"><span class="hint">${itens.length} ${itens.length===1?'item':'itens'}${galSel?` · ${galSel.size} selecionado${galSel.size===1?'':'s'}`:''}</span><div class="row" style="gap:6px">${galSel?`<button class="btn sm primary" id="gl_shs" ${galSel.size?'':'disabled'}>Compartilhar</button><button class="btn sm internal" id="gl_mv" ${galSel.size?'':'disabled'}>Mover</button><button class="btn sm danger internal" id="gl_dels" ${galSel.size?'':'disabled'}>Apagar</button><button class="btn sm" id="gl_selx">Cancelar</button>`:`<button class="btn sm" id="gl_sel">Selecionar várias</button>`}</div></div>${grade(itens)}`
+    :`<div class="empty" style="padding:18px">${subs.length?'Escolha uma subpasta acima ou adicione aqui as fotos gerais desta pasta.':'Nenhuma foto ainda. Toque em "Adicionar" ou "Tirar foto".'}</div>`}`
+  :`<p class="hint" style="margin:0">Organize por tipo de serviço. Para mandar fotos ao cliente, abra a foto e toque em "Compartilhar", ou use "Selecionar várias".</p>`}`}`;
+  const $=id=>app.querySelector('#'+id);
+  app.querySelectorAll('img[data-gimg]').forEach(im=>galImg(im,im.dataset.gimg));
+  app.querySelectorAll('[data-gp]').forEach(b=>b.onclick=()=>{ui.galPasta=b.dataset.gp;galSel=null;render();window.scrollTo(0,0)});
+  if($('gl_q'))$('gl_q').addEventListener('input',e=>{ui.galBusca=e.target.value;render()});
+  if($('gl_np'))$('gl_np').onclick=()=>galPastaSheet(null,atual);if($('gl_ped'))$('gl_ped').onclick=()=>galPastaSheet(p);
+  const lista=achados||itens;
+  app.querySelectorAll('[data-gi]').forEach(b=>b.onclick=()=>{const id=b.dataset.gi;if(galSel){galSel.has(id)?galSel.delete(id):galSel.add(id);render();return}galVer(lista,lista.findIndex(x=>x.id===id))});
+  const envia=async fs=>{const st=$('gl_st');const n=await galAdicionar(fs,atual,t=>{if(st)st.textContent=t});if(n)toast(n>1?`${n} arquivos adicionados`:'Adicionado');const s2=document.getElementById('gl_st');if(s2)s2.textContent='ou arraste para cá'};
+  ['gl_f','gl_cam','gl_vid'].forEach(i=>{if($(i))$(i).onchange=e=>{const fs=[...e.target.files];e.target.value='';envia(fs)}});
+  const d=$('gl_drop');if(d){d.addEventListener('dragover',e=>{e.preventDefault();d.classList.add('over')});d.addEventListener('dragleave',()=>d.classList.remove('over'));d.addEventListener('drop',e=>{e.preventDefault();d.classList.remove('over');envia(e.dataTransfer.files)})}
+  if($('gl_sel'))$('gl_sel').onclick=()=>{galSel=new Set();render()};if($('gl_selx'))$('gl_selx').onclick=()=>{galSel=null;render()};
+  const sel=()=>(S.galeria||[]).filter(x=>galSel&&galSel.has(x.id));
+  if($('gl_shs'))$('gl_shs').onclick=()=>galCompartilhar(sel());
+  if($('gl_dels'))$('gl_dels').onclick=()=>{const l=sel();confirmSheet(`Apagar ${l.length} ${l.length===1?'item':'itens'}?`,'Saem da galeria e não dá para desfazer.','Apagar',async()=>{for(const x of l){await store.remove('galeria',x.id);galApagarArq(x)}galSel=null;render();toast('Apagado')})};
+  if($('gl_mv'))$('gl_mv').onclick=()=>{const l=sel();openSheet(`Mover ${l.length} ${l.length===1?'item':'itens'}`,`<div class="field"><label for="gm_p">Para a pasta</label><select id="gm_p">${galOpcoesPasta(atual)}</select></div>`,`<button class="btn" data-act="close">Cancelar</button><button class="btn primary" id="gm_ok">Mover</button>`,L=>{L.querySelector('#gm_ok').onclick=async()=>{const pd=L.querySelector('#gm_p').value;for(const x of l)await salvarOp('galeria',{...x,pasta:pd});galSel=null;closeSheet();render();toast('Movido')}})};
+}
 function vProposta(app){
   const o=S.orcamentos.find(x=>x.id===view.id);
   if(!o){app.innerHTML=`<div class="empty"><b>Orçamento não encontrado</b><button class="btn" data-nav="inicio">Voltar</button></div>`;return}
