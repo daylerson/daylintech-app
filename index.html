@@ -289,6 +289,14 @@ body.apresentacao .internal{display:none!important}
 .pix-box{flex-direction:row;align-items:center;gap:16px;padding:12px}
 .st-b{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
 .ag-list{display:flex;flex-direction:column;gap:10px}
+.pv-res{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.pv-res>div{display:flex;flex-direction:column;gap:2px;background:var(--surface-2);border-radius:10px;padding:10px 12px;min-width:0}
+.pv-res span{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}.pv-res b{font-size:18px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.pv-res .pv-fim{background:var(--brand-soft)}.pv-res .pv-fim b{color:var(--brand);font-size:20px}.pv-res b.neg{color:var(--bad)!important}
+@media (max-width:560px){.pv-res{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.pv-ls{display:flex;flex-direction:column}.pv-l{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;gap:4px 10px;align-items:center;padding:9px 0;border-top:1px solid var(--line)}.pv-ls .pv-l:first-child{border-top:0}
+.pv-l>div{display:flex;flex-direction:column;min-width:0}.pv-l>div b{font-size:14px;overflow-wrap:anywhere}
+@media (max-width:560px){.pv-l{grid-template-columns:auto minmax(0,1fr) auto}.pv-l>.btn{grid-column:2/-1;justify-self:start}}
+.gc-pas{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:10px;font-size:14px;line-height:1.45}
 .op-foto{width:96px;height:72px;border-radius:10px;object-fit:cover;flex:none;cursor:zoom-in;background:var(--surface-2)}
 .op-foto.vazio{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:1.5px dashed var(--line);color:var(--brand);font:inherit;font-size:11.5px;font-weight:600;cursor:pointer}.op-foto.vazio svg{width:22px;height:22px}
 .campo-fotos{border-radius:12px;transition:background .15s}.campo-fotos.over{background:var(--brand-soft);outline:2px dashed var(--brand)}
@@ -658,8 +666,8 @@ function idadePill(d){return d==null?'':`<span class="pill ${d>30?'conf-baixa':'
 
 const DEF_EMPRESA={nome:'DaylinTech',slogan:'Tecnologia que protege',cnpj:'',telefone:'',email:'',endereco:'',margem:30,imposto:6,despesas:0,arredondar:1,descontoPix:5,cartaoMax:12,cartaoSemJuros:3,cartaoJuros:2.99,pixTipo:'cpf',pixChave:'',pixNome:'',cidade:'',whatsapp:'',linkPagamento:'',responsavel:'',assinatura:'',validade:15,pagamento:'Oferecemos 3 formas de pagamento:\n1) 50% na aprovação e 50% na conclusão do serviço (Pix ou transferência).\n2) Pix à vista com 5% de desconto.\n3) Cartão de crédito em até 3x sem juros ou em até 12x com juros da operadora.',garantia:'Equipamentos: 12 meses de garantia do fabricante (verificar com o fabricante). Nos primeiros 30 dias, qualquer defeito tem troca expressa. Após os 30 dias, o equipamento com defeito é retirado e enviado para a análise de garantia do fabricante; durante esse período, o cliente pode ficar sem o equipamento.\nInstalação: 90 dias (3 meses) de garantia total com a DaylinTech: qualquer problema na instalação é resolvido sem custo. Após os 90 dias, é cobrada visita técnica de R$ 130,00 para diagnóstico.',garantiaEquipMeses:12,garantiaServDias:90,prazo:'Início da instalação em até 5 dias úteis após a aprovação.'};
 
-const COLS=['produtos','clientes','orcamentos','veiculos','gastos','compras','lancamentos'];
-const S={produtos:[],clientes:[],orcamentos:[],veiculos:[],gastos:[],compras:[],lancamentos:[],empresa:{...DEF_EMPRESA},ready:{produtos:false,clientes:false,orcamentos:false,veiculos:false,gastos:false,compras:false,lancamentos:false,empresa:false}};
+const COLS=['produtos','clientes','orcamentos','veiculos','gastos','compras','lancamentos','contasfixas'];
+const S={produtos:[],clientes:[],orcamentos:[],veiculos:[],gastos:[],compras:[],lancamentos:[],contasfixas:[],empresa:{...DEF_EMPRESA},ready:{produtos:false,clientes:false,orcamentos:false,veiculos:false,gastos:false,compras:false,lancamentos:false,contasfixas:false,empresa:false}};
 let view={name:'home'};
 let ui={busca:'',cat:'todas',status:'todos',buscaCli:'',buscaMO:'',grupo:'todos'};
 let draft=null;
@@ -881,6 +889,7 @@ function render(fromSnap){
   const active=document.activeElement&&document.activeElement.id;
   const pos=document.activeElement&&document.activeElement.selectionStart;
   ({home:vHome,inicio:vInicio,catalogo:vCatalogo,maodeobra:vMaoDeObra,clientes:vClientes,ajustes:vAjustes,editor:vEditor,proposta:vProposta,agenda:vAgenda,os:vOS,garantias:vGarantias,impostos:vImpostos,operacional:vOperacional,financeiro:vFinanceiro}[view.name]||vHome)(app);
+  agendarSync();
   if(active){const el=document.getElementById(active);if(el&&el.tagName==='INPUT'&&el.type==='search'){el.focus();try{el.setSelectionRange(pos,pos)}catch(e){}}}
 }
 
@@ -927,7 +936,7 @@ function vHome(app){
   if(antigos.length)upd.push(`<button class="up-i internal" data-nav="catalogo"><span class="up-dot warn"></span><span><b>${antigos.length} preço${antigos.length===1?'':'s'} com mais de 30 dias</b><span class="hint">${esc(antigos.slice(0,3).map(p=>p.nome).join(', '))}${antigos.length>3?'…':''}. Peça uma cotação nova.</span></span></button>`);
   if(semLoja.length)upd.push(`<button class="up-i internal" data-nav="catalogo"><span class="up-dot muted"></span><span><b>${semLoja.length} produto${semLoja.length===1?'':'s'} sem loja cadastrada</b><span class="hint">Cadastre onde comprar para comparar preços.</span></span></button>`);
   recentes.forEach(p=>{const ef=fornEf(p);upd.push(`<button class="up-i internal" data-edit-prod="${p.id}"><span class="up-dot brand"></span><span><b>Preço atualizado: ${esc(p.nome)}</b><span class="hint">${money(p.custo)}${ef?` na ${esc(ef.f.nome)}`:''} · ${fmtDate(dataPreco(p))}</span></span></button>`)});
-  [...avisosFiscais(),...avisosOperacionais().map(a=>({...a,nav:'operacional'}))].forEach(a=>{const h=`<button class="up-i internal" data-nav="${a.nav||'impostos'}"><span class="up-dot ${a.cls}"></span><span><b>${esc(a.t)}</b><span class="hint">${esc(a.h)}</span></span></button>`;if(a.cls==='warn')upd.unshift(h);else upd.push(h)});
+  [...avisosFinanceiros().map(a=>({...a,nav:'financeiro'})),...avisosFiscais(),...avisosOperacionais().map(a=>({...a,nav:'operacional'}))].forEach(a=>{const h=`<button class="up-i internal" data-nav="${a.nav||'impostos'}"><span class="up-dot ${a.cls}"></span><span><b>${esc(a.t)}</b><span class="hint">${esc(a.h)}</span></span></button>`;if(a.cls==='warn')upd.unshift(h);else upd.push(h)});
   const ult=[...os].sort((a,b)=>(b.criadoEm||'').localeCompare(a.criadoEm||'')).slice(0,3);
   const tile=(nav,icon,label,cls='')=>`<button class="tile ${cls}" ${nav}>${svg(icon)}<span>${label}</span></button>`;
   app.innerHTML=`
@@ -2681,14 +2690,14 @@ function vAgenda(app){
   const sec=(tit,html)=>html?`<div><h2 class="h2" style="margin-bottom:10px">${tit}</h2><div class="ag-list">${html}</div></div>`:'';
   const vazio=!ag.length&&!espera.length&&!feitos.length;
   app.innerHTML=`
-  <div class="spread"><div><div class="eyebrow">${hj.length?`${hj.length} atendimento${hj.length>1?'s':''} hoje`:'Instalações e visitas'}</div><h1 class="h1">Agenda</h1></div><button class="btn primary" id="ag_nova">${svg(UI.plus)}Nova OS</button></div>
+  <div class="spread"><div><div class="eyebrow">${hj.length?`${hj.length} atendimento${hj.length>1?'s':''} hoje`:'Instalações e visitas'}</div><h1 class="h1">Agenda</h1></div><div class="row" style="gap:8px"><button class="btn internal" id="ag_gc">${svg(NAVI.agenda)}${gcalCfg().url?'Google Agenda ✓':'Ligar Google Agenda'}</button><button class="btn primary" id="ag_nova">${svg(UI.plus)}Nova OS</button></div></div>
   ${vazio?`<div class="empty"><b>Nenhuma instalação por aqui ainda</b><span class="muted">Quando um cliente aceitar a proposta, ela aparece aqui para você agendar.</span></div>`:''}
   ${sec('Atrasadas',late.map(o=>card(o,'late')).join(''))}
   ${sec('Hoje',hj.map(o=>card(o,'hoje')).join(''))}
   ${sec('Próximas',prox.map(o=>card(o)).join(''))}
   ${sec('Aguardando agendamento',espera.map(esperaCard).join(''))}
   ${sec('Concluídas',feitos.map(o=>card(o,'wait')).join(''))}`;
-  const pega=id=>S.orcamentos.find(x=>x.id===id);app.querySelector('#ag_nova').onclick=()=>novaOS();
+  const pega=id=>S.orcamentos.find(x=>x.id===id);app.querySelector('#ag_nova').onclick=()=>novaOS();app.querySelector('#ag_gc').onclick=()=>gcalCfg().url?openSheet('Google Agenda',`<p style="margin-top:0">Ligado. As OS, contas a pagar, guias e vencimentos vão para o seu Google Agenda sozinhos, sempre que algo muda no app.</p>`,`<button class="btn left" id="gs_cfg">Configurar</button><button class="btn" data-act="close">Fechar</button><button class="btn primary" id="gs_now">Atualizar agora</button>`,L=>{L.querySelector('#gs_cfg').onclick=()=>{closeSheet();gcalSheet()};L.querySelector('#gs_now').onclick=async()=>{closeSheet();await sincronizarAgenda(true)}}):gcalSheet();
   app.querySelectorAll('[data-ag-os]').forEach(b=>b.onclick=()=>go('os',{id:b.dataset.agOs}));
   app.querySelectorAll('[data-ag-wa]').forEach(b=>b.onclick=()=>{const o=pega(b.dataset.agWa);mensagemCliente(o,'Confirmar instalação',textoAgenda(o))});
   app.querySelectorAll('[data-ag-ok]').forEach(b=>b.onclick=()=>concluirOS(pega(b.dataset.agOk)));
@@ -3371,7 +3380,8 @@ async function relatorioMes(ym){const r=resumoMes(ym),temFoto=r.doMes.some(m=>m.
       await baixar(nome,f,'application/pdf');const t=(fiscal().titular||{}).contadorTel;let num_=soDig(t);if(num_.length>=10){if(num_.length<=11)num_='55'+num_;window.open('https://wa.me/'+num_+'?text='+encodeURIComponent(txt+'\n(PDF em anexo)'),'_blank','noopener')}
       toast('PDF salvo. Anexe na conversa com o contador.')};
   })}
-function vFinanceiro(app){
+function vFinanceiro(app){(ui.finAba==='fixas'?vFinFixas:vFinGeral)(app)}
+function vFinGeral(app){
   const ms=movimentos(),cfg=finCfg(),ym=ui.finMes||ymHoje(),r=resumoMes(ym,ms),fil=ui.finFil||'todos',hoje=hojeISO();
   const lista=r.doMes.filter(m=>fil==='todos'||fil==='semnota'?(fil==='todos'||r.semNota.includes(m)):m.tipo===fil);
   const mx=Math.max(...r.catS.map(x=>x[1]),1);
@@ -3381,8 +3391,10 @@ function vFinanceiro(app){
   app.innerHTML=`
   <div class="spread"><div><div class="eyebrow">Dinheiro da empresa</div><h1 class="h1">Financeiro</h1></div>
     <div class="row" style="gap:8px"><button class="btn primary" id="fn_nf">${svg('<path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/><path d="M10 13h5M10 17h3"/>')}Importar nota</button><button class="btn" id="fn_novo">${svg(UI.plus)}Lançamento</button></div></div>
+  ${finTabs('geral')}
   <div class="fin-contas">${cfg.contas.length?cfg.contas.map(c=>`<div class="fx-card fin-saldo"><span>${esc(c.nome)}</span><b class="${saldoConta(c,hoje,ms)<0?'neg':''}">${money(saldoConta(c,hoje,ms))}</b><span>saldo hoje · <button class="linkbtn" data-cf="${c.id}">conferir com o banco</button> · <button class="linkbtn" data-ce="${c.id}">editar</button></span></div>`).join('')+`<button class="btn ghost sm" id="fn_conta" style="align-self:center">${svg(UI.plus)}Outra conta</button>`
     :`<div class="fx-card fin-saldo"><span>Saldo da conta</span><b>—</b><span>Informe quanto tem no banco hoje para o app acompanhar o saldo.</span><button class="btn primary sm" id="fn_conta" style="align-self:flex-start;margin-top:6px">Informar saldo</button></div>`}</div>
+  ${previsaoHTML()}
   <div class="spread" style="align-items:center"><div class="row fin-mes" style="gap:6px;flex-wrap:nowrap"><button class="iconbtn" id="fn_ant" aria-label="Mês anterior">${svg(UI.back)}</button><b>${esc(mesNomeFin(ym))}</b><button class="iconbtn" id="fn_prox" aria-label="Próximo mês" ${ym>=ymHoje()?'disabled':''} style="transform:scaleX(-1)">${svg(UI.back)}</button></div>
     <button class="btn" id="fn_rel">${svg(UI.dl)}Relatório do mês</button></div>
   <div class="fx-cards">
@@ -3407,7 +3419,205 @@ function vFinanceiro(app){
     else if(m.src==='carro'){const g=S.gastos.find(x=>x.id===m.ref),v=g&&S.veiculos.find(x=>x.id===g.veiculoId);if(g&&v)formGasto(v,g)}
     else if(m.src==='compra')formCompra(S.compras.find(x=>x.id===m.ref));
     else if(m.src==='das')go('impostos')});
+  ligarFin(app);
 }
+/* ---------- Contas fixas, a receber e previsão ---------- */
+// Coleção "contasfixas": {nome, valor, freq: mensal|anual|unica, dia, mes (anual), data (única), inicio 'AAAA-MM', parcelas, cat, contaId, ativo}.
+// Pagar uma conta cria um lançamento com contaFixaId + competencia ('AAAA-MM' ou 'AAAA'), que marca aquele mês como pago.
+const FREQ={mensal:'Todo mês',anual:'Uma vez por ano',unica:'Uma vez só'};
+const ultimoDia=(a,m)=>new Date(a,m,0).getDate();
+function ocorrencias(cf,de,ate){if(cf.ativo===false)return [];const out=[],z=n=>String(n).padStart(2,'0');
+  if(cf.freq==='unica'){if(cf.data&&cf.data>=de&&cf.data<=ate)out.push({cf,comp:cf.data.slice(0,7),vence:cf.data});return out}
+  if(cf.freq==='anual'){for(let a=+de.slice(0,4);a<=+ate.slice(0,4);a++){const m=+cf.mes||1,v=`${a}-${z(m)}-${z(Math.min(+cf.dia||1,ultimoDia(a,m)))}`;if(v>=de&&v<=ate&&(!cf.inicio||`${a}-${z(m)}`>=cf.inicio))out.push({cf,comp:String(a),vence:v})}return out}
+  let ym=(cf.inicio&&cf.inicio>de.slice(0,7))?cf.inicio:de.slice(0,7),n=0;const ini=cf.inicio||ym;
+  if(cf.parcelas){let k=ini;while(k<ym){k=ymMais(k,1);n++}}
+  for(;ym<=ate.slice(0,7);ym=ymMais(ym,1)){if(cf.parcelas&&n>=+cf.parcelas)break;n++;const [a,m]=ym.split('-').map(Number),v=`${ym}-${z(Math.min(+cf.dia||1,ultimoDia(a,m)))}`;if(v>=de&&v<=ate)out.push({cf,comp:ym,vence:v,parcela:cf.parcelas?n:0})}
+  return out}
+const pagamentoDe=(cf,comp)=>(S.lancamentos||[]).find(l=>l.contaFixaId===cf.id&&l.competencia===comp);
+// Contas em aberto: vencidas (até 6 meses para trás) e as próximas até "ate".
+function contasAbertas(ate){const hoje=hojeISO(),de=ymMais(hoje.slice(0,7),-6)+'-01';
+  return (S.contasfixas||[]).flatMap(cf=>ocorrencias(cf,de,ate)).filter(o=>!pagamentoDe(o.cf,o.comp)&&(o.vence>=hoje||o.vence>=(o.cf.criadoEm||'').slice(0,10))).sort((a,b)=>a.vence.localeCompare(b.vence))}
+// A receber: orçamentos/OS fechados sem pagamento completo.
+function aReceber(){return S.orcamentos.filter(o=>(vendido(o)||o.aceite)&&o.status!=='recusado').map(o=>{const t=calc(o).total,p=o.pgto,v=p?(p.tipo==='parcial'?Math.max(0,t-num(p.valor)):0):num((o.aceite||{}).valor)||t;
+  return {o,valor:v,quando:(o.agenda&&o.agenda.data)||''}}).filter(x=>x.valor>0.009).sort((a,b)=>(a.quando||'9').localeCompare(b.quando||'9'))}
+function previsao(dias){const hoje=hojeISO(),ate=isoDia(new Date(Date.now()+dias*864e5)),ms=movimentos(),cs=finCfg().contas;
+  const saldo=cs.reduce((t,c)=>t+saldoConta(c,hoje,ms),0),pagar=contasAbertas(ate),rec=aReceber(),f=fiscal(),extras=[];
+  if(f.regime!=='outro'&&f.inicio){const g=guias(f).find(x=>x.st==='aberto'&&x.vence>=hoje&&x.vence<=ate);if(g)extras.push({nome:`Guia de imposto (DAS) de ${ymTxt(g.ym)}`,valor:g.valor,vence:g.vence,das:true})}
+  (S.gastos||[]).filter(g=>g.tipo==='multa'&&g.situacao==='pendente').forEach(g=>extras.push({nome:'Multa'+(g.desc?': '+g.desc:''),valor:num(g.valor),vence:g.vence||hoje,multa:g}));
+  const totP=pagar.reduce((t,o)=>t+num(o.cf.valor),0)+extras.reduce((t,x)=>t+x.valor,0),totR=rec.reduce((t,x)=>t+x.valor,0);
+  return {saldo,pagar,extras,rec,totP,totR,final:saldo+totR-totP,ate,temConta:cs.length>0}}
+function avisosFinanceiros(){const hoje=hojeISO(),ate=isoDia(new Date(Date.now()+3*864e5)),ab=contasAbertas(ate),venc=ab.filter(o=>o.vence<hoje),prox=ab.filter(o=>o.vence>=hoje),out=[];
+  if(venc.length)out.push({cls:'warn',t:`${venc.length} conta${venc.length>1?'s':''} vencida${venc.length>1?'s':''} · ${money(venc.reduce((t,o)=>t+num(o.cf.valor),0))}`,h:venc.slice(0,3).map(o=>o.cf.nome).join(', ')});
+  prox.forEach(o=>{const d=diasAte(o.vence);out.push({cls:d===0?'warn':'info',t:`Pagar ${o.cf.nome}: ${money(o.cf.valor)}`,h:`Vence ${d===0?'hoje':d===1?'amanhã':'em '+dataBR(o.vence)}`})});
+  return out}
+function formContaFixa(cf){const n=!cf,cfg=finCfg();cf=cf||{id:uid(),freq:'mensal',dia:10,cat:'',contaId:contaPadrao(),inicio:ymHoje(),ativo:true,criadoEm:new Date().toISOString()};
+  const cats=Object.entries(FIN_CATS).filter(([,v])=>v[1]==='s');
+  openSheet(n?'Nova conta fixa':cf.nome,`<div class="form">
+    <div class="field full"><label for="cx_n">Conta</label><input id="cx_n" value="${esc(cf.nome||'')}" placeholder="Ex.: aluguel, internet, celular, contador, parcela da furadeira"></div>
+    <div class="field"><label for="cx_v">Valor (R$)</label><input id="cx_v" inputmode="decimal" value="${cf.valor!=null&&cf.valor!==''?num(cf.valor).toFixed(2).replace('.',','):''}"><span class="hint">Se varia, coloque uma média.</span></div>
+    <div class="field"><label for="cx_f">Repete</label><select id="cx_f">${Object.entries(FREQ).map(([k,l])=>`<option value="${k}" ${cf.freq===k?'selected':''}>${l}</option>`).join('')}</select></div>
+    <div class="field" data-fq="mensal anual"><label for="cx_d">Vence no dia</label><input id="cx_d" inputmode="numeric" value="${esc(cf.dia||'')}"></div>
+    <div class="field" data-fq="anual"><label for="cx_m">Mês</label><select id="cx_m">${Array.from({length:12},(_,i)=>`<option value="${i+1}" ${+cf.mes===i+1?'selected':''}>${cap(new Date(2026,i,15).toLocaleDateString('pt-BR',{month:'long'}))}</option>`).join('')}</select></div>
+    <div class="field" data-fq="unica"><label for="cx_dt">Vence em</label><input id="cx_dt" type="date" value="${esc(cf.data||'')}"></div>
+    <div class="field" data-fq="mensal"><label for="cx_i">A partir de</label><input id="cx_i" type="month" value="${esc(cf.inicio||ymHoje())}"></div>
+    <div class="field" data-fq="mensal"><label for="cx_p">Número de parcelas</label><input id="cx_p" inputmode="numeric" value="${esc(cf.parcelas||'')}" placeholder="Vazio = sem fim"></div>
+    <div class="field"><label for="cx_c">Categoria</label><select id="cx_c"><option value="">Escolha…</option>${cats.map(([k,[nm]])=>`<option value="${k}" ${cf.cat===k?'selected':''}>${nm}</option>`).join('')}</select></div>
+    ${cfg.contas.length>1?`<div class="field"><label for="cx_ct">Sai da conta</label><select id="cx_ct">${cfg.contas.map(c=>`<option value="${c.id}" ${cf.contaId===c.id?'selected':''}>${esc(c.nome)}</option>`).join('')}</select></div>`:''}
+    <label class="field full chk"><input type="checkbox" id="cx_a" ${cf.ativo!==false?'checked':''}> <span>Ativa <span class="hint">(desmarque quando parar de pagar)</span></span></label>
+  </div>`,`${n?'':'<button class="btn danger left" id="cx_del">Excluir</button>'}<button class="btn" data-act="close">Cancelar</button><button class="btn primary" id="cx_ok">Salvar</button>`,L=>{
+    const $=id=>L.querySelector('#'+id),mostra=()=>{const f=$('cx_f').value;L.querySelectorAll('[data-fq]').forEach(x=>x.hidden=!x.dataset.fq.split(' ').includes(f))};$('cx_f').onchange=mostra;mostra();
+    let iniMexido=!n;$('cx_i').addEventListener('input',()=>iniMexido=true);const iniAuto=()=>{if(iniMexido)return;const d=Math.round(num($('cx_d').value))||1;$('cx_i').value=d<new Date().getDate()?ymMais(ymHoje(),1):ymHoje()};$('cx_d').addEventListener('input',iniAuto);iniAuto();
+    $('cx_n').addEventListener('change',()=>{if(!$('cx_c').value){const c=classificar({desc:$('cx_n').value});if(c&&FIN_CATS[c][1]==='s')$('cx_c').value=c}});
+    $('cx_ok').onclick=async()=>{const nome=$('cx_n').value.trim(),f=$('cx_f').value;if(!nome){toast('Escreva o nome da conta.');return}
+      const dia=Math.min(31,Math.max(1,Math.round(num($('cx_d').value))||1));if(f==='unica'&&!$('cx_dt').value){toast('Escolha a data de vencimento.');return}
+      const o={...cf,nome,valor:num($('cx_v').value),freq:f,dia,mes:+$('cx_m').value,data:$('cx_dt').value,inicio:$('cx_i').value||ymHoje(),parcelas:Math.round(num($('cx_p').value))||'',cat:$('cx_c').value||'outros',contaId:$('cx_ct')?$('cx_ct').value:cf.contaId||contaPadrao(),ativo:$('cx_a').checked,atualizadoEm:new Date().toISOString()};
+      if(await salvarOp('contasfixas',o,'Conta salva'))closeSheet()};
+    if(!n)$('cx_del').onclick=()=>confirmSheet('Excluir conta fixa?',`${esc(cf.nome)} sai da lista. Os pagamentos já lançados continuam no financeiro.`,'Excluir',()=>store.remove('contasfixas',cf.id).then(()=>toast('Excluída'),()=>toast('Não foi possível excluir.')));
+  })}
+function pagarConta(oc){const cf=oc.cf,cfg=finCfg(),comp=cf.freq==='anual'?String(oc.comp):oc.comp;
+  openSheet('Paguei: '+cf.nome,`<div class="form">
+    <div class="field"><label for="py_v">Valor pago (R$)</label><input id="py_v" inputmode="decimal" value="${num(cf.valor).toFixed(2).replace('.',',')}"></div>
+    <div class="field"><label for="py_d">Data</label><input id="py_d" type="date" value="${hojeISO()}"></div>
+    <div class="field"><label for="py_f">Forma</label><select id="py_f">${Object.entries(FIN_FORMAS).map(([k,t])=>`<option value="${k}">${t}</option>`).join('')}</select></div>
+    ${cfg.contas.length>1?`<div class="field"><label for="py_c">Saiu da conta</label><select id="py_c">${cfg.contas.map(c=>`<option value="${c.id}" ${(cf.contaId||contaPadrao())===c.id?'selected':''}>${esc(c.nome)}</option>`).join('')}</select></div>`:''}
+    <div class="full"><span class="hint">Comprovante (opcional)</span><div id="py_fotos"></div></div></div>`,
+  `<button class="btn" data-act="close">Cancelar</button><button class="btn primary" id="py_ok">Lançar pagamento</button>`,L=>{const $=id=>L.querySelector('#'+id),id=uid(),wf=campoFotos($('py_fotos'),[],{rotulo:'Comprovante'});
+    $('py_ok').onclick=async()=>{const vl=num($('py_v').value);if(!(vl>0)){toast('Informe o valor.');return}const b=$('py_ok');b.disabled=true;
+      let anexos;try{anexos=await wf.salvar(id,'fin')}catch(e){b.disabled=false;toast('Não foi possível enviar o comprovante.');return}
+      const ref=cf.freq==='anual'?comp:ymTxt(comp);
+      if(await salvarOp('lancamentos',{id,tipo:'saida',valor:vl,data:$('py_d').value||hojeISO(),desc:`${cf.nome}${cf.freq==='unica'?'':` (${ref}${oc.parcela?`, parcela ${oc.parcela}/${cf.parcelas}`:''})`}`,cat:cf.cat||'outros',forma:$('py_f').value,contaId:$('py_c')?$('py_c').value:cf.contaId||contaPadrao(),contaFixaId:cf.id,competencia:comp,anexos,criadoEm:new Date().toISOString()},'Pagamento lançado'))closeSheet();else b.disabled=false}})}
+const finTabs=aba=>`<div class="op-tabs" role="tablist">${[['geral','Visão geral'],['fixas',`Contas fixas${(S.contasfixas||[]).length?` (${(S.contasfixas||[]).filter(c=>c.ativo!==false).length})`:''}`]].map(([k,l])=>`<button role="tab" aria-selected="${aba===k}" data-fin-aba="${k}">${l}</button>`).join('')}</div>`;
+function previsaoHTML(){const dias=+ui.finPrev||30,p=previsao(dias),hoje=hojeISO();
+  const linha=(nome,v,quando,sinal,acao,extra='')=>`<div class="pv-l"><span class="fin-s ${sinal>0?'entrada':'saida'}">${sinal>0?'+':'−'}</span><div><b>${esc(nome)}</b><span class="hint">${quando}${extra}</span></div><b class="num" style="color:var(--${sinal>0?'ok':'bad'})">${sinal>0?'+':'−'} ${money(v)}</b>${acao}</div>`;
+  const pag=[...p.pagar.map(o=>({o,v:o.vence})),...p.extras.map(x=>({x,v:x.vence}))].sort((a,b)=>a.v.localeCompare(b.v));
+  return `<section class="panel">
+    <div class="spread" style="align-items:center"><h2 class="h2">Previsão</h2><div class="chips">${[7,30,60].map(d=>`<button class="chip" data-prev="${d}" aria-pressed="${dias===d}">${d} dias</button>`).join('')}</div></div>
+    <div class="pv-res"><div><span>Saldo hoje</span><b>${p.temConta?money(p.saldo):'—'}</b></div><div><span>A receber</span><b style="color:var(--ok)">+ ${money(p.totR)}</b></div><div><span>A pagar</span><b style="color:var(--bad)">− ${money(p.totP)}</b></div><div class="pv-fim"><span>Previsto em ${dataBR(p.ate).slice(0,5)}</span><b class="${p.final<0?'neg':''}">${p.temConta?money(p.final):'—'}</b></div></div>
+    ${p.temConta&&p.final<0?`<p class="note" style="margin:0;color:var(--bad)"><b>Atenção:</b> se tudo for pago e recebido como previsto, falta ${money(-p.final)} até ${dataBR(p.ate)}.</p>`:''}
+    ${pag.length?`<div><div class="sec-k">A pagar</div><div class="pv-ls">${pag.map(({o,x})=>o?linha(o.cf.nome,num(o.cf.valor),o.vence<hoje?`<b style="color:var(--bad)">Venceu ${dataBR(o.vence)}</b>`:`Vence ${diasAte(o.vence)===0?'hoje':diasAte(o.vence)===1?'amanhã':dataBR(o.vence)}`,-1,`<button class="btn sm primary" data-pagar="${o.cf.id}|${o.comp}">Paguei</button>`,o.parcela?` · parcela ${o.parcela}/${o.cf.parcelas}`:'')
+      :linha(x.nome,x.valor,`Vence ${dataBR(x.vence)}`,-1,x.das?'<button class="btn sm" data-nav="impostos">Abrir</button>':'<button class="btn sm" data-nav="operacional">Abrir</button>')).join('')}</div></div>`:`<p class="hint" style="margin:0">Nenhuma conta para pagar nos próximos ${dias} dias.${(S.contasfixas||[]).length?'':' Cadastre aluguel, internet, celular e outras em "Contas fixas".'}</p>`}
+    ${p.rec.length?`<div><div class="sec-k">A receber</div><div class="pv-ls">${p.rec.map(r=>linha(`${cliNome(r.o)} · ${r.o.tipo==='os'?'OS':'Orçamento'} Nº ${nOrc(r.o.numero)}`,r.valor,r.quando?`Serviço em ${dataBR(r.quando)}`:'Aprovado, sem data',1,`<button class="btn sm" data-open-orc="${r.o.id}">Abrir</button>`,r.o.pgto?' · falta o restante':'')).join('')}</div></div>`:''}
+  </section>`}
+function vFinFixas(app){const cs=[...(S.contasfixas||[])].sort((a,b)=>(a.ativo===false)-(b.ativo===false)||(+a.dia||0)-(+b.dia||0)),hoje=hojeISO(),ym=ymHoje();
+  const totMes=cs.filter(c=>c.ativo!==false&&c.freq==='mensal').reduce((t,c)=>t+num(c.valor),0);
+  const st=cf=>{const fim=isoDia(new Date(Date.now()+400*864e5)),cri=(cf.criadoEm||'').slice(0,10),oc=ocorrencias(cf,ymMais(ym,-1)+'-01',fim).find(o=>!pagamentoDe(cf,o.comp)&&(o.vence>=hoje||o.vence>=cri));if(!oc)return {txt:cf.ativo===false?'Parada':'Em dia',cls:'ok'};
+    const pg=pagamentoDe(cf,ym);return oc.vence<hoje?{txt:`Venceu ${dataBR(oc.vence)}`,cls:'bad',oc}:{txt:`${pg?'Paga este mês · ':''}Próxima: ${dataBR(oc.vence)}`,cls:pg?'ok':'',oc}};
+  app.innerHTML=`<div class="spread"><div><div class="eyebrow">Dinheiro da empresa</div><h1 class="h1">Financeiro</h1></div><button class="btn primary" id="cx_novo">${svg(UI.plus)}Conta fixa</button></div>${finTabs('fixas')}
+    <p class="hint" style="margin:0">Contas que se repetem: aluguel, internet, celular, contador, parcelas. O app avisa antes de vencer${(S.empresa.gcal||{}).url?' e coloca no Google Agenda':''}, e "Paguei" lança no financeiro.</p>
+    ${cs.length?`<div class="fx-cards"><div class="fx-card"><span>Contas mensais</span><b>${money(totMes)}</b><span>${cs.filter(c=>c.ativo!==false&&c.freq==='mensal').length} conta${cs.length>1?'s':''} todo mês</span></div></div>
+    <div class="list">${cs.map(cf=>{const s=st(cf);return `<div class="li fin-m" data-cx="${cf.id}" tabindex="0" role="button"><span class="fin-s saida">${cf.dia||'·'}</span><div><div class="t">${esc(cf.nome)}${cf.ativo===false?' <span class="pill st-rascunho">parada</span>':''}</div>
+      <div class="d">${esc(FREQ[cf.freq])}${cf.freq==='mensal'?`, dia ${cf.dia}`:cf.freq==='anual'?`, ${cf.dia}/${String(cf.mes).padStart(2,'0')}`:` · ${dataBR(cf.data)}`}${cf.parcelas?` · ${cf.parcelas} parcelas`:''} · ${esc(catNomeFin(cf.cat))} · <span style="color:var(--${s.cls==='bad'?'bad':s.cls==='ok'?'ok':'muted'})">${s.txt}</span></div></div>
+      <div class="r"><span class="num">${money(cf.valor)}</span>${s.oc&&cf.ativo!==false?`<button class="btn sm ${s.cls==='bad'?'primary':''}" data-pagar="${cf.id}|${s.oc.comp}">Paguei</button>`:''}</div></div>`}).join('')}</div>`
+    :`<div class="empty"><b>Nenhuma conta fixa</b><span class="muted">Cadastre as contas que vencem todo mês para o app avisar e prever o saldo.</span><button class="btn primary" id="cx_novo2">${svg(UI.plus)}Cadastrar conta</button></div>`}`;
+  const $=id=>app.querySelector('#'+id);$('cx_novo').onclick=()=>formContaFixa();if($('cx_novo2'))$('cx_novo2').onclick=()=>formContaFixa();
+  app.querySelectorAll('[data-cx]').forEach(b=>b.onclick=e=>{if(e.target.closest('[data-pagar]'))return;formContaFixa(S.contasfixas.find(c=>c.id===b.dataset.cx))});
+  ligarFin(app)}
+function ligarFin(app){app.querySelectorAll('[data-fin-aba]').forEach(b=>b.onclick=()=>{ui.finAba=b.dataset.finAba;render()});
+  app.querySelectorAll('[data-prev]').forEach(b=>b.onclick=()=>{ui.finPrev=b.dataset.prev;render()});
+  app.querySelectorAll('[data-pagar]').forEach(b=>b.onclick=e=>{e.stopPropagation();const [id,comp]=b.dataset.pagar.split('|'),cf=S.contasfixas.find(c=>c.id===id);if(!cf)return;
+    const oc=ocorrencias(cf,ymMais(ymHoje(),-7)+'-01',isoDia(new Date(Date.now()+400*864e5))).find(o=>String(o.comp)===comp)||{cf,comp,vence:hojeISO()};pagarConta(oc)})}
+
+/* ---------- Google Agenda ---------- */
+// O app manda a lista de compromissos para um Google Apps Script que o próprio dono instala na conta Google dele.
+// O script cria, muda e apaga só os eventos marcados como DaylinTech no Google Agenda. Nada passa por servidor nosso.
+const APP_URL=()=>location.origin+location.pathname;
+const gcalCfg=()=>S.empresa.gcal||{};
+function scriptGcal(segredo){return `// DaylinTech → Google Agenda. Cole tudo isto em script.google.com e implante como "App da Web".
+const SEGREDO = '${segredo}';
+const TAG = 'daylintech';
+
+function doGet() { return saida({ ok: true, app: 'DaylinTech' }); }
+
+function doPost(e) {
+  const req = JSON.parse(e.postData.contents);
+  if (req.segredo !== SEGREDO) return saida({ erro: 'segredo' });
+  const cal = CalendarApp.getDefaultCalendar();
+  const lock = LockService.getScriptLock(); lock.waitLock(30000);
+  try {
+    const existentes = {};
+    cal.getEvents(new Date(req.de), new Date(req.ate)).forEach(function (ev) {
+      const id = ev.getTag(TAG); if (id) (existentes[id] = existentes[id] || []).push(ev);
+    });
+    let criados = 0, apagados = 0;
+    (req.eventos || []).forEach(function (x) {
+      const evs = existentes[x.id] || []; delete existentes[x.id];
+      const atual = evs.shift(); evs.forEach(function (d) { d.deleteEvent(); apagados++; });
+      if (atual && atual.getTag(TAG + '_h') === x.h) return;
+      if (atual) { atual.deleteEvent(); apagados++; }
+      const op = { description: x.desc || '', location: x.local || '' };
+      let ev;
+      if (x.dia) { const p = x.dia.split('-'); ev = cal.createAllDayEvent(x.titulo, new Date(+p[0], +p[1] - 1, +p[2], 12), op); }
+      else ev = cal.createEvent(x.titulo, new Date(x.inicio), new Date(x.fim), op);
+      ev.setTag(TAG, x.id); ev.setTag(TAG + '_h', x.h);
+      ev.removeAllReminders(); (x.lembretes || []).forEach(function (m) { ev.addPopupReminder(m); });
+      if (x.cor) ev.setColor(x.cor);
+      criados++;
+    });
+    Object.keys(existentes).forEach(function (k) { existentes[k].forEach(function (d) { d.deleteEvent(); apagados++; }); });
+    return saida({ ok: true, criados: criados, apagados: apagados });
+  } finally { lock.releaseLock(); }
+}
+
+function saida(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
+`}
+const hashTxt=s=>{let h=5381;for(let i=0;i<s.length;i++)h=(h*33^s.charCodeAt(i))>>>0;return h.toString(36)};
+const duracaoMin=t=>{t=String(t||'');const h=t.match(/(\d+(?:[.,]\d+)?)\s*h/i),m=t.match(/(\d+)\s*min/i);const v=(h?num(h[1])*60:0)+(m?+m[1]:0);return v>0?Math.min(v,14*60):120};
+// Cor dos eventos: 9 azul (OS), 11 vermelho (contas e prazos), 5 amarelo (carro), 2 verde (receber).
+function eventosAgenda(){const hoje=hojeISO(),de=isoDia(new Date(Date.now()-2*864e5)),ate=isoDia(new Date(Date.now()+120*864e5)),u=APP_URL(),out=[];
+  const add=e=>{e.h=hashTxt(JSON.stringify([e.titulo,e.inicio,e.fim,e.dia,e.desc,e.local,e.lembretes,e.cor]));out.push(e)};
+  S.orcamentos.forEach(o=>{const g=o.agenda;if(!g||!g.data||g.data<de||g.data>ate||o.status==='recusado')return;const c=S.clientes.find(x=>x.id===o.clienteId)||{},hora=g.hora||'08:00';
+    const ini=new Date(`${g.data}T${hora}:00`),fim=new Date(ini.getTime()+duracaoMin(g.duracao||(calc(o).tempo?fmtH(calc(o).tempo):''))*6e4),feito=o.status==='concluido';
+    add({id:'os-'+o.id,titulo:`${feito?'✓ ':''}${o.tipo==='os'?osTipoNome(o):'Instalação'} · ${cliNome(o)}`,inicio:ini.toISOString(),fim:fim.toISOString(),local:[g.endereco,c.cep].filter(Boolean).join(', '),cor:'9',lembretes:feito?[]:[60,24*60],
+      desc:[`${o.tipo==='os'?'OS':'Orçamento'} Nº ${nOrc(o.numero)}${o.titulo&&o.tipo!=='os'?' · '+o.titulo:''}`,`Cliente: ${cliNome(o)}${c.telefone?' · '+c.telefone:''}`,o.motivo?'Motivo: '+o.motivo:'',g.tecnico?'Técnico: '+g.tecnico:'',g.obs?'Obs.: '+g.obs:'','',`Abrir a OS no app: ${u}#os=${o.id}`].filter((x,i)=>x!==''||i>4).join('\n')})});
+  S.orcamentos.filter(o=>o.tipo!=='os'&&o.status==='enviado'&&o.criadoEm).forEach(o=>{const v=isoDia(new Date(new Date(o.criadoEm).getTime()+num(o.validadeDias||S.empresa.validade||15)*864e5));if(v<hoje||v>ate)return;
+    add({id:'val-'+o.id,dia:v,titulo:`Proposta vence: ${cliNome(o)} (Nº ${nOrc(o.numero)})`,cor:'2',lembretes:[15*60],desc:`Cobrar resposta do cliente antes de a proposta vencer.\n\nAbrir no app: ${u}#orc=${o.id}`})});
+  contasAbertas(ate).forEach(oc=>{if(oc.vence<de)return;add({id:`cf-${oc.cf.id}-${oc.comp}`,dia:oc.vence,titulo:`Pagar: ${oc.cf.nome} · ${money(oc.cf.valor)}`,cor:'11',lembretes:[15*60],desc:`Conta fixa${oc.parcela?` · parcela ${oc.parcela}/${oc.cf.parcelas}`:''}. Depois de pagar, toque em "Paguei" no app.\n\nAbrir o financeiro: ${u}#fin`})});
+  const f=fiscal();if(f.regime!=='outro'&&f.inicio){guias(f).filter(g=>g.st==='aberto'&&g.vence>=de&&g.vence<=ate).forEach(g=>add({id:'das-'+g.ym,dia:g.vence,titulo:`Pagar DAS de ${ymTxt(g.ym)} · ${money(g.valor)}`,cor:'11',lembretes:[15*60,4*24*60],desc:`Guia de imposto.\nEmitir: ${f.regime==='mei'?FX_LINK.pgmei:FX_LINK.simples}\n\nAbrir impostos no app: ${u}#impostos`}));
+    anuais(f).filter(x=>x.st==='pendente'&&x.prazo>=de&&x.prazo<=ate).forEach(x=>add({id:'anual-'+x.ano,dia:x.prazo,titulo:`Prazo: ${anualNome(f)} ${x.ano}`,cor:'11',lembretes:[15*60,7*24*60],desc:`Declaração anual da empresa.\n\nAbrir impostos no app: ${u}#impostos`}))}
+  veiculos().forEach(v=>{[['licenciamento','Licenciamento'],['ipvaVence','IPVA'],['seguroVence','Seguro']].forEach(([k,l])=>{if(v[k]&&v[k]>=de&&v[k]<=ate)add({id:`car-${k}-${v.id}`,dia:v[k],titulo:`${l} vence · ${veicNome(v)}${v.placa?' ('+v.placa+')':''}`,cor:'5',lembretes:[15*60,7*24*60],desc:`Abrir o carro no app: ${u}#carro`})});
+    gastosDe(v).filter(g=>g.tipo==='multa'&&g.situacao==='pendente'&&g.vence&&g.vence>=de&&g.vence<=ate).forEach(g=>add({id:'multa-'+g.id,dia:g.vence,titulo:`Pagar multa · ${money(g.valor)}`,cor:'5',lembretes:[15*60,3*24*60],desc:`${g.desc||''}\n\nAbrir o carro no app: ${u}#carro`}));
+    const rev=gastosDe(v).find(g=>g.tipo==='manutencao'&&g.proxData);if(rev&&rev.proxData>=de&&rev.proxData<=ate)add({id:'rev-'+v.id,dia:rev.proxData,titulo:`Revisão do carro: ${rev.desc||'manutenção'} · ${veicNome(v)}`,cor:'5',lembretes:[15*60,3*24*60],desc:`Abrir o carro no app: ${u}#carro`})});
+  return {de:new Date(de+'T00:00:00').toISOString(),ate:new Date(ate+'T23:59:59').toISOString(),eventos:out}}
+let gcalT=null,gcalRodando=false;
+async function sincronizarAgenda(manual){const g=gcalCfg();if(!g.url||!g.segredo||gcalRodando)return null;
+  const pac=eventosAgenda(),assin=hashTxt(JSON.stringify(pac.eventos.map(e=>e.id+e.h)));
+  let ult='';try{ult=localStorage.getItem('daylintech:gcal')||''}catch(e){}
+  if(!manual&&ult===assin+'|'+hojeISO())return null;
+  gcalRodando=true;
+  try{const r=await fetch(g.url,{method:'POST',body:JSON.stringify({segredo:g.segredo,...pac})}),j=await r.json();
+    if(j.erro==='segredo')throw new Error('segredo');if(!j.ok)throw new Error('falha');
+    try{localStorage.setItem('daylintech:gcal',assin+'|'+hojeISO())}catch(e){}
+    if(manual)toast(`Google Agenda atualizado (${pac.eventos.length} compromisso${pac.eventos.length===1?'':'s'})`);return j}
+  catch(e){if(manual)toast(e.message==='segredo'?'O código do script não confere. Copie o código de novo e reimplante.':'Não foi possível falar com o Google Agenda. Confira o link do script e a internet.');return null}
+  finally{gcalRodando=false}}
+const agendarSync=()=>{if(!gcalCfg().url)return;clearTimeout(gcalT);gcalT=setTimeout(()=>sincronizarAgenda(),4000)};
+function gcalSheet(){const g=gcalCfg(),segredo=g.segredo||Array.from(crypto.getRandomValues(new Uint8Array(18)),b=>b.toString(16).padStart(2,'0')).join('');
+  openSheet('Google Agenda',`<p class="muted" style="margin-top:0">Liga o app ao seu Google Agenda: as OS, instalações, contas a pagar, guias de imposto, vencimentos do carro e propostas aparecem lá sozinhos, com aviso no celular. Cada evento tem um link que abre direto no app.</p>
+    <ol class="gc-pas">
+      <li>Toque em <b>Copiar código</b>. <button class="btn sm primary" id="gc_cp" type="button">${svg(UI.copy)}Copiar código</button></li>
+      <li>Abra <a href="https://script.google.com/create" target="_blank" rel="noopener"><b>script.google.com/create</b></a> com a sua conta Google (a do Agenda). Apague o que estiver escrito e <b>cole</b> o código. Dê o nome "DaylinTech Agenda" e salve (ícone do disquete).</li>
+      <li>Clique em <b>Implantar → Nova implantação</b>. Na engrenagem, escolha <b>App da Web</b>. Em "Executar como", deixe <b>Eu</b>; em "Quem pode acessar", escolha <b>Qualquer pessoa</b>. Clique em <b>Implantar</b>.</li>
+      <li>O Google pede autorização: <b>Autorizar acesso</b> → escolha sua conta → <b>Avançado</b> → <b>Acessar DaylinTech Agenda (não seguro)</b> → <b>Permitir</b>. O aviso aparece porque o script é seu, não é de uma empresa verificada.</li>
+      <li>Copie o <b>URL do app da Web</b> (começa com https://script.google.com/macros/s/…) e cole aqui:</li>
+    </ol>
+    <div class="field"><input id="gc_url" inputmode="url" value="${esc(g.url||'')}" placeholder="https://script.google.com/macros/s/…/exec" aria-label="URL do app da Web"></div>
+    <p class="hint" style="margin:0" id="gc_st">${g.url?`Ligado${g.em?' desde '+fmtDate(g.em):''}.`:''}</p>`,
+  `${g.url?'<button class="btn danger left" id="gc_off">Desligar</button>':''}<button class="btn" data-act="close">Fechar</button><button class="btn primary" id="gc_ok">Salvar e testar</button>`,L=>{const $=id=>L.querySelector('#'+id);
+    $('gc_cp').onclick=()=>copyText(scriptGcal(segredo));
+    $('gc_ok').onclick=async()=>{const url=$('gc_url').value.trim();if(!/^https:\/\/script\.google(usercontent)?\.com\/.+/.test(url)){toast('Cole o URL do app da Web do script (https://script.google.com/macros/s/…).');return}
+      const b=$('gc_ok');b.disabled=true;$('gc_st').textContent='Testando…';
+      try{S.empresa={...S.empresa,gcal:{url,segredo,em:g.em||new Date().toISOString()}};await store.saveEmpresa(S.empresa);try{localStorage.removeItem('daylintech:gcal')}catch(e){}
+        const r=await sincronizarAgenda(true);b.disabled=false;$('gc_st').textContent=r?`Funcionando! ${r.criados} evento${r.criados===1?'':'s'} criado${r.criados===1?'':'s'} no Google Agenda.`:'Não funcionou. Confira os passos 3 e 4 (Qualquer pessoa, autorizar) e se o link está completo.';if(r)render()}
+      catch(e){b.disabled=false;$('gc_st').textContent='Não foi possível salvar.'}};
+    if($('gc_off'))$('gc_off').onclick=()=>confirmSheet('Desligar o Google Agenda?','O app para de mandar compromissos. Os eventos que já estão no Google Agenda continuam lá (apague pelo Google se quiser).','Desligar',async()=>{const e={...S.empresa};delete e.gcal;S.empresa=e;await store.saveEmpresa(e);toast('Google Agenda desligado')});
+  })}
+// Link dos eventos: index.html#os=ID abre a OS; #orc=ID a proposta; #fin, #carro, #impostos.
+let linkPendente=(location.hash.match(/^#(os|orc)=([\w-]+)$|^#(fin|carro|impostos)$/)||[])[0]||'';
+function abrirLink(){if(!linkPendente||!allReady()||tela)return;const h=linkPendente;linkPendente='';try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}
+  const m=h.match(/^#(os|orc)=([\w-]+)$/);if(m){const o=S.orcamentos.find(x=>x.id===m[2]);if(!o){toast('Esse compromisso não existe mais no app.');return}go(m[1]==='os'&&o.agenda?'os':'proposta',{id:o.id,force:true});return}
+  if(h==='#fin'){ui.finAba='geral';go('financeiro',{force:true})}else if(h==='#carro'){ui.opAba='carro';go('operacional',{force:true})}else if(h==='#impostos')go('impostos',{force:true})}
+addEventListener('hashchange',()=>{const h=(location.hash.match(/^#(os|orc)=([\w-]+)$|^#(fin|carro|impostos)$/)||[])[0];if(h){linkPendente=h;abrirLink()}});
+setInterval(abrirLink,700);
 function vProposta(app){
   const o=S.orcamentos.find(x=>x.id===view.id);
   if(!o){app.innerHTML=`<div class="empty"><b>Orçamento não encontrado</b><button class="btn" data-nav="inicio">Voltar</button></div>`;return}
