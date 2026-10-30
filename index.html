@@ -864,7 +864,8 @@ function renderNav(){
 }
 function go(name,extra={}){
   if(view.name==='editor'&&name!=='editor'&&draft&&draft._dirty&&!extra.force){
-    confirmSheet('Sair sem salvar?','As alterações deste orçamento serão perdidas.','Sair sem salvar',()=>{draft=null;go(name,{...extra,force:true})});return;
+    if(draft.status==='rascunho'){autoSalvar(true).then(ok=>{toast(ok?'Rascunho salvo em Orçamentos → Rascunho':'Rascunho guardado neste aparelho');draft=null;go(name,{...extra,force:true})});return}
+    confirmSheet('Sair sem salvar?','As alterações deste orçamento serão perdidas.','Sair sem salvar',()=>{draft=null;limparRascLocal();go(name,{...extra,force:true})});return;
   }
   view={name,...extra};render();window.scrollTo(0,0);
 }
@@ -876,7 +877,7 @@ function render(fromSnap){
   renderNav();
   const app=document.getElementById('app');
   if(!allReady()){app.innerHTML='<div class="loading">Carregando seus dados…</div>';return}
-  if(fromSnap&&view.name==='editor'){renderEditorParts();return}
+  if(fromSnap&&view.name==='editor'){if(!autoQuieto)renderEditorParts();return}
   const active=document.activeElement&&document.activeElement.id;
   const pos=document.activeElement&&document.activeElement.selectionStart;
   ({home:vHome,inicio:vInicio,catalogo:vCatalogo,maodeobra:vMaoDeObra,clientes:vClientes,ajustes:vAjustes,editor:vEditor,proposta:vProposta,agenda:vAgenda,os:vOS,garantias:vGarantias,impostos:vImpostos,operacional:vOperacional,financeiro:vFinanceiro}[view.name]||vHome)(app);
@@ -983,7 +984,7 @@ function vInicio(app){
   </section>
   <div class="toolbar">
     <label class="search">${svg(UI.search)}<input type="search" id="buscaOrc" placeholder="Buscar por cliente ou número" value="${esc(ui.busca)}" aria-label="Buscar orçamentos"></label>
-    <div class="chips">${[['todos','Todos'],...Object.entries(STATUS)].map(([k,l])=>`<button class="chip" data-status="${k}" aria-pressed="${ui.status===k}">${l}</button>`).join('')}</div>
+    <div class="chips">${[['todos','Todos'],...Object.entries(STATUS)].map(([k,l])=>{const n=k==='rascunho'?os.filter(o=>o.status==='rascunho').length:0;return `<button class="chip" data-status="${k}" aria-pressed="${ui.status===k}">${l}${n?` (${n})`:''}</button>`}).join('')}</div>
   </div>
   ${os.length===0?`<div class="empty"><b>Nenhum orçamento ainda</b><span>Monte o primeiro escolhendo itens do catálogo. Ele fica salvo aqui com número, status e valor.</span><button class="btn primary" data-act="novo-orc">${svg(UI.plus)}Criar orçamento</button></div>`:
     list.length===0?`<div class="empty">Nenhum orçamento encontrado com esse filtro.</div>`:
@@ -1812,7 +1813,7 @@ function vEditor(app){
   const cs=[...S.clientes].sort((a,b)=>a.nome.localeCompare(b.nome));
   app.innerHTML=`
   <div class="row"><button class="btn ghost" data-nav="inicio">${svg(UI.back)}Orçamentos</button></div>
-  <div class="spread"><div><div class="eyebrow">${draft._new?'Novo orçamento':'Orçamento Nº '+nOrc(draft.numero)}</div><h1 class="h1">${draft._new?'Montar orçamento':'Editar orçamento'}</h1></div></div>
+  <div class="spread"><div><div class="eyebrow">${draft._new?'Novo orçamento':'Orçamento Nº '+nOrc(draft.numero)}</div><h1 class="h1">${draft._new?'Montar orçamento':'Editar orçamento'}</h1></div><span class="hint ed-auto" id="ed_auto">${draft.status==='rascunho'?'Salva sozinho como rascunho':''}</span></div>
   <div class="ed">
     <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
       <section class="panel">
@@ -1893,9 +1894,9 @@ async function salvarOrc(ver){
   if(!o.numero)o.numero=S.orcamentos.reduce((m,x)=>Math.max(m,x.numero||0),0)+1;
   const c=S.clientes.find(c=>c.id===o.clienteId);o.clienteNome=c?c.nome:'';
   o.atualizadoEm=new Date().toISOString();
-  try{await store.save('orcamentos',o);toast(draft._new?`Orçamento Nº ${nOrc(o.numero)} criado`:'Orçamento salvo');draft=null;
+  try{autoQuieto=true;await store.save('orcamentos',o);autoQuieto=false;limparRascLocal();toast(draft._new?`Orçamento Nº ${nOrc(o.numero)} criado`:'Orçamento salvo');draft=null;
     if(o.tipo==='os'&&o.agenda)go('os',{id:o.id,force:true});else if(ver)go('proposta',{id:o.id,force:true});else go('inicio',{force:true})}
-  catch(e){toast(e&&e.code==='quota_exceeded'?'Limite de armazenamento atingido.':'Não foi possível salvar. Tente de novo.')}
+  catch(e){autoQuieto=false;toast(e&&e.code==='quota_exceeded'?'Limite de armazenamento atingido.':'Não foi possível salvar. Tente de novo.')}
 }
 function openPicker(mode){
   mode=mode==='mo'?'mo':'mat';let q='',cat='todas';const doTipo=p=>mode==='mo'?isMO(p):!isMO(p);
@@ -3536,6 +3537,46 @@ document.addEventListener('focusin',e=>{const el=e.target;if(!corrigivel(el)||el
   const bt=document.createElement('button'),box=document.createElement('div');bt.type='button';bt.className='linkbtn corr-b';bt.textContent='✓ Corrigir português';box.className='corr';box.hidden=true;
   [bt,box].forEach(x=>x.addEventListener('mousedown',ev=>ev.preventDefault())); // o campo continua focado: não salva nem redesenha a tela no meio da correção
   bt.onclick=()=>corrigir(el,box);el.after(bt,box)});
+
+/* Rascunho automático do orçamento. Rascunho (novo ou já rascunho) vai para a nuvem com status "rascunho"
+   alguns segundos depois de cada mudança e ao sair do app. Orçamento já enviado/aprovado não muda sozinho:
+   a edição fica guardada só neste aparelho, e o app oferece continuar quando abrir de novo. */
+const RASC_LS='daylintech:rascunho';let autoQuieto=false,autoRodando=null;
+const limparRascLocal=()=>{try{localStorage.removeItem(RASC_LS)}catch(e){}};
+function guardarRascLocal(){if(!draft)return;try{localStorage.setItem(RASC_LS,JSON.stringify({d:draft,em:Date.now()}))}catch(e){}}
+async function autoSalvar(forcar){
+  if(!draft||!draft._dirty&&!forcar)return true;guardarRascLocal();
+  if(draft.status!=='rascunho'||!(draft.itens.length||draft.clienteId||String(draft.titulo||'').trim()))return draft.status!=='rascunho'?false:true;
+  if(autoRodando){await autoRodando;if(!draft||!draft._dirty)return true}
+  const d=draft,o=JSON.parse(JSON.stringify(d));delete o._dirty;delete o._new;
+  if(!o.numero){o.numero=S.orcamentos.reduce((m,x)=>Math.max(m,x.numero||0),0)+1;d.numero=o.numero}
+  const c=S.clientes.find(c=>c.id===o.clienteId);o.clienteNome=c?c.nome:'';o.atualizadoEm=new Date().toISOString();
+  d._dirty=false;let ok=true;
+  autoRodando=(async()=>{try{autoQuieto=true;
+      if(db)await db.collection('orcamentos').doc(o.id).set(o);
+      else{const all=lsGet();all.orcamentos=(all.orcamentos||[]).filter(x=>x.id!==o.id).concat([o]);if(!lsSet(all))throw new Error('espaco');S.orcamentos=all.orcamentos}
+      const el=document.getElementById('ed_auto');if(el)el.textContent='Rascunho salvo às '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+      if(draft===d&&!d._dirty)limparRascLocal()}
+    catch(e){ok=false;d._dirty=true;const el=document.getElementById('ed_auto');if(el)el.textContent='Sem internet: rascunho guardado neste aparelho'}
+    finally{autoQuieto=false;autoRodando=null}})();
+  await autoRodando;return ok}
+setInterval(()=>{if(view.name==='editor'&&draft&&draft._dirty)autoSalvar()},3000);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'&&draft&&draft._dirty)autoSalvar()});
+addEventListener('pagehide',()=>{if(draft&&draft._dirty)guardarRascLocal()});
+// Ao abrir: edição que ficou só no aparelho (orçamento já enviado, ou rascunho sem internet).
+let rascOferecido=false;
+function oferecerRascLocal(){if(rascOferecido||!allReady()||tela||draft)return;rascOferecido=true;
+  let r;try{r=JSON.parse(localStorage.getItem(RASC_LS)||'null')}catch(e){r=null}if(!r||!r.d)return;
+  const d=r.d,salvo=S.orcamentos.find(x=>x.id===d.id),limpa=x=>{const y={...x};['_dirty','_new','atualizadoEm','clienteNome'].forEach(k=>delete y[k]);return JSON.stringify(y)};
+  if(salvo&&limpa(salvo)===limpa(d)){limparRascLocal();return}
+  if(salvo&&new Date(salvo.atualizadoEm||0).getTime()>r.em){limparRascLocal();return}
+  if(!d.itens.length&&!d.clienteId&&!String(d.titulo||'').trim()){limparRascLocal();return}
+  const c=S.clientes.find(x=>x.id===d.clienteId);
+  openSheet('Continuar o orçamento?',`<p style="margin-top:0">Você estava editando ${d.numero?`o orçamento <b>Nº ${nOrc(d.numero)}</b>`:'um orçamento novo'}${c?` de <b>${esc(c.nome)}</b>`:''} e saiu sem salvar (${new Date(r.em).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}). As mudanças ficaram guardadas neste aparelho.</p>`,
+    `<button class="btn" id="rl_no">Descartar</button><button class="btn primary" id="rl_ok">Continuar editando</button>`,L=>{
+      L.querySelector('#rl_no').onclick=()=>{limparRascLocal();closeSheet();toast('Mudanças descartadas')};
+      L.querySelector('#rl_ok').onclick=()=>{closeSheet();draft={...d,_dirty:true};go('editor',{force:true})}})}
+setInterval(oferecerRascLocal,1500);
 
 /* Modo cliente */
 const pb=document.getElementById('presentBtn');
