@@ -3020,13 +3020,21 @@ const opV=v=>v===''||v==null?'':String(v).replace('.',',');
 // Consumo: entre dois tanques cheios, km rodados ÷ litros colocados depois do primeiro.
 function trechosConsumo(gs){const fs=gs.filter(g=>g.tipo==='combustivel'&&num(g.km)>0).sort((a,b)=>num(a.km)-num(b.km)),out=[];let ant=null,l=0;
   for(const f of fs){if(ant)l+=num(f.litros);if(f.cheio){if(ant&&l>0&&num(f.km)>num(ant.km))out.push({km:num(f.km)-num(ant.km),l,data:f.data});ant=f;l=0}}return out}
+// Consumo: com tanque cheio (exato) ou, sem ele, estimado: km rodados do 1º ao último abastecimento ÷ litros colocados antes do último.
+// A diferença de nível do tanque entre o começo e o fim dilui com o tempo, então a estimativa melhora a cada abastecimento.
+function consumoCarro(gs,ano,tr){if(tr.length)return {kmL:tr.reduce((t,x)=>t+x.km,0)/tr.reduce((t,x)=>t+x.l,0),kmLEst:false,kmLN:tr.length};
+  let fs=gs.filter(g=>g.tipo==='combustivel'&&num(g.km)>0&&num(g.litros)>0).sort((a,b)=>num(a.km)-num(b.km));
+  const doAno=fs.filter(g=>String(g.data||'').startsWith(ano));if(doAno.length>=3)fs=doAno;
+  if(fs.length<3)return {kmL:0,kmLEst:false,kmLN:fs.length};
+  const km=num(fs[fs.length-1].km)-num(fs[0].km),l=fs.slice(0,-1).reduce((t,g)=>t+num(g.litros),0);
+  return km>=150&&l>0?{kmL:km/l,kmLEst:true,kmLN:fs.length}:{kmL:0,kmLEst:false,kmLN:fs.length}}
 function resumoCarro(v,ano){const gs=gastosDe(v),doAno=gs.filter(g=>String(g.data||'').startsWith(ano)),soma=l=>l.reduce((t,g)=>t+num(g.valor),0);
   const grupos=Object.fromEntries(GRUPOS_CARRO.map(([k])=>[k,soma(doAno.filter(g=>GASTO_GRUPO[g.tipo]===k))]));
   const comb=doAno.filter(g=>g.tipo==='combustivel'),tr=trechosConsumo(gs).filter(t=>String(t.data||'').startsWith(ano));
   const kms=doAno.map(g=>num(g.km)).filter(k=>k>0),antes=gs.filter(g=>String(g.data||'')<ano+'-01-01'&&num(g.km)>0).map(g=>num(g.km));
   const ini=antes.length?Math.max(...antes):num(v.kmInicial)||(kms.length?Math.min(...kms):0),rodado=kms.length?Math.max(0,Math.max(...kms)-ini):0;
   const meses=Array.from({length:12},(_,i)=>soma(doAno.filter(g=>+String(g.data).slice(5,7)===i+1)));
-  return {gs,doAno,total:soma(doAno),grupos,litros:comb.reduce((t,g)=>t+num(g.litros),0),kmL:tr.length?tr.reduce((t,x)=>t+x.km,0)/tr.reduce((t,x)=>t+x.l,0):0,rodado,meses,ultComb:gs.find(g=>g.tipo==='combustivel')}}
+  return {gs,doAno,total:soma(doAno),grupos,litros:comb.reduce((t,g)=>t+num(g.litros),0),...consumoCarro(gs,ano,tr),rodado,meses,ultComb:gs.find(g=>g.tipo==='combustivel')}}
 function avisosCarro(v){const out=[],km=kmAtual(v),gs=gastosDe(v);
   [['licenciamento','Licenciamento'],['ipvaVence','IPVA'],['seguroVence','Seguro']].forEach(([k,l])=>{if(!v[k])return;const d=diasAte(v[k]);
     if(d<0)out.push({cls:'warn',t:`${l} venceu em ${dataBR(v[k])}`,h:veicNome(v)+(v.placa?' · '+v.placa:'')});else if(d<=30)out.push({cls:d<=7?'warn':'info',t:`${l} vence ${d===0?'hoje':d===1?'amanhã':'em '+d+' dias'} (${dataBR(v[k])})`,h:veicNome(v)+(v.placa?' · '+v.placa:'')})});
@@ -3079,7 +3087,7 @@ function formVeic(v){const n=!v;v=v||{id:uid(),uf:'RJ',combustivel:'flex'};
     if(!n)$('vc_del').onclick=()=>{const gs=gastosDe(v);confirmSheet('Excluir carro?',`${esc(veicNome(v))} e ${gs.length} lançamento${gs.length===1?'':'s'} de gastos serão apagados.`,'Excluir',async()=>{try{for(const g of gs)await store.remove('gastos',g.id);await store.remove('veiculos',v.id);ui.veic='';render();toast('Carro excluído')}catch(e){toast('Não foi possível excluir.')}})};
   })}
 function formComb(v,g){const n=!g,ult=gastosDe(v).find(x=>x.tipo==='combustivel'),km=kmAtual(v);
-  g=g||{id:uid(),veiculoId:v.id,tipo:'combustivel',data:hojeISO(),comb:v.combustivel&&v.combustivel!=='flex'?v.combustivel:(ult&&ult.comb)||'gasolina',cheio:true,precoL:ult&&ult.precoL||''};
+  g=g||{id:uid(),veiculoId:v.id,tipo:'combustivel',data:hojeISO(),comb:v.combustivel&&v.combustivel!=='flex'?v.combustivel:(ult&&ult.comb)||'gasolina',cheio:false,precoL:ult&&ult.precoL||''};
   openSheet(n?'Abastecimento':'Editar abastecimento',`<div class="form">
     <div class="field"><label for="ab_data">Data</label><input id="ab_data" type="date" value="${esc(g.data)}"></div>
     <div class="field"><label for="ab_km">Km no painel</label><input id="ab_km" inputmode="numeric" value="${esc(g.km||'')}" placeholder="${km?'Último: '+Math.round(km).toLocaleString('pt-BR'):'Ex.: 85.400'}"></div>
@@ -3087,7 +3095,7 @@ function formComb(v,g){const n=!g,ult=gastosDe(v).find(x=>x.tipo==='combustivel'
     <div class="field"><label for="ab_pl">Preço por litro (R$)</label><input id="ab_pl" inputmode="decimal" value="${esc(opV(g.precoL))}" placeholder="Ex.: 6,19"></div>
     <div class="field"><label for="ab_val">Valor pago (R$)</label><input id="ab_val" inputmode="decimal" value="${esc(opV(g.valor))}" placeholder="Ex.: 150,00"></div>
     <div class="field"><label for="ab_l">Litros</label><input id="ab_l" inputmode="decimal" value="${esc(opV(g.litros))}" placeholder="Calcula sozinho"></div>
-    <label class="field full chk"><input type="checkbox" id="ab_ch" ${g.cheio?'checked':''}> <span>Completei o tanque <span class="hint">(serve para calcular o consumo em km/l)</span></span></label>
+    <label class="field full chk"><input type="checkbox" id="ab_ch" ${g.cheio?'checked':''}> <span>Completei o tanque <span class="hint">(opcional: deixa o consumo exato; sem isso o app estima)</span></span></label>
     <div class="field full"><label for="ab_posto">Posto</label><input id="ab_posto" value="${esc(g.local||'')}" placeholder="Nome do posto">
       <div class="row" style="gap:6px;margin-top:6px"><button type="button" class="btn sm" id="ab_gps">${svg('<path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>')}Posto onde estou</button><span id="ab_map"></span></div>
       <div id="ab_ps" class="ab-ps"></div></div>
@@ -3189,7 +3197,7 @@ function vCarro(el){
   <div class="fx-cards">
     <div class="fx-card"><span>Total em ${ano}</span><b>${money(r.total)}</b><span>${r.rodado?`${fmtKm(r.rodado)} rodados · ${money(r.total/r.rodado)}/km`:'Anote o km para ver o custo por km'}</span></div>
     <div class="fx-card"><span>Combustível</span><b>${money(r.grupos.comb)}</b><span>${r.litros?fmtL(r.litros):'—'}${r.ultComb&&r.ultComb.precoL?` · último ${money(r.ultComb.precoL)}/L`:''}</span></div>
-    <div class="fx-card"><span>Consumo médio</span><b>${r.kmL?r.kmL.toFixed(1).replace('.',',')+' km/l':'—'}</b><span>${r.kmL?'Entre tanques cheios':'Complete o tanque 2 vezes, anotando o km'}</span></div>
+    <div class="fx-card"><span>Consumo médio</span><b>${r.kmL?(r.kmLEst?'≈ ':'')+r.kmL.toFixed(1).replace('.',',')+' km/l':'—'}</b><span>${r.kmL?(r.kmLEst?`Estimado por ${r.kmLN} abastecimentos; fica mais certo com o tempo`:'Entre tanques cheios'):`Anote o km e os litros em cada abastecimento (${r.kmLN}/3)`}</span></div>
     <div class="fx-card"><span>Mecânica e reforma</span><b>${money(r.grupos.mec)}</b><span>Documentos, seguro e multas: ${money(r.grupos.doc)}</span></div>
   </div>
   ${r.total?`<section class="panel"><div class="op-bars" role="img" aria-label="Gastos por mês em ${ano}">${r.meses.map((m,i)=>`<div title="${esc(cap(new Date(+ano,i,15).toLocaleDateString('pt-BR',{month:'long'})))}: ${money(m)}"><span class="op-bv">${m?Math.round(m).toLocaleString('pt-BR'):''}</span><i style="height:${m/mx*100}%"></i><span>${new Date(+ano,i,15).toLocaleDateString('pt-BR',{month:'short'}).slice(0,3)}</span></div>`).join('')}</div>

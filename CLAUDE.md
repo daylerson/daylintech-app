@@ -97,7 +97,7 @@ O app foi feito como artefato do claude.ai e usa `window.claude.use(...)`. Fora 
 ## Aba Operacional (`vOperacional`: `vCarro` e `vCompras`)
 - Coleções novas: `veiculos`, `gastos` (do carro: tipo combustivel/manutencao/reforma/documento/seguro/multa/outro, `veiculoId`), `compras` (status pendente/comprado, prioridade urgente/normal/depois). Lista em `COLS`. O banco precisa do `supabase/financeiro.sql` (ou operacional.sql, mais antigo) para aceitar coleções novas; sem ele, `salvarOp` avisa. Depois do financeiro.sql, `docs.col` aceita qualquer nome `^[a-z_]{1,40}$`: coleção nova não precisa de SQL.
 - Backup: exporta todas as `COLS`; ao restaurar, coleção ausente no arquivo (backup antigo) fica como está.
-- Consumo: `trechosConsumo` (km entre tanques cheios ÷ litros colocados depois do anterior).
+- Consumo (`consumoCarro`): com tanque cheio, `trechosConsumo` (km entre tanques cheios ÷ litros colocados depois do anterior); sem tanque cheio, estimado com 3+ abastecimentos com km e litros: km do 1º ao último ÷ litros antes do último (mostra "≈"). "Completei o tanque" vem desmarcado.
 - "Posto onde estou": geolocalização + Overpass API (amenity=fuel, 800 m); sem posto, endereço pelo Nominatim.
 - Avisos de licenciamento/IPVA/seguro (≤30 dias), próxima revisão (≤500 km ou 15 dias), multas a pagar e compras urgentes vão para a página inicial (`avisosOperacionais`).
 
