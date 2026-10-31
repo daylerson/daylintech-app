@@ -453,7 +453,7 @@ body.apresentacao .internal{display:none!important}
 .ficha .fc-foto{display:flex;justify-content:center;background:var(--paper-soft);border-radius:10px;padding:14px}.ficha .fc-foto img{max-width:100%;max-height:300px;object-fit:contain}
 .fc-nome{font-family:var(--f-display);font-size:24px;line-height:1.2;margin:0;color:var(--paper-ink)}.fc-sub{color:var(--paper-muted);font-size:14px;margin-top:4px}
 .fc-ds{display:flex;gap:14px;align-items:center;border:1px solid var(--paper-line);border-radius:10px;padding:10px 12px}.fc-ds img{width:92px;height:92px}.fc-ds>div{display:flex;flex-direction:column;gap:4px;min-width:0}.fc-url{font-size:12px;color:var(--paper-blue);overflow-wrap:anywhere}
-.fc-rod{border-top:1px solid var(--paper-line);padding-top:10px;font-size:13px;color:var(--paper-muted)}.fc-rod b{color:var(--paper-ink)}
+.pdf-lk{color:var(--paper-blue);text-decoration:underline;text-underline-offset:2px}.fc-rod{border-top:1px solid var(--paper-line);padding-top:10px;font-size:13px;color:var(--paper-muted)}.fc-rod b{color:var(--paper-ink)}
 .rc-valor{display:flex;justify-content:space-between;align-items:baseline;background:var(--paper-soft);border-left:6px solid var(--paper-accent);border-radius:6px;padding:12px 14px}
 .rc-valor b{font-family:var(--f-display);font-size:26px;font-weight:800;color:var(--paper-blue)}
 .rc-txt{margin:0;font-size:15px;line-height:1.6;color:var(--paper-ink)}
@@ -1064,15 +1064,18 @@ const ICON_SHARE='<circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"
 function textoProd(p,preco){const ds=safeUrl(p.datasheet),e=S.empresa;
   return [`*${p.nome}*`,[p.marca,p.modelo].filter(Boolean).join(' · '),p.descricao||'',preco?`Valor: ${money(p.preco)} / ${p.unidade||'un'}`:'',ds?`Ficha técnica: ${ds}`:'','',`${e.nome||'DaylinTech'}${e.slogan?' · '+e.slogan:''}${e.telefone?'\n'+e.telefone:''}`].filter((x,i)=>x!==''||i===5).join('\n')}
 // Ficha do produto em PDF, no mesmo visual do recibo e da OS.
-function fichaHTML(p,preco,qr){const e=S.empresa,ds=safeUrl(p.datasheet),redes=[e.telefone,e.email,e.instagram?'@'+String(e.instagram).replace(/^@|https?:\/\/(www\.)?instagram\.com\//g,'').replace(/\/$/,''):'',e.site].filter(Boolean).join(' · ');
+function contatosLinks(e){const tel=soDig(e.whatsapp||e.telefone),ig=String(e.instagram||'').replace(/^@|https?:\/\/(www\.)?instagram\.com\//g,'').replace(/[/?#].*$/,''),site=normUrl(e.site||'');
+  return [e.telefone||e.whatsapp?{t:(e.whatsapp?'WhatsApp ':'')+(e.whatsapp||e.telefone),u:tel.length>=10?'https://wa.me/'+(tel.length<=11?'55'+tel:tel):''}:null,e.email?{t:e.email,u:'mailto:'+e.email}:null,ig?{t:'@'+ig,u:'https://instagram.com/'+ig}:null,site?{t:site.replace(/^https?:\/\/(www\.)?/,'').replace(/\/$/,''),u:site}:null].filter(Boolean)}
+const linkPDF=c=>c.u?`<a class="pdf-lk" href="${esc(c.u)}" target="_blank" rel="noopener" data-pdf-link="${esc(c.u)}">${esc(c.t)}</a>`:esc(c.t);
+function fichaHTML(p,preco,qr){const e=S.empresa,ds=safeUrl(p.datasheet),redes=contatosLinks(e).map(linkPDF).join(' · ');
   return `<div class="paper recibo ficha"><div class="pp-band"><div class="pp-id"><img class="pp-logo2" src="${LOGO}" alt="${esc(e.nome)}"></div><div class="pp-num"><div class="k">Ficha do produto</div><div class="n" style="font-size:20px">${esc(catNome(p.categoria))}</div></div></div><div class="pp-stripe"></div>
     <div class="pp-body">
       ${p.foto?`<div class="fc-foto"><img src="${p.foto}" alt=""></div>`:''}
       <div><h2 class="fc-nome">${esc(p.nome)}</h2>${p.marca||p.modelo?`<div class="fc-sub">${esc([p.marca,p.modelo].filter(Boolean).join(' · '))}</div>`:''}</div>
       ${p.descricao?`<p class="rc-txt" style="white-space:pre-line">${esc(p.descricao)}</p>`:''}
       ${preco?`<div class="rc-valor"><span class="pp-k">Valor</span><b>${money(p.preco)} <small style="font-size:14px;font-weight:600">/ ${esc(p.unidade||'un')}</small></b></div>`:''}
-      ${ds?`<div class="fc-ds">${qr?`<img src="${qr}" alt="">`:''}<div><span class="pp-k">Ficha técnica do fabricante</span><span class="fc-url">${esc(ds)}</span></div></div>`:''}
-      <div class="fc-rod"><b>${esc(e.nome||'DaylinTech')}</b>${e.slogan?` · ${esc(e.slogan)}`:''}${redes?`<br><span>${esc(redes)}</span>`:''}${preco?`<br><span>Valor de referência em ${new Date().toLocaleDateString('pt-BR')}, sujeito a confirmação no orçamento.</span>`:''}</div>
+      ${ds?`<div class="fc-ds">${qr?`<a href="${esc(ds)}" target="_blank" rel="noopener" data-pdf-link="${esc(ds)}"><img src="${qr}" alt=""></a>`:''}<div><span class="pp-k">Ficha técnica do fabricante</span><a class="fc-url pdf-lk" href="${esc(ds)}" target="_blank" rel="noopener" data-pdf-link="${esc(ds)}">${esc(ds)}</a><span class="hint" style="font-size:11px">Toque no link ou aponte a câmera para o QR Code</span></div></div>`:''}
+      <div class="fc-rod"><b>${esc(e.nome||'DaylinTech')}</b>${e.slogan?` · ${esc(e.slogan)}`:''}${redes?`<br><span>${redes}</span>`:''}${preco?`<br><span>Valor de referência em ${new Date().toLocaleDateString('pt-BR')}, sujeito a confirmação no orçamento.</span>`:''}</div>
     </div></div>`}
 function compartilharProd(p){
   openSheet('Compartilhar produto',`<div class="card-top">${thumb(p)}<div style="min-width:0"><div class="t">${esc(p.nome)}</div><div class="d">${esc([p.marca,p.modelo].filter(Boolean).join(' · '))}</div></div></div>
@@ -2357,6 +2360,7 @@ async function htmlPDF(html){
     try{await document.fonts.ready}catch(e){}
     await Promise.all([...box.querySelectorAll('img')].map(i=>(i.decode?i.decode():new Promise(r=>{i.onload=i.onerror=r})).catch(()=>{})));
     const top0=el.getBoundingClientRect().top,cortes=[...el.querySelectorAll('.pp-body > *, .pp-table tr:not(:first-child)')].filter(x=>!x.closest('.os-cob')||x.classList.contains('os-cob')).map(x=>Math.round((x.getBoundingClientRect().top-top0)*2)).sort((a,b)=>a-b);
+    const left0=el.getBoundingClientRect().left,links=[...el.querySelectorAll('[data-pdf-link]')].map(x=>{const r=x.getBoundingClientRect();return {url:x.dataset.pdfLink,x:(r.left-left0)*2,y:(r.top-top0)*2,w:r.width*2,h:r.height*2}}).filter(l=>l.url&&l.w>0);
     const cv=await window.html2canvas(el,{scale:2,backgroundColor:'#ffffff',logging:false});
     const pdf=new window.jspdf.jsPDF({unit:'mm',format:'a4'}),pw=190,pxMm=cv.width/pw,pag=Math.floor(277*pxMm);
     for(let y=0,n=0,hp;y<cv.height;y+=hp,n++){hp=Math.min(pag,cv.height-y);
@@ -2364,7 +2368,8 @@ async function htmlPDF(html){
       if(y+hp<cv.height){const c=cortes.filter(v=>v>y+pag*0.4&&v<=y+pag).pop();if(c)hp=c-y}
       const c2=document.createElement('canvas');c2.width=cv.width;c2.height=hp;
       const x=c2.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c2.width,hp);x.drawImage(cv,0,y,cv.width,hp,0,0,cv.width,hp);
-      if(n)pdf.addPage();pdf.addImage(c2.toDataURL('image/jpeg',0.9),'JPEG',10,10,pw,hp/pxMm)}
+      if(n)pdf.addPage();pdf.addImage(c2.toDataURL('image/jpeg',0.9),'JPEG',10,10,pw,hp/pxMm);
+      links.filter(l=>l.y>=y&&l.y<y+hp).forEach(l=>pdf.link(10+l.x/pxMm,10+(l.y-y)/pxMm,l.w/pxMm,l.h/pxMm,{url:l.url}))}
     return pdf.output('blob');
   }finally{box.remove()}
 }
