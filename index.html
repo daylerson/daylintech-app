@@ -1055,6 +1055,24 @@ function breakdown(c,v){
   <div class="ln tot"><span>Lucro líquido</span><span class="marg ${margCls(a.margem)}">${money(a.lucro)} · ${a.margem.toFixed(1).replace('.',',')}%</span></div>
   ${c>0?`<div class="ln"><span class="muted">Markup sobre o custo</span><span class="muted">${a.markup.toFixed(0)}%</span></div>`:''}`;
 }
+// Compartilhar um produto do catálogo com o cliente: foto + nome, marca/modelo, descrição e datasheet (preço só se marcar).
+const ICON_SHARE='<circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M8.2 10.8l7.6-4.4M8.2 13.2l7.6 4.4"/>';
+function textoProd(p,preco){const ds=safeUrl(p.datasheet),e=S.empresa;
+  return [`*${p.nome}*`,[p.marca,p.modelo].filter(Boolean).join(' · '),p.descricao||'',preco?`Valor: ${money(p.preco)} / ${p.unidade||'un'}`:'',ds?`Ficha técnica: ${ds}`:'','',`${e.nome||'DaylinTech'}${e.slogan?' · '+e.slogan:''}${e.telefone?'\n'+e.telefone:''}`].filter((x,i)=>x!==''||i===5).join('\n')}
+function compartilharProd(p){
+  openSheet('Compartilhar produto',`<div class="card-top">${thumb(p)}<div style="min-width:0"><div class="t">${esc(p.nome)}</div><div class="d">${esc([p.marca,p.modelo].filter(Boolean).join(' · '))}</div></div></div>
+    <label class="chk" style="display:flex;margin-top:10px"><input type="checkbox" id="sp_pr"> <span>Mostrar o preço (${money(p.preco)} / ${esc(p.unidade||'un')})</span></label>
+    <div class="field"><label for="sp_t">Mensagem</label><textarea id="sp_t" style="min-height:150px">${esc(textoProd(p,false))}</textarea></div>
+    ${p.foto?'':'<p class="hint" style="margin:0">Este produto não tem foto. Coloque uma em Editar para ela ir junto.</p>'}`,
+    `<button class="btn" id="sp_cp">${svg(UI.copy)}Copiar texto</button><button class="btn primary" id="sp_ok">${svg(ICON_SHARE)}Compartilhar</button>`,L=>{const $=id=>L.querySelector('#'+id);
+      $('sp_pr').onchange=()=>{$('sp_t').value=textoProd(p,$('sp_pr').checked)};
+      $('sp_cp').onclick=()=>copyText($('sp_t').value);
+      $('sp_ok').onclick=async()=>{const txt=$('sp_t').value;let f=null;
+        if(p.foto){try{const b=await (await fetch(p.foto)).blob();f=new File([b],(arqNome(p.nome).normalize('NFD').replace(/[\u0300-\u036f]/g,'')||'produto')+'.'+((b.type.split('/')[1]||'jpg').replace('jpeg','jpg')),{type:b.type})}catch(e){}}
+        if(f&&navigator.canShare&&navigator.canShare({files:[f]})){try{await navigator.share({files:[f],text:txt,title:p.nome});return}catch(e){if(e&&e.name==='AbortError')return}}
+        if(navigator.share&&!f){try{await navigator.share({text:txt,title:p.nome});return}catch(e){if(e&&e.name==='AbortError')return}}
+        if(f)await baixar(f.name,f,f.type);window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank','noopener');toast(f?'Foto baixada: anexe na conversa junto com o texto.':'Texto pronto no WhatsApp.')};
+    })}
 function cardProd(p){
   const a=analise(num(p.custo),num(p.preco));const ds=safeUrl(p.datasheet);
   return `<article class="card" data-edit-prod="${p.id}" tabindex="0" role="button">
@@ -1062,7 +1080,7 @@ function cardProd(p){
     ${p.descricao?`<div class="d muted" style="font-size:13px">${esc(p.descricao)}</div>`:''}
     <div class="row" style="justify-content:space-between;align-items:baseline"><div class="price">${money(p.preco)} <small>/ ${esc(p.unidade||'un')}</small></div>${ds?`<a class="ds" href="${esc(ds)}" target="_blank" rel="noopener">Datasheet ↗</a>`:''}</div>
     <div class="cost internal"><span>Custo ${money(p.custo)}</span><span class="marg ${margCls(a.margem)}">lucro ${money(a.lucro)} · ${a.margem.toFixed(0)}%</span></div>
-    ${(()=>{const ef=fornEf(p);return ef?`<div class="d internal">Comprar em <b>${esc(ef.f.nome)}</b>${ef.n>1?` · ${ef.n} lojas cadastradas`:''}${diasDesde(ef.f.data)>30?' · <span style="color:var(--accent)">preço antigo</span>':''}</div>`:''})()}
+    <div class="row" style="justify-content:space-between;align-items:center;gap:8px;flex-wrap:nowrap">${(()=>{const ef=fornEf(p);return ef?`<div class="d internal" style="min-width:0">Comprar em <b>${esc(ef.f.nome)}</b>${ef.n>1?` · ${ef.n} lojas cadastradas`:''}${diasDesde(ef.f.data)>30?' · <span style="color:var(--accent)">preço antigo</span>':''}</div>`:'<span></span>'})()}<button class="btn sm" type="button" data-act="share-prod" data-id="${p.id}" aria-label="Compartilhar ${esc(p.nome)}">${svg(ICON_SHARE)}Compartilhar</button></div>
   </article>`;
 }
 function formProd(p){
@@ -3906,6 +3924,7 @@ document.addEventListener('click',e=>{
   if(a==='novo-serv'){formServ();return}
   if(a==='importar'){importarCotacao();return}
   if(a==='padronizar'){padronizarNomes();return}
+  if(a==='share-prod'){const pr=S.produtos.find(x=>x.id===t.dataset.id);if(pr)compartilharProd(pr);return}
   if(a==='garantia'){const o=S.orcamentos.find(x=>x.id===t.dataset.id);if(o)garantiaSheet(o);return}
   if(a==='importar-home'){go('catalogo');importarCotacao();return}
   if(a==='novo-cli'){formCli();return}
