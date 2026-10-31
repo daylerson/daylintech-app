@@ -2377,7 +2377,7 @@ function agendar(o){
         const ag={...g,data,hora:$('ag_hora').value,endereco:$('ag_end').value.trim(),tecnico:$('ag_tec').value.trim(),duracao:$('ag_dur').value.trim(),obs:$('ag_obs').value.trim(),atualizadoEm:new Date().toISOString()};
         const mudou=!cur.agenda||cur.agenda.data!==ag.data||cur.agenda.hora!==ag.hora;
         const extra=avulsa?{osTipo:$('ag_tipo').value,titulo:OS_TIPOS[$('ag_tipo').value],motivo:$('ag_mot').value.trim()}:{};
-        try{await store.save('orcamentos',{...cur,...extra,agenda:ag,atualizadoEm:new Date().toISOString()});closeSheet();render();toast(avulsa?'OS salva':'Instalação agendada');
+        try{await store.save('orcamentos',{...cur,...extra,agenda:ag,atualizadoEm:new Date().toISOString()});closeSheet();render();toast(avulsa?'OS salva':'Instalação agendada');if(gcalCfg().url)sincronizarAgenda(true);
           if(mudou)verOS(S.orcamentos.find(x=>x.id===cur.id)||{...cur,agenda:ag},true)}catch(e){toast('Não foi possível salvar. Tente de novo.')}};
       if(cur.agenda)$('ag_del').onclick=async()=>{const n={...cur};delete n.agenda;try{await store.save('orcamentos',n);closeSheet();render();toast('Agendamento cancelado')}catch(e){toast('Não foi possível salvar.')}};
     });
@@ -2533,7 +2533,7 @@ function vOS(app){
   <div class="row" style="justify-content:space-between"><button class="btn ghost" data-nav="agenda">${svg(UI.back)}Agenda</button><span class="os-fase">${fase}</span></div>
   <div><div class="eyebrow">${o.tipo==='os'?esc(osTipoNome(o)):'Ordem de serviço'} · OS Nº ${nOrc(o.numero)}</div><h1 class="h1">${esc(c.nome)}</h1>${o.motivo?`<p style="margin:6px 0 0"><b>Motivo:</b> ${esc(o.motivo)}</p>`:''}
     <p class="muted" style="margin:6px 0 0">${esc(cap(diaTxt(g.data,true)))}${g.hora?` às ${esc(g.hora)}`:''}${g.endereco?` · ${esc(g.endereco)}`:''}</p>
-    ${g.endereco?`<div class="row" style="gap:8px;margin-top:10px">${(e=>`<a class="btn sm" href="${esc(rotaURL(e))}" target="_blank" rel="noopener">Rota no Google Maps</a><a class="btn sm" href="${esc(rotaURL(e,'waze'))}" target="_blank" rel="noopener">Rota no Waze</a>`)([g.endereco,c.cep].filter(Boolean).join(', '))}</div>`:''}</div>
+    <div class="row" style="gap:8px;margin-top:10px">${g.endereco?(e=>`<a class="btn sm" href="${esc(rotaURL(e))}" target="_blank" rel="noopener">Rota no Google Maps</a><a class="btn sm" href="${esc(rotaURL(e,'waze'))}" target="_blank" rel="noopener">Rota no Waze</a>`)([g.endereco,c.cep].filter(Boolean).join(', ')):''}<button class="btn sm internal" id="ox_gc">${svg(NAVI.agenda)}${gcalCfg().url?'Atualizar no Google Agenda':'Google Agenda'}</button></div></div>
   <section class="panel"><div class="spread" style="align-items:center"><h2 class="h2">Andamento</h2><button class="btn sm" id="ox_ed">${o.tipo==='os'?'Editar OS':'Editar agendamento'}</button></div>
     <div class="os-tempo"><div><span class="hint">Início</span><b>${g.inicio?hm(g.inicio):'—'}</b></div><div><span class="hint">Término</span><b>${g.fim?hm(g.fim):'—'}</b></div><div><span class="hint">${dur?'Duração':'Duração aproximada'}</span><b>${dur||esc(g.duracao||'—')}</b></div></div>
     <div class="row">${!g.inicio?`<button class="btn primary" id="os_ini">Iniciar serviço</button>`:!g.fim?`<button class="btn primary" id="os_fim">Finalizar serviço</button>`:''}${g.inicio?`<button class="btn ghost sm" id="os_hr">Corrigir horários</button>`:''}</div>
@@ -2557,7 +2557,7 @@ function vOS(app){
   app.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{const [t,i]=b.dataset.rm.split(':');confirmSheet('Remover foto?','A foto sai desta ordem de serviço.','Remover',()=>removerFoto(o,t,+i).catch(erro))});
   app.querySelectorAll('[data-add]').forEach(inp=>inp.onchange=async()=>{const fs=[...inp.files];inp.value='';if(!fs.length)return;toast(fs.length>1?`Enviando ${fs.length} fotos…`:'Enviando foto…');
     try{await addFotos(o,inp.dataset.add,fs);toast(fs.length>1?'Fotos salvas':'Foto salva')}catch(err){toast(/espaço/i.test(err&&err.message||'')?'Sem espaço no navegador para mais fotos.':'Não foi possível salvar a foto. Tente de novo.')}});
-  $('ox_ed').onclick=()=>agendar(o);
+  $('ox_ed').onclick=()=>agendar(o);$('ox_gc').onclick=()=>gcalOS(o);
   if($('ox_cob'))$('ox_cob').onclick=()=>editarOrc(o);
   if($('ox_lk'))$('ox_lk').addEventListener('change',e=>{const v=normUrl(e.target.value);
     store.save('orcamentos',{...(S.orcamentos.find(x=>x.id===o.id)||o),linkPagamento:v,atualizadoEm:new Date().toISOString()}).then(()=>toast(v?'Link do cartão salvo':'Link removido'),erro)});if($('ox_pg'))$('ox_pg').onclick=()=>registrarPagamento(o);if($('ox_rc'))$('ox_rc').onclick=()=>verRecibo(o.id);if($('ox_nf'))$('ox_nf').onclick=()=>nfseSheet(o);
@@ -2604,7 +2604,7 @@ function novaOS(pre={}){
           titulo:OS_TIPOS[d.tipo],itens:[],descontoPct:0,validadeDias:e.validade,pagamento:e.pagamento,prazo:'',garantia:e.garantia,obs:'',status:'aprovado',
           criadoEm:new Date().toISOString(),atualizadoEm:new Date().toISOString(),
           agenda:{data:d.data,hora:d.hora,endereco:d.endereco.trim(),tecnico:d.tecnico.trim(),duracao:d.duracao.trim(),atualizadoEm:new Date().toISOString()}};
-        try{await store.save('orcamentos',o);closeSheet();toast('OS criada');verOS(S.orcamentos.find(x=>x.id===o.id)||o,true)}catch(err){toast('Não foi possível criar a OS. Tente de novo.')}};
+        try{await store.save('orcamentos',o);closeSheet();toast('OS criada');if(gcalCfg().url)setTimeout(()=>sincronizarAgenda(true),800);verOS(S.orcamentos.find(x=>x.id===o.id)||o,true)}catch(err){toast('Não foi possível criar a OS. Tente de novo.')}};
     });
 }
 // Formas de pagamento da OS cobrada (Pix e cartão em QR Code, porque no PDF o link não é clicável).
@@ -3627,6 +3627,16 @@ function gcalSheet(){const g=gcalCfg(),segredo=g.segredo||Array.from(crypto.getR
       catch(e){b.disabled=false;$('gc_st').textContent='Não foi possível salvar.'}};
     if($('gc_off'))$('gc_off').onclick=()=>confirmSheet('Desligar o Google Agenda?','O app para de mandar compromissos. Os eventos que já estão no Google Agenda continuam lá (apague pelo Google se quiser).','Desligar',async()=>{const e={...S.empresa};delete e.gcal;S.empresa=e;await store.saveEmpresa(e);toast('Google Agenda desligado')});
   })}
+// Uma OS no Google Agenda: ligado, sincroniza agora; não ligado, oferece "Adicionar só esta" (link do Google) ou ligar o automático.
+function gcalLinkOS(o){const g=o.agenda||{},c=S.clientes.find(x=>x.id===o.clienteId)||{},ini=new Date(`${g.data}T${g.hora||'08:00'}:00`),fim=new Date(ini.getTime()+duracaoMin(g.duracao)*6e4),z=d=>d.toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'');
+  const desc=[`${o.tipo==='os'?'OS':'Orçamento'} Nº ${nOrc(o.numero)}`,`Cliente: ${cliNome(o)}${c.telefone?' · '+c.telefone:''}`,o.motivo?'Motivo: '+o.motivo:'',g.obs?'Obs.: '+g.obs:'','',`Abrir a OS no app: ${APP_URL()}#os=${o.id}`].filter((x,i)=>x!==''||i===4).join('\n');
+  return 'https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent(`${o.tipo==='os'?osTipoNome(o):'Instalação'} · ${cliNome(o)}`)+'&dates='+z(ini)+'/'+z(fim)+'&details='+encodeURIComponent(desc)+'&location='+encodeURIComponent([g.endereco,c.cep].filter(Boolean).join(', '))}
+function gcalOS(o){const cur=S.orcamentos.find(x=>x.id===o.id)||o;
+  if(gcalCfg().url){sincronizarAgenda(true);return}
+  openSheet('Google Agenda',`<p style="margin-top:0">O Google Agenda automático ainda não está ligado. Escolha:</p>
+    <div class="mais"><a class="mais-i" href="${esc(gcalLinkOS(cur))}" target="_blank" rel="noopener">${svg(UI.plus)}<span><b>Adicionar só esta OS</b><span class="hint">Abre o Google Agenda com tudo preenchido; é só tocar em Salvar. Se mudar o horário depois, precisa mudar lá também.</span></span></a>
+    <button class="mais-i" id="gk_auto">${svg(NAVI.agenda)}<span><b>Ligar o automático (recomendado)</b><span class="hint">Uma vez só, uns 5 minutos. Depois toda OS, mudança de horário, conta a pagar e vencimento vai sozinho para o Google Agenda.</span></span></button></div>`,
+    `<button class="btn" data-act="close">Fechar</button>`,L=>{L.querySelector('#gk_auto').onclick=()=>{closeSheet();gcalSheet()}})}
 // Link dos eventos: index.html#os=ID abre a OS; #orc=ID a proposta; #fin, #carro, #impostos.
 let linkPendente=(location.hash.match(/^#(os|orc)=([\w-]+)$|^#(fin|carro|impostos)$/)||[])[0]||'';
 function abrirLink(){if(!linkPendente||!allReady()||tela)return;const h=linkPendente;linkPendente='';try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}
