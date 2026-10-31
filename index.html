@@ -1848,11 +1848,11 @@ function vEditor(app){
         </div>
       </section>
       <section class="panel">
-        <div class="spread" style="align-items:center"><h2 class="h2">Materiais</h2><button class="btn primary sm" id="o_add">${svg(UI.plus)}Adicionar do catálogo</button></div>
+        <div class="spread" style="align-items:center"><h2 class="h2">Materiais</h2><div class="row" style="gap:6px"><button class="btn sm" id="o_av">${svg(UI.edit)}Adicionar manual</button><button class="btn primary sm" id="o_add">${svg(UI.plus)}Adicionar do catálogo</button></div></div>
         <div id="o_items"></div>
       </section>
       <section class="panel">
-        <div class="spread" style="align-items:center"><h2 class="h2">Mão de obra</h2><button class="btn primary sm" id="o_add_mo">${svg(UI.plus)}Adicionar serviço</button></div>
+        <div class="spread" style="align-items:center"><h2 class="h2">Mão de obra</h2><div class="row" style="gap:6px"><button class="btn sm" id="o_av_mo">${svg(UI.edit)}Adicionar manual</button><button class="btn primary sm" id="o_add_mo">${svg(UI.plus)}Adicionar serviço</button></div></div>
         <div id="o_mo"></div>
       </section>
       <section class="panel">
@@ -1874,7 +1874,7 @@ function vEditor(app){
   bind('o_tit','titulo');bind('o_val','validadeDias',v=>Math.round(num(v)));bind('o_prazo','prazo');bind('o_pag','pagamento');bind('o_link','linkPagamento',v=>String(v).trim());bind('o_gar','garantia');bind('o_obs','obs');
   $('o_cli').onchange=e=>{draft.clienteId=e.target.value;draft._dirty=true};
   $('o_cli_new').onclick=()=>formCli(null,c=>{draft.clienteId=c.id;draft._dirty=true;vEditor(app)});
-  $('o_add').onclick=()=>openPicker('mat');$('o_add_mo').onclick=()=>openPicker('mo');
+  $('o_add').onclick=()=>openPicker('mat');$('o_add_mo').onclick=()=>openPicker('mo');$('o_av').onclick=()=>formItem('mat');$('o_av_mo').onclick=()=>formItem('mo');
   renderEditorParts();
 }
 function renderEditorParts(onlySide){
@@ -1883,7 +1883,7 @@ function renderEditorParts(onlySide){
     const linha=(i,ix)=>`<div class="it">
       <div class="info" style="min-width:0"><div class="t">${esc(i.nome)}</div><div class="d">${money(i.preco)} / ${esc(i.unidade||'un')}${isMO(i)?(()=>{const pr=S.produtos.find(x=>x.id===i.produtoId);const tp=num(i.tempo!=null&&i.tempo!==''?i.tempo:pr&&pr.tempo);return tp?` · ${fmtH(tp*num(i.qtd))} no total`:''})():` · ${esc(catNome(i.categoria))}`}</div></div>
       <div class="qty"><button data-q="${ix}" data-d="-1" aria-label="Diminuir">−</button><input data-qi="${ix}" inputmode="decimal" value="${String(i.qtd).replace('.',',')}" aria-label="Quantidade"><button data-q="${ix}" data-d="1" aria-label="Aumentar">+</button></div>
-      <div class="row" style="flex-wrap:nowrap;gap:6px"><span class="sum">${money(num(i.preco)*num(i.qtd))}</span><button class="iconbtn" data-rm="${ix}" aria-label="Remover item">${svg(UI.trash)}</button></div>
+      <div class="row" style="flex-wrap:nowrap;gap:6px"><span class="sum">${money(num(i.preco)*num(i.qtd))}</span><button class="iconbtn" data-ed="${ix}" aria-label="Editar item">${svg(UI.edit)}</button><button class="iconbtn" data-rm="${ix}" aria-label="Remover item">${svg(UI.trash)}</button></div>
     </div>`;
     const mat=draft.itens.map((i,ix)=>[i,ix]).filter(([i])=>!isMO(i)),mo=draft.itens.map((i,ix)=>[i,ix]).filter(([i])=>isMO(i));
     box.innerHTML=mat.length?`<div class="items">${mat.map(([i,ix])=>linha(i,ix)).join('')}</div>`:`<div class="empty" style="padding:20px"><span>Toque em <b>Adicionar do catálogo</b> para incluir câmeras, sensores, cabos e acessórios.</span></div>`;
@@ -1923,6 +1923,28 @@ async function salvarOrc(ver){
     if(o.tipo==='os'&&o.agenda)go('os',{id:o.id,force:true});else if(ver)go('proposta',{id:o.id,force:true});else go('inicio',{force:true})}
   catch(e){autoQuieto=false;toast(e&&e.code==='quota_exceeded'?'Limite de armazenamento atingido.':'Não foi possível salvar. Tente de novo.')}
 }
+// Item digitado à mão (fora do catálogo) ou ajuste de um item só neste orçamento. Opcional: guardar no catálogo.
+function formItem(mode,ix){const novo=ix==null,i=novo?{nome:'',qtd:1,unidade:mode==='mo'?'serviço':'un',preco:'',custo:'',categoria:mode==='mo'?'servicos':'acessorios',descricao:'',tempo:''}:draft.itens[ix],mo=mode==='mo';
+  const un=mo?UNID_MO:UNIDADES,v=x=>x===''||x==null?'':String(num(x).toFixed(2)).replace('.',',');
+  openSheet(novo?(mo?'Serviço fora do catálogo':'Material fora do catálogo'):'Editar item deste orçamento',`<div class="form">
+    <div class="field full"><label for="fi_n">${mo?'Serviço':'Material'}</label><input id="fi_n" value="${esc(i.nome)}" placeholder="${mo?'Ex.: Troca de fonte do DVR':'Ex.: Suporte de parede reforçado'}"></div>
+    <div class="field"><label for="fi_q">Quantidade</label><input id="fi_q" inputmode="decimal" value="${esc(String(i.qtd).replace('.',','))}"></div>
+    <div class="field"><label for="fi_u">Unidade</label><select id="fi_u">${[...new Set([...un,i.unidade].filter(Boolean))].map(u=>`<option ${u===i.unidade?'selected':''}>${esc(u)}</option>`).join('')}</select></div>
+    ${mo?'':`<div class="field"><label for="fi_c">Quanto você pagou (custo, R$)</label><input id="fi_c" inputmode="decimal" value="${v(i.custo)}" placeholder="Opcional"><span class="hint" id="fi_sug"></span></div>`}
+    <div class="field"><label for="fi_p">Preço para o cliente (R$ cada)</label><input id="fi_p" inputmode="decimal" value="${v(i.preco)}"></div>
+    ${mo?`<div class="field"><label for="fi_t">Tempo (horas cada, opcional)</label><input id="fi_t" inputmode="decimal" value="${esc(i.tempo?String(i.tempo).replace('.',','):'')}" placeholder="Ex.: 1,5"></div>`:`<div class="field"><label for="fi_cat">Categoria</label><select id="fi_cat">${CATS_MAT.map(c=>`<option value="${c.id}" ${i.categoria===c.id?'selected':''}>${c.nome}</option>`).join('')}</select></div>`}
+    <div class="field full"><label for="fi_d">Descrição (aparece na proposta, opcional)</label><textarea id="fi_d">${esc(i.descricao||'')}</textarea></div>
+    ${novo?`<label class="field full chk"><input type="checkbox" id="fi_cat_save"> <span>Guardar também no ${mo?'cadastro de mão de obra':'catálogo'} <span class="hint">(para usar em outros orçamentos)</span></span></label>`:`<p class="hint full" style="margin:0">A mudança vale só para este orçamento. O ${mo?'cadastro de mão de obra':'catálogo'} continua igual.</p>`}
+  </div>`,`<button class="btn" data-act="close">Cancelar</button><button class="btn primary" id="fi_ok">${novo?'Adicionar':'Salvar'}</button>`,L=>{const $=id=>L.querySelector('#'+id);
+    const sug=()=>{if(mo||!$('fi_sug'))return;const c=num($('fi_c').value),ps=c>0?precoSugerido(c,margemDe({})):0;$('fi_sug').innerHTML=ps?`Preço sugerido: <button type="button" class="linkbtn" id="fi_usa">${money(ps)}</button>`:'';const u=$('fi_usa');if(u)u.onclick=()=>{$('fi_p').value=v(ps)}};
+    if($('fi_c')){$('fi_c').addEventListener('input',sug);sug()}
+    $('fi_ok').onclick=async()=>{const nome=$('fi_n').value.trim(),preco=num($('fi_p').value),qtd=Math.max(0.01,num($('fi_q').value)||1);
+      if(!nome){toast('Escreva o nome do '+(mo?'serviço':'material')+'.');return}if(!(preco>0)){toast('Informe o preço para o cliente.');return}
+      const it={...i,nome,qtd,unidade:$('fi_u').value,preco,custo:mo?num(i.custo):num($('fi_c').value),categoria:mo?'servicos':$('fi_cat').value,descricao:$('fi_d').value.trim(),...(mo?{tempo:num($('fi_t').value)||''}:{})};
+      if(novo&&$('fi_cat_save').checked){const p={id:uid(),nome,categoria:it.categoria,unidade:it.unidade,preco,custo:it.custo,descricao:it.descricao,marca:'',modelo:'',codigo:'',fornecedores:[],margem:'',...(mo?{grupo:'geral',tempo:it.tempo}:{custoAtualizadoEm:it.custo?new Date().toISOString():''}),criadoEm:new Date().toISOString()};
+        try{await store.save('produtos',p);it.produtoId=p.id}catch(e){toast('Não foi possível guardar no catálogo, mas o item entra no orçamento.')}}
+      if(novo)draft.itens.push(it);else draft.itens[ix]=it;draft._dirty=true;closeSheet();renderEditorParts();toast(novo?'Item adicionado':'Item atualizado')};
+  })}
 function openPicker(mode){
   mode=mode==='mo'?'mo':'mat';let q='',cat='todas';const doTipo=p=>mode==='mo'?isMO(p):!isMO(p);
   const count=id=>{const it=draft.itens.find(i=>i.produtoId===id);return it?num(it.qtd):0};
@@ -3867,7 +3889,7 @@ function vProposta(app){
 document.addEventListener('click',e=>{
   if(e.target.closest('a[href]'))return;
   const cpy=e.target.closest('[data-copy]');if(cpy){copyText(cpy.dataset.copy);return}
-  const t=e.target.closest('[data-nav],[data-act],[data-status],[data-cat],[data-open-orc],[data-edit-prod],[data-edit-cli],[data-q],[data-rm],[data-grupo],[data-close-scrim]');
+  const t=e.target.closest('[data-ed],[data-nav],[data-act],[data-status],[data-cat],[data-open-orc],[data-edit-prod],[data-edit-cli],[data-q],[data-rm],[data-grupo],[data-close-scrim]');
   if(!t)return;
   if(t.hasAttribute('data-close-scrim')){if(e.target===t)closeSheet();return}
   if(t.dataset.nav){closeSheet();ui.busca='';go(t.dataset.nav);return}
@@ -3889,6 +3911,7 @@ document.addEventListener('click',e=>{
   if(t.dataset.editProd){const pr=S.produtos.find(p=>p.id===t.dataset.editProd);(isMO(pr)?formServ:formProd)(pr);return}
   if(t.dataset.editCli){formCli(S.clientes.find(c=>c.id===t.dataset.editCli));return}
   if(t.dataset.q!==undefined&&draft){const i=draft.itens[+t.dataset.q];i.qtd=Math.max(1,num(i.qtd)+(+t.dataset.d));draft._dirty=true;renderEditorParts();return}
+  if(t.dataset.ed!==undefined&&draft){const i=draft.itens[+t.dataset.ed];if(i)formItem(isMO(i)?'mo':'mat',+t.dataset.ed);return}
   if(t.dataset.rm!==undefined&&draft){draft.itens.splice(+t.dataset.rm,1);draft._dirty=true;renderEditorParts();return}
 });
 document.addEventListener('keydown',e=>{
