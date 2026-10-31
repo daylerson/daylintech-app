@@ -3347,10 +3347,15 @@ function formLanc(l,pre={}){const n=!l,cfg=finCfg();l=l||{id:uid(),tipo:pre.tipo
     const $=id=>L.querySelector('#'+id),tipo=()=>L.querySelector('input[name=lc_t]:checked').value,ax=[...(l.anexos||[])];
     const desenha=()=>{$('lc_ax').innerHTML=ax.map((a,i)=>`<div class="os-th"><img data-ax="${i}" alt="Nota ${i+1}"><button type="button" class="iconbtn os-x" data-axr="${i}" aria-label="Remover">${svg(UI.x)}</button></div>`).join('')+blobs.map((b,i)=>`<div class="os-th"><img data-bl="${i}" alt="Nota nova ${i+1}"><button type="button" class="iconbtn os-x" data-blr="${i}" aria-label="Remover">${svg(UI.x)}</button></div>`).join('')+
         `<label class="os-add">${svg(UI.plus)}<span>Adicionar foto</span><input type="file" accept="image/*" multiple hidden id="lc_add"></label>`;
+      if(!$('lc_axb')){$('lc_ax').insertAdjacentHTML('afterend',`<div class="row" id="lc_axb" style="gap:8px;margin-top:6px;align-items:center"><label class="btn sm">${svg(ICON_CAM)}Tirar foto<input type="file" accept="image/*" capture="environment" hidden id="lc_cam"></label><span class="hint">ou arraste a foto ou o PDF aqui</span></div>`);$('lc_cam').onchange=e=>{blobs.push(...e.target.files);e.target.value='';desenha()}}
       $('lc_ax').querySelectorAll('[data-ax]').forEach(im=>{const a=ax[+im.dataset.ax];const s=fotoSync(a);if(s)im.src=s;else if(sb&&a.p)fotoSrc(a).then(u=>im.src=u).catch(()=>{})});
       $('lc_ax').querySelectorAll('[data-bl]').forEach(im=>{im.src=URL.createObjectURL(blobs[+im.dataset.bl])});
       $('lc_ax').querySelectorAll('[data-axr]').forEach(b=>b.onclick=()=>{ax.splice(+b.dataset.axr,1);desenha()});$('lc_ax').querySelectorAll('[data-blr]').forEach(b=>b.onclick=()=>{blobs.splice(+b.dataset.blr,1);desenha()});
       $('lc_add').onchange=e=>{blobs.push(...e.target.files);desenha()}};desenha();
+    // Arrastar foto (ou PDF, que vira foto da 1ª página) para a área do comprovante.
+    const zona=$('lc_ax').parentElement;zona.classList.add('campo-fotos');
+    zona.addEventListener('dragover',e=>{e.preventDefault();zona.classList.add('over')});zona.addEventListener('dragleave',()=>zona.classList.remove('over'));
+    zona.addEventListener('drop',async e=>{e.preventDefault();zona.classList.remove('over');for(const f of [...e.dataTransfer.files]){if(/^image\//.test(f.type))blobs.push(f);else if(f.type==='application/pdf'||/\.pdf$/i.test(f.name)){try{blobs.push(await pdfPagina(f))}catch(x){toast('Não consegui ler esse PDF.')}}}desenha()});
     const sugere=()=>{if(manual)return;const c=classificar({fornecedor:$('lc_f').value,desc:$('lc_ds').value,doc:$('lc_doc').value,cnae:pre.cnae,itens:l.itens});if(c&&FIN_CATS[c][1]===(tipo()==='entrada'?'e':'s')){$('lc_c').value=c;$('lc_auto').textContent='· sugerida'}carro()};
     const carro=()=>{if($('lc_carw'))$('lc_carw').hidden=!(tipo()==='saida'&&['combustivel','veiculo'].includes($('lc_c').value))};
     L.querySelectorAll('input[name=lc_t]').forEach(r=>r.onchange=()=>{$('lc_c').innerHTML='<option value="">Escolha…</option>'+opts(tipo());if(tipo()==='entrada'&&!manual)$('lc_c').value='servicos';sugere();carro()});
