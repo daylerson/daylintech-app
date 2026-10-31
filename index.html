@@ -450,6 +450,10 @@ body.apresentacao .internal{display:none!important}
 .acc-done{display:flex;flex-direction:column;gap:6px;background:#E3F5EA;color:#14532D;border-radius:10px;padding:14px;font-size:14px}
 .acc-done a{color:#14532D;font-weight:700}
 .recibo .pp-body{gap:16px}
+.ficha .fc-foto{display:flex;justify-content:center;background:var(--paper-soft);border-radius:10px;padding:14px}.ficha .fc-foto img{max-width:100%;max-height:300px;object-fit:contain}
+.fc-nome{font-family:var(--f-display);font-size:24px;line-height:1.2;margin:0;color:var(--paper-ink)}.fc-sub{color:var(--paper-muted);font-size:14px;margin-top:4px}
+.fc-ds{display:flex;gap:14px;align-items:center;border:1px solid var(--paper-line);border-radius:10px;padding:10px 12px}.fc-ds img{width:92px;height:92px}.fc-ds>div{display:flex;flex-direction:column;gap:4px;min-width:0}.fc-url{font-size:12px;color:var(--paper-blue);overflow-wrap:anywhere}
+.fc-rod{border-top:1px solid var(--paper-line);padding-top:10px;font-size:13px;color:var(--paper-muted)}.fc-rod b{color:var(--paper-ink)}
 .rc-valor{display:flex;justify-content:space-between;align-items:baseline;background:var(--paper-soft);border-left:6px solid var(--paper-accent);border-radius:6px;padding:12px 14px}
 .rc-valor b{font-family:var(--f-display);font-size:26px;font-weight:800;color:var(--paper-blue)}
 .rc-txt{margin:0;font-size:15px;line-height:1.6;color:var(--paper-ink)}
@@ -1059,16 +1063,31 @@ function breakdown(c,v){
 const ICON_SHARE='<circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M8.2 10.8l7.6-4.4M8.2 13.2l7.6 4.4"/>';
 function textoProd(p,preco){const ds=safeUrl(p.datasheet),e=S.empresa;
   return [`*${p.nome}*`,[p.marca,p.modelo].filter(Boolean).join(' · '),p.descricao||'',preco?`Valor: ${money(p.preco)} / ${p.unidade||'un'}`:'',ds?`Ficha técnica: ${ds}`:'','',`${e.nome||'DaylinTech'}${e.slogan?' · '+e.slogan:''}${e.telefone?'\n'+e.telefone:''}`].filter((x,i)=>x!==''||i===5).join('\n')}
+// Ficha do produto em PDF, no mesmo visual do recibo e da OS.
+function fichaHTML(p,preco,qr){const e=S.empresa,ds=safeUrl(p.datasheet),redes=[e.telefone,e.email,e.instagram?'@'+String(e.instagram).replace(/^@|https?:\/\/(www\.)?instagram\.com\//g,'').replace(/\/$/,''):'',e.site].filter(Boolean).join(' · ');
+  return `<div class="paper recibo ficha"><div class="pp-band"><div class="pp-id"><img class="pp-logo2" src="${LOGO}" alt="${esc(e.nome)}"></div><div class="pp-num"><div class="k">Ficha do produto</div><div class="n" style="font-size:20px">${esc(catNome(p.categoria))}</div></div></div><div class="pp-stripe"></div>
+    <div class="pp-body">
+      ${p.foto?`<div class="fc-foto"><img src="${p.foto}" alt=""></div>`:''}
+      <div><h2 class="fc-nome">${esc(p.nome)}</h2>${p.marca||p.modelo?`<div class="fc-sub">${esc([p.marca,p.modelo].filter(Boolean).join(' · '))}</div>`:''}</div>
+      ${p.descricao?`<p class="rc-txt" style="white-space:pre-line">${esc(p.descricao)}</p>`:''}
+      ${preco?`<div class="rc-valor"><span class="pp-k">Valor</span><b>${money(p.preco)} <small style="font-size:14px;font-weight:600">/ ${esc(p.unidade||'un')}</small></b></div>`:''}
+      ${ds?`<div class="fc-ds">${qr?`<img src="${qr}" alt="">`:''}<div><span class="pp-k">Ficha técnica do fabricante</span><span class="fc-url">${esc(ds)}</span></div></div>`:''}
+      <div class="fc-rod"><b>${esc(e.nome||'DaylinTech')}</b>${e.slogan?` · ${esc(e.slogan)}`:''}${redes?`<br><span>${esc(redes)}</span>`:''}${preco?`<br><span>Valor de referência em ${new Date().toLocaleDateString('pt-BR')}, sujeito a confirmação no orçamento.</span>`:''}</div>
+    </div></div>`}
 function compartilharProd(p){
   openSheet('Compartilhar produto',`<div class="card-top">${thumb(p)}<div style="min-width:0"><div class="t">${esc(p.nome)}</div><div class="d">${esc([p.marca,p.modelo].filter(Boolean).join(' · '))}</div></div></div>
     <label class="chk" style="display:flex;margin-top:10px"><input type="checkbox" id="sp_pr"> <span>Mostrar o preço (${money(p.preco)} / ${esc(p.unidade||'un')})</span></label>
     <div class="field"><label for="sp_t">Mensagem</label><textarea id="sp_t" style="min-height:150px">${esc(textoProd(p,false))}</textarea></div>
+    <label class="chk" style="display:flex"><input type="checkbox" id="sp_pdf" checked> <span>Mandar a ficha em PDF, com a logo <span class="hint">(desmarque para mandar só a foto)</span></span></label>
+    <div class="paper-wrap" id="sp_prev" style="max-height:340px;overflow:auto"></div>
     ${p.foto?'':'<p class="hint" style="margin:0">Este produto não tem foto. Coloque uma em Editar para ela ir junto.</p>'}`,
     `<button class="btn" id="sp_cp">${svg(UI.copy)}Copiar texto</button><button class="btn primary" id="sp_ok">${svg(ICON_SHARE)}Compartilhar</button>`,L=>{const $=id=>L.querySelector('#'+id);
-      $('sp_pr').onchange=()=>{$('sp_t').value=textoProd(p,$('sp_pr').checked)};
+      let qr='';const prev=()=>{$('sp_prev').innerHTML=fichaHTML(p,$('sp_pr').checked,qr)};prev();if(safeUrl(p.datasheet))qrPNG(safeUrl(p.datasheet)).then(u=>{qr=u||'';prev()});
+      $('sp_pr').onchange=()=>{$('sp_t').value=textoProd(p,$('sp_pr').checked);prev()};$('sp_pdf').onchange=()=>{$('sp_prev').hidden=!$('sp_pdf').checked};
       $('sp_cp').onclick=()=>copyText($('sp_t').value);
-      $('sp_ok').onclick=async()=>{const txt=$('sp_t').value;let f=null;
-        if(p.foto){try{const b=await (await fetch(p.foto)).blob();f=new File([b],(arqNome(p.nome).normalize('NFD').replace(/[\u0300-\u036f]/g,'')||'produto')+'.'+((b.type.split('/')[1]||'jpg').replace('jpeg','jpg')),{type:b.type})}catch(e){}}
+      $('sp_ok').onclick=async()=>{const txt=$('sp_t').value;let f=null;const b0=$('sp_ok');
+        if($('sp_pdf').checked){b0.disabled=true;try{f=new File([await htmlPDF(fichaHTML(p,$('sp_pr').checked,qr))],(arqNome(p.nome).normalize('NFD').replace(/[̀-ͯ]/g,'')||'produto')+'.pdf',{type:'application/pdf'})}catch(e){toast('Não foi possível gerar o PDF.')}b0.disabled=false}
+        else if(p.foto){try{const b=await (await fetch(p.foto)).blob();f=new File([b],(arqNome(p.nome).normalize('NFD').replace(/[\u0300-\u036f]/g,'')||'produto')+'.'+((b.type.split('/')[1]||'jpg').replace('jpeg','jpg')),{type:b.type})}catch(e){}}
         if(f&&navigator.canShare&&navigator.canShare({files:[f]})){try{await navigator.share({files:[f],text:txt,title:p.nome});return}catch(e){if(e&&e.name==='AbortError')return}}
         if(navigator.share&&!f){try{await navigator.share({text:txt,title:p.nome});return}catch(e){if(e&&e.name==='AbortError')return}}
         if(f)await baixar(f.name,f,f.type);window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank','noopener');toast(f?'Foto baixada: anexe na conversa junto com o texto.':'Texto pronto no WhatsApp.')};
