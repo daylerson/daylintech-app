@@ -2141,7 +2141,7 @@ const linkAval=()=>safeUrl(S.empresa.linkAvaliacao);
 const prepAval=async()=>{const u=linkAval();if(u)await qrPNG(u)};
 const textoAval=()=>{const u=linkAval();return u?`\n\n⭐ Se puder, avalie nosso serviço no Google. Leva 1 minuto e ajuda muito: ${u}`:''};
 function avaliacaoHTML(){const u=linkAval();if(!u)return '';const qr=qrCache[u];
-  return `<div class="aval"><div class="aval-t"><span class="aval-st">★★★★★</span><b>Gostou do nosso serviço?</b><span>Sua avaliação no Google ajuda muito a ${esc(S.empresa.nome||'DaylinTech')}. Aponte a câmera do celular para o código${qr?'':' abaixo'} ou acesse:</span><span class="aval-u">${esc(urlCurta(u))}</span></div>${qr?`<img class="aval-qr" src="${qr}" alt="QR Code para avaliar no Google">`:''}</div>`}
+  return `<div class="aval"><div class="aval-t"><span class="aval-st">★★★★★</span><b>Gostou do nosso serviço?</b><span>Sua avaliação no Google ajuda muito a ${esc(S.empresa.nome||'DaylinTech')}. Aponte a câmera do celular para o código${qr?'':' abaixo'} ou acesse:</span><a class="aval-u pdf-lk" href="${esc(u)}" target="_blank" rel="noopener" data-pdf-link="${esc(u)}">${esc(urlCurta(u))}</a></div>${qr?`<a href="${esc(u)}" target="_blank" rel="noopener" data-pdf-link="${esc(u)}"><img class="aval-qr" src="${qr}" alt="QR Code para avaliar no Google"></a>`:''}</div>`}
 async function qrSVG(txt){try{await loadScript(QR_SRC);const q=window.qrcode(0,'M');q.addData(txt);q.make();const n=q.getModuleCount();let d='';
   for(let r=0;r<n;r++)for(let c=0;c<n;c++)if(q.isDark(r,c))d+=`M${c+3} ${r+3}h1v1h-1z`;
   return `<svg class="qr" viewBox="0 0 ${n+6} ${n+6}" role="img" aria-label="QR Code do Pix" shape-rendering="crispEdges"><rect width="${n+6}" height="${n+6}" fill="#fff"/><path d="${d}" fill="#0B1A33"/></svg>`}catch(e){return ''}}
@@ -2345,7 +2345,7 @@ function reciboHTML(o){const p=o.pgto,e=S.empresa,d=new Date((p.data||'').slice(
       <p class="rc-txt">Recebi de <b>${esc(p.nome)}</b>${p.doc?`, CPF/CNPJ <b>${esc(p.doc)}</b>,`:''} a importância de <b>${money(p.valor)}</b> (${esc(extenso(p.valor))}), ${p.tipo==='parcial'?'como pagamento parcial ':''}referente ${o.tipo==='os'?`ao atendimento de ${esc(osTipoNome(o).toLowerCase())}, conforme OS Nº ${nOrc(o.numero)}`:`${o.titulo?`ao serviço "${esc(o.titulo)}", conforme `:'à '}proposta comercial Nº ${nOrc(o.numero)}`}, pago via ${esc(via)}.</p>
       ${p.tipo==='parcial'?'':`<p class="rc-txt">Pelo que dou plena e geral quitação do valor acima.</p>`}
       <p class="rc-local">${esc(e.cidade||'')}${e.cidade?', ':''}${d.toLocaleDateString('pt-BR',{day:'numeric',month:'long',year:'numeric'})}.</p>
-      <div class="rc-sign">${e.assinatura?`<img src="${e.assinatura}" alt="Assinatura">`:'<div class="rc-blank"></div>'}<div class="rc-line"><b>${esc(e.responsavel||e.nome)}</b><span>${esc(e.nome)}${e.cnpj?` · CNPJ ${esc(e.cnpj)}`:''}</span>${e.telefone?`<span>${esc(e.telefone)}</span>`:''}</div></div>
+      <div class="rc-sign">${e.assinatura?`<img src="${e.assinatura}" alt="Assinatura">`:'<div class="rc-blank"></div>'}<div class="rc-line"><b>${esc(e.responsavel||e.nome)}</b><span>${esc(e.nome)}${e.cnpj?` · CNPJ ${esc(e.cnpj)}`:''}</span>${contatosLinks(e).length?`<span>${contatosLinks(e).map(linkPDF).join(' · ')}</span>`:''}</div></div>
       ${avaliacaoHTML()}
     </div></div>`}
 // Recibo em PDF: desenha o recibo (com logo e assinatura) numa imagem e põe numa folha A4.
@@ -2477,7 +2477,7 @@ function osHTML(o,opc={}){
           ${t.desc?`<div class="os-tot"><span>Desconto</span><span>− ${money(t.desc)}</span></div>`:''}<div class="os-tot g"><span>Total</span><b>${money(t.total)}</b></div>
           ${opc.pag!=null?opc.pag:pagOSHTML(o)}${assin}</div>${fotosH}`})()}
       ${g.fim||o.status==='concluido'?avaliacaoHTML():''}
-      <div class="pp-foot"><div><b style="color:var(--paper-ink)">${esc(e.nome)}</b>${e.cnpj?` · CNPJ ${esc(e.cnpj)}`:''}<br>${esc([e.telefone,e.email].filter(Boolean).join(' · '))}</div></div>
+      <div class="pp-foot"><div><b style="color:var(--paper-ink)">${esc(e.nome)}</b>${e.cnpj?` · CNPJ ${esc(e.cnpj)}`:''}<br>${contatosLinks(e).map(linkPDF).join(' · ')}</div></div>
     </div></div>`;
 }
 function textoOS(o,link){
@@ -2680,7 +2680,7 @@ function pagOSHTML(o){const t=calc(o);if(!(t.total>0))return '';
   if(!pl&&!lk)return '';
   return `<div class="os-pag">
     ${pl?`<div class="os-pg"><div class="os-pg-t"><b>Pix: ${money(vp)}</b>${num(S.empresa.descontoPix)?`<span>Com ${fmtPct(S.empresa.descontoPix)} de desconto · ${esc(S.empresa.pixNome||S.empresa.nome)}</span>`:`<span>${esc(S.empresa.pixNome||S.empresa.nome)}</span>`}<span class="os-pg-k">Pix copia e cola</span><span class="os-pg-c">${esc(pl)}</span></div>${qp?`<img class="os-pg-qr" src="${qp}" alt="QR Code do Pix">`:''}</div>`:''}
-    ${lk?`<div class="os-pg"><div class="os-pg-t"><b>Cartão de crédito</b><span>${esc(cap(cartaoTxt()))}.</span><span class="os-pg-k">Link de pagamento</span><span class="os-pg-c">${esc(urlCurta(lk))}</span></div></div>`:''}
+    ${lk?`<div class="os-pg"><div class="os-pg-t"><b>Cartão de crédito</b><span>${esc(cap(cartaoTxt()))}.</span><span class="os-pg-k">Link de pagamento</span><a class="os-pg-c pdf-lk" href="${esc(lk)}" target="_blank" rel="noopener" data-pdf-link="${esc(lk)}">${esc(urlCurta(lk))}</a></div></div>`:''}
   </div>`}
 // Página online da OS (mesmo esquema da proposta): o cliente copia o código Pix e abre o link do cartão.
 async function linkOSOnline(o){
