@@ -1085,29 +1085,24 @@ async function htmlImagem(html){await loadScript(H2C_SRC);const box=document.cre
     const cv=await window.html2canvas(el,{scale:2,backgroundColor:'#ffffff',logging:false});return await new Promise(r=>cv.toBlob(r,'image/png'))}
   finally{box.remove()}}
 function compartilharProd(p){const base=arqNome(p.nome).normalize('NFD').replace(/[̀-ͯ]/g,'')||'produto';
-  let fmt='img';try{fmt=localStorage.getItem('dt:fichafmt')||'img'}catch(e){}
   openSheet('Compartilhar produto',`<div class="card-top">${thumb(p)}<div style="min-width:0"><div class="t">${esc(p.nome)}</div><div class="d">${esc([p.marca,p.modelo].filter(Boolean).join(' · '))}</div></div></div>
     <label class="chk" style="display:flex;margin-top:10px"><input type="checkbox" id="sp_pr"> <span>Mostrar o preço (${money(p.preco)} / ${esc(p.unidade||'un')})</span></label>
-    <div class="seg" role="radiogroup" aria-label="Formato">${[['img','Ficha em imagem'],['pdf','Ficha em PDF'],['foto','Só a foto']].map(([k,l])=>`<label><input type="radio" name="sp_f" value="${k}" ${fmt===k?'checked':''} ${k==='foto'&&!p.foto?'disabled':''}><span>${l}</span></label>`).join('')}</div>
+    <p class="hint" style="margin:0">Vai em PDF, com os links clicáveis (datasheet, WhatsApp, e-mail e Instagram).</p>
     <div class="paper-wrap" id="sp_prev" style="max-height:340px;overflow:auto"></div>
     <div class="field"><label for="sp_t">Mensagem</label><textarea id="sp_t" style="min-height:130px">${esc(textoProd(p,false))}</textarea></div>
     ${p.foto?'':'<p class="hint" style="margin:0">Este produto não tem foto. Coloque uma em Editar para ela ir junto.</p>'}`,
-    `<button class="btn left" id="sp_cp">${svg(UI.copy)}Copiar texto</button><button class="btn" id="sp_dl">${svg(UI.dl)}Baixar</button><button class="btn primary" id="sp_ok">${svg(ICON_SHARE)}Compartilhar</button>`,L=>{const $=id=>L.querySelector('#'+id);
-      let qr='';const formato=()=>L.querySelector('input[name=sp_f]:checked').value;
-      const prev=()=>{$('sp_prev').innerHTML=fichaHTML(p,$('sp_pr').checked,qr);$('sp_prev').hidden=formato()==='foto'};prev();if(safeUrl(p.datasheet))qrPNG(safeUrl(p.datasheet)).then(u=>{qr=u||'';prev()});
+    `<button class="btn left" id="sp_cp">${svg(UI.copy)}Copiar texto</button><button class="btn" id="sp_dl">${svg(UI.dl)}Baixar PDF</button><button class="btn primary" id="sp_ok">${svg(ICON_SHARE)}Compartilhar</button>`,L=>{const $=id=>L.querySelector('#'+id);
+      let qr='';
+      const prev=()=>{$('sp_prev').innerHTML=fichaHTML(p,$('sp_pr').checked,qr)};prev();if(safeUrl(p.datasheet))qrPNG(safeUrl(p.datasheet)).then(u=>{qr=u||'';prev()});
       $('sp_pr').onchange=()=>{$('sp_t').value=textoProd(p,$('sp_pr').checked);prev()};
-      L.querySelectorAll('input[name=sp_f]').forEach(r=>r.onchange=()=>{try{localStorage.setItem('dt:fichafmt',formato())}catch(e){}prev()});
       $('sp_cp').onclick=()=>copyText($('sp_t').value);
-      const arquivo=async()=>{const f=formato(),h=fichaHTML(p,$('sp_pr').checked,qr);
-        if(f==='pdf')return new File([await htmlPDF(h)],base+'.pdf',{type:'application/pdf'});
-        if(f==='img')return new File([await htmlImagem(h)],base+'.png',{type:'image/png'});
-        if(p.foto){const b=await (await fetch(p.foto)).blob();return new File([b],base+'.'+((b.type.split('/')[1]||'jpg').replace('jpeg','jpg')),{type:b.type})}return null};
+      const arquivo=async()=>new File([await htmlPDF(fichaHTML(p,$('sp_pr').checked,qr))],base+'.pdf',{type:'application/pdf'});
       const ocupado=async(b,fn)=>{b.disabled=true;const t=b.innerHTML;b.textContent='Preparando…';try{return await fn()}catch(e){toast('Não foi possível gerar o arquivo.');return undefined}finally{b.disabled=false;b.innerHTML=t}};
-      $('sp_dl').onclick=async()=>{const f=await ocupado($('sp_dl'),arquivo);if(f){await baixar(f.name,f,f.type);toast(f.type==='application/pdf'?'PDF baixado.':'Imagem baixada.')}};
+      $('sp_dl').onclick=async()=>{const f=await ocupado($('sp_dl'),arquivo);if(f){await baixar(f.name,f,f.type);toast('PDF baixado.')}};
       $('sp_ok').onclick=async()=>{const txt=$('sp_t').value,f=await ocupado($('sp_ok'),arquivo);if(f===undefined)return;
         if(f&&navigator.canShare&&navigator.canShare({files:[f]})){try{await navigator.share({files:[f],text:txt,title:p.nome});return}catch(e){if(e&&e.name==='AbortError')return}}
         if(navigator.share&&!f){try{await navigator.share({text:txt,title:p.nome});return}catch(e){if(e&&e.name==='AbortError')return}}
-        if(f)await baixar(f.name,f,f.type);window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank','noopener');toast(f?'Arquivo baixado: anexe na conversa junto com o texto.':'Texto pronto no WhatsApp.')};
+        if(f)await baixar(f.name,f,f.type);window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank','noopener');toast('PDF baixado: anexe na conversa junto com o texto.')};
     })}
 function cardProd(p){
   const a=analise(num(p.custo),num(p.preco));const ds=safeUrl(p.datasheet);
