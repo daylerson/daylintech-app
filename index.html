@@ -450,9 +450,10 @@ body.apresentacao .internal{display:none!important}
 .acc-done{display:flex;flex-direction:column;gap:6px;background:#E3F5EA;color:#14532D;border-radius:10px;padding:14px;font-size:14px}
 .acc-done a{color:#14532D;font-weight:700}
 .recibo .pp-body{gap:16px}
-.ficha .fc-foto{display:flex;justify-content:center;background:var(--paper-soft);border-radius:10px;padding:14px}.ficha .fc-foto img{max-width:100%;max-height:300px;object-fit:contain}
+.ficha .fc-foto{display:flex;justify-content:center;background:var(--paper-soft);border-radius:10px;padding:14px}.ficha .fc-foto img{max-width:100%;max-height:230px;object-fit:contain}
 .fc-nome{font-family:var(--f-display);font-size:24px;line-height:1.2;margin:0;color:var(--paper-ink)}.fc-sub{color:var(--paper-muted);font-size:14px;margin-top:4px}
-.fc-ds{display:flex;gap:14px;align-items:center;border:1px solid var(--paper-line);border-radius:10px;padding:10px 12px}.fc-ds img{width:92px;height:92px}.fc-ds>div{display:flex;flex-direction:column;gap:4px;min-width:0}.fc-url{font-size:12px;color:var(--paper-blue);overflow-wrap:anywhere}
+.fc-ds{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;border:1px solid var(--paper-line);border-radius:10px;padding:14px}.fc-ds img{width:120px;height:120px;flex:none;display:block;image-rendering:pixelated}
+.fc-ver{display:inline-block;background:var(--paper-blue);color:#fff;text-decoration:none;font-weight:700;font-size:14px;padding:8px 18px;border-radius:999px}.fc-dica{font-size:11px;color:var(--paper-muted)}
 .pdf-lk{color:var(--paper-blue);text-decoration:none}.fc-rod{border-top:1px solid var(--paper-line);padding-top:10px;font-size:13px;color:var(--paper-muted)}.fc-rod b{color:var(--paper-ink)}
 .rc-valor{display:flex;justify-content:space-between;align-items:baseline;background:var(--paper-soft);border-left:6px solid var(--paper-accent);border-radius:6px;padding:12px 14px}
 .rc-valor b{font-family:var(--f-display);font-size:26px;font-weight:800;color:var(--paper-blue)}
@@ -1074,7 +1075,7 @@ function fichaHTML(p,preco,qr){const e=S.empresa,ds=safeUrl(p.datasheet),redes=c
       <div><h2 class="fc-nome">${esc(p.nome)}</h2>${p.marca||p.modelo?`<div class="fc-sub">${esc([p.marca,p.modelo].filter(Boolean).join(' · '))}</div>`:''}</div>
       ${p.descricao?`<p class="rc-txt" style="white-space:pre-line">${esc(p.descricao)}</p>`:''}
       ${preco?`<div class="rc-valor"><span class="pp-k">Valor</span><b>${money(p.preco)} <small style="font-size:14px;font-weight:600">/ ${esc(p.unidade||'un')}</small></b></div>`:''}
-      ${ds?`<div class="fc-ds">${qr?`<a href="${esc(ds)}" target="_blank" rel="noopener" data-pdf-link="${esc(ds)}"><img src="${qr}" alt=""></a>`:''}<div><span class="pp-k">Ficha técnica do fabricante</span><a class="fc-url pdf-lk" href="${esc(ds)}" target="_blank" rel="noopener" data-pdf-link="${esc(ds)}">${esc(ds)}</a><span class="hint" style="font-size:11px">Toque no link ou aponte a câmera para o QR Code</span></div></div>`:''}
+      ${ds?`<div class="fc-ds"><span class="pp-k">Ficha técnica do fabricante</span>${qr?`<a href="${esc(ds)}" target="_blank" rel="noopener" data-pdf-link="${esc(ds)}"><img src="${qr}" alt="QR Code da ficha técnica"></a>`:''}<a class="fc-ver" href="${esc(ds)}" target="_blank" rel="noopener" data-pdf-link="${esc(ds)}">Ver datasheet ↗</a><span class="fc-dica">Toque no botão ou aponte a câmera do celular para o QR Code</span></div>`:''}
       <div class="fc-rod"><b>${esc(e.nome||'DaylinTech')}</b>${e.slogan?` · ${esc(e.slogan)}`:''}${redes?`<br><span>${redes}</span>`:''}${preco?`<br><span>Valor de referência em ${new Date().toLocaleDateString('pt-BR')}, sujeito a confirmação no orçamento.</span>`:''}</div>
     </div></div>`}
 function compartilharProd(p){
