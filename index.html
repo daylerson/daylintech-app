@@ -3258,7 +3258,18 @@ const FIN_CATS={servicos:['Serviços e vendas','e'],outras_ent:['Outras entradas
   impostos:['Impostos e taxas','s'],alimentacao:['Alimentação','s'],telefone:['Telefone e internet','s'],marketing:['Marketing e anúncios','s'],contador:['Contador','s'],
   tarifas:['Tarifas do banco e maquininha','s'],escritorio:['Escritório, aluguel e contas','s'],retirada:['Retirada do dono (pró-labore)','s'],outros:['Outras despesas','s'],ajuste:['Ajuste de saldo','x']};
 const FIN_FORMAS={pix:'Pix',dinheiro:'Dinheiro',debito:'Cartão de débito',credito:'Cartão de crédito',boleto:'Boleto',transferencia:'Transferência'};
-const catNomeFin=k=>(FIN_CATS[k]||FIN_CATS.outros)[0];
+// Categorias padrão + as criadas pelo dono (S.empresa.financeiro.cats: [{id, nome, tipo 'e'|'s'}]).
+const finCats=()=>{const m={...FIN_CATS};((S.empresa.financeiro||{}).cats||[]).forEach(c=>{m[c.id]=[c.nome,c.tipo]});return m};
+const catNomeFin=k=>(finCats()[k]||FIN_CATS.outros)[0];
+const novaCatHTML=t=>`<div class="row cat-nova" hidden style="gap:6px;margin-top:6px;flex-wrap:nowrap"><input placeholder="${t==='e'?'Ex.: Venda de sucata':'Ex.: Uniforme e EPI'}" aria-label="Nome da nova categoria" style="flex:1;min-width:0"><button type="button" class="btn sm primary">Criar</button></div>`;
+document.addEventListener('change',e=>{const sl=e.target;if(!sl.matches||!sl.matches('select[data-nova-cat]'))return;const box=sl.parentElement.querySelector('.cat-nova');box.hidden=sl.value!=='__novacat';if(!box.hidden)box.querySelector('input').focus()});
+document.addEventListener('click',async e=>{const b=e.target.closest('.cat-nova button');if(!b)return;const box=b.closest('.cat-nova'),inp=box.querySelector('input'),nome=inp.value.trim(),sl=box.parentElement.querySelector('select[data-nova-cat]');if(!nome){inp.focus();return}
+  const ex=Object.entries(finCats()).find(([,v])=>normNome(v[0])===normNome(nome)&&v[1]===sl.dataset.novaCat);
+  let id=ex&&ex[0];b.disabled=true;
+  try{if(!id){id='u'+uid();await salvarFinCfg({cats:[...(finCfg().cats||[]),{id,nome,tipo:sl.dataset.novaCat}]})}
+    if(!sl.querySelector(`option[value="${id}"]`)){const op=document.createElement('option');op.value=id;op.textContent=nome;sl.insertBefore(op,sl.querySelector('option[value="__novacat"]'))}
+    sl.value=id;sl.dispatchEvent(new Event('change',{bubbles:true}));box.hidden=true;inp.value='';toast(ex?'Essa categoria já existia: escolhida.':'Categoria criada')}
+  catch(x){toast('Não foi possível criar a categoria.')}finally{b.disabled=false}});
 // Classificação automática grátis: primeiro o que você já usou para o mesmo fornecedor, depois a atividade do CNPJ, depois palavras.
 const CAT_REGRAS=[['tarifas',/\b(tarifa|maquininha|mercado ?pago|pagseguro|pagbank|stone|cielo|sumup|infinitepay|iof|juros|anuidade)/],
   ['combustivel',/\b(gasolina|etanol|alcool|diesel|gnv|combustive|posto|shell|ipiranga|petrobras|br mania|raizen)/],
@@ -3352,11 +3363,13 @@ const ICON_CAM='<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3
 const fotoEm=(img,a)=>{const s=fotoSync(a);if(s)img.src=s;else if(sb&&a&&a.p)fotoSrc(a).then(u=>img.src=u).catch(()=>{img.alt='Foto não carregou'})};
 function verFoto(src){if(!src)return;const d=document.createElement('div');d.className='lightbox';d.setAttribute('role','dialog');d.setAttribute('aria-label','Foto');d.innerHTML=`<img src="${src}" alt=""><button class="iconbtn" aria-label="Fechar">${svg(UI.x)}</button>`;d.onclick=()=>d.remove();document.body.appendChild(d)}
 function campoFotos(el,ax,{max=12,rotulo='Adicionar foto'}={}){ax=[...(ax||[])];const blobs=[];
-  const add=fs=>{[...fs].filter(f=>/^image\//.test(f.type)||/\.(jpe?g|png|webp|heic)$/i.test(f.name||'')).slice(0,Math.max(0,max-ax.length-blobs.length)).forEach(f=>blobs.push(f));desenha()};
+  const add=async fs=>{for(const f of [...fs]){if(ax.length+blobs.length>=max)break;
+      if(f.type==='application/pdf'||/\.pdf$/i.test(f.name||'')){try{blobs.push(await pdfPagina(f))}catch(x){toast('Não consegui ler esse PDF.')}}
+      else if(/^image\//.test(f.type)||/\.(jpe?g|png|webp|heic)$/i.test(f.name||''))blobs.push(f)}desenha()};
   const th=(i,t)=>`<div class="os-th"><img data-${t}="${i}" alt="Foto ${i+1}" style="cursor:zoom-in"><button type="button" class="iconbtn os-x" data-${t}r="${i}" aria-label="Remover foto">${svg(UI.x)}</button></div>`;
   function desenha(){const livre=ax.length+blobs.length<max;
     el.innerHTML=`<div class="os-fotos">${ax.map((a,i)=>th(i,'ax')).join('')}${blobs.map((b,i)=>th(i,'bl')).join('')}${livre?`<label class="os-add">${svg(UI.plus)}<span>${rotulo}</span><input type="file" accept="image/*" ${max>1?'multiple':''} hidden data-f></label>`:''}</div>
-      ${livre?`<div class="row" style="gap:8px;margin-top:6px;align-items:center"><label class="btn sm">${svg(ICON_CAM)}Tirar foto<input type="file" accept="image/*" capture="environment" hidden data-f></label><span class="hint">ou arraste a foto aqui</span></div>`:''}`;
+      ${livre?`<div class="row" style="gap:8px;margin-top:6px;align-items:center"><label class="btn sm">${svg(ICON_CAM)}Tirar foto<input type="file" accept="image/*" capture="environment" hidden data-f></label><label class="btn sm">${svg(UI.up)}Enviar PDF<input type="file" accept="application/pdf,.pdf" hidden data-f></label><span class="hint">ou arraste a foto ou o PDF aqui</span></div>`:''}`;
     el.querySelectorAll('[data-ax]').forEach(im=>fotoEm(im,ax[+im.dataset.ax]));el.querySelectorAll('[data-bl]').forEach(im=>{im.src=URL.createObjectURL(blobs[+im.dataset.bl])});
     el.querySelectorAll('img').forEach(im=>im.onclick=()=>verFoto(im.src));
     el.querySelectorAll('[data-axr]').forEach(b=>b.onclick=()=>{ax.splice(+b.dataset.axr,1);desenha()});el.querySelectorAll('[data-blr]').forEach(b=>b.onclick=()=>{blobs.splice(+b.dataset.blr,1);desenha()});
@@ -3391,7 +3404,7 @@ function formLanc(l,pre={}){const n=!l,cfg=finCfg();l=l||{id:uid(),tipo:pre.tipo
     nf:pre.chave||pre.numero?{numero:pre.numero||'',chave:pre.chave||''}:null,itens:pre.itens&&pre.itens.length?pre.itens:undefined,criadoEm:new Date().toISOString()};
   let blobs=[...(pre.blobs||[])],cat=l.cat||classificar({...l,cnae:pre.cnae}),manual=!!l.cat;const vs=veiculos();
   const achou=pre.lida?[pre.valor?'valor':'',pre.data?'data':'',pre.fornecedor?'fornecedor':'',pre.chave||pre.numero?'número da nota':''].filter(Boolean):null;
-  const opts=t=>Object.entries(FIN_CATS).filter(([,v])=>v[1]===(t==='entrada'?'e':'s')).map(([k,[nm]])=>`<option value="${k}" ${cat===k?'selected':''}>${nm}</option>`).join('');
+  const opts=t=>Object.entries(finCats()).filter(([,v])=>v[1]===(t==='entrada'?'e':'s')).map(([k,[nm]])=>`<option value="${k}" ${cat===k?'selected':''}>${esc(nm)}</option>`).join('')+'<option value="__novacat">+ Nova categoria…</option>';
   openSheet(n?(pre.lida?'Conferir nota':'Novo lançamento'):'Editar lançamento',`
     ${achou?`<p class="note" style="margin-top:0">${achou.length?`Li ${achou.join(', ')}. Confira antes de salvar.`:'Não consegui ler os dados da nota. Preencha à mão; a foto fica guardada junto.'}</p>`:''}
     <div class="seg" role="radiogroup" aria-label="Tipo">${[['saida','Saída (gasto)'],['entrada','Entrada']].map(([k,t])=>`<label><input type="radio" name="lc_t" value="${k}" ${l.tipo===k?'checked':''}><span>${t}</span></label>`).join('')}</div>
@@ -3401,7 +3414,7 @@ function formLanc(l,pre={}){const n=!l,cfg=finCfg();l=l||{id:uid(),tipo:pre.tipo
       <div class="field full"><label for="lc_ds">Descrição</label><input id="lc_ds" value="${esc(l.desc)}" placeholder="Ex.: gasolina, cabo de rede, almoço"></div>
       <div class="field"><label for="lc_f">Fornecedor ou cliente</label><input id="lc_f" value="${esc(l.fornecedor||'')}"></div>
       <div class="field"><label for="lc_doc">CNPJ ou CPF</label><input id="lc_doc" inputmode="numeric" value="${esc(soDig(l.doc).length===14?fmtCNPJ(l.doc):l.doc||'')}"></div>
-      <div class="field"><label for="lc_c">Categoria <span class="hint" id="lc_auto"></span></label><select id="lc_c"><option value="">Escolha…</option>${opts(l.tipo)}</select></div>
+      <div class="field"><label for="lc_c">Categoria <span class="hint" id="lc_auto"></span></label><select id="lc_c" data-nova-cat="${l.tipo==='entrada'?'e':'s'}"><option value="">Escolha…</option>${opts(l.tipo)}</select>${novaCatHTML(l.tipo==='entrada'?'e':'s')}</div>
       <div class="field"><label for="lc_fm">Forma de pagamento</label><select id="lc_fm">${Object.entries(FIN_FORMAS).map(([k,t])=>`<option value="${k}" ${l.forma===k?'selected':''}>${t}</option>`).join('')}</select></div>
       ${campoConta('lc_ct',l.contaId,'Conta (de onde saiu ou para onde entrou)')}
       <div class="field"><label for="lc_nf">Nº da nota fiscal</label><input id="lc_nf" inputmode="numeric" value="${esc((l.nf&&l.nf.numero)||'')}" placeholder="Se tiver"></div>
@@ -3413,7 +3426,8 @@ function formLanc(l,pre={}){const n=!l,cfg=finCfg();l=l||{id:uid(),tipo:pre.tipo
     const $=id=>L.querySelector('#'+id),tipo=()=>L.querySelector('input[name=lc_t]:checked').value,ax=[...(l.anexos||[])];
     const desenha=()=>{$('lc_ax').innerHTML=ax.map((a,i)=>`<div class="os-th"><img data-ax="${i}" alt="Nota ${i+1}"><button type="button" class="iconbtn os-x" data-axr="${i}" aria-label="Remover">${svg(UI.x)}</button></div>`).join('')+blobs.map((b,i)=>`<div class="os-th"><img data-bl="${i}" alt="Nota nova ${i+1}"><button type="button" class="iconbtn os-x" data-blr="${i}" aria-label="Remover">${svg(UI.x)}</button></div>`).join('')+
         `<label class="os-add">${svg(UI.plus)}<span>Adicionar foto</span><input type="file" accept="image/*" multiple hidden id="lc_add"></label>`;
-      if(!$('lc_axb')){$('lc_ax').insertAdjacentHTML('afterend',`<div class="row" id="lc_axb" style="gap:8px;margin-top:6px;align-items:center"><label class="btn sm">${svg(ICON_CAM)}Tirar foto<input type="file" accept="image/*" capture="environment" hidden id="lc_cam"></label><span class="hint">ou arraste a foto ou o PDF aqui</span></div>`);$('lc_cam').onchange=e=>{blobs.push(...e.target.files);e.target.value='';desenha()}}
+      if(!$('lc_axb')){$('lc_ax').insertAdjacentHTML('afterend',`<div class="row" id="lc_axb" style="gap:8px;margin-top:6px;align-items:center"><label class="btn sm">${svg(ICON_CAM)}Tirar foto<input type="file" accept="image/*" capture="environment" hidden id="lc_cam"></label><label class="btn sm">${svg(UI.up)}Enviar PDF<input type="file" accept="application/pdf,.pdf" multiple hidden id="lc_pdf"></label><span class="hint">ou arraste a foto ou o PDF aqui</span></div>`);$('lc_cam').onchange=e=>{blobs.push(...e.target.files);e.target.value='';desenha()};
+        $('lc_pdf').onchange=async e=>{const fs=[...e.target.files];e.target.value='';for(const f of fs){try{blobs.push(await pdfPagina(f))}catch(x){toast('Não consegui ler esse PDF.')}}desenha()}}
       $('lc_ax').querySelectorAll('[data-ax]').forEach(im=>{const a=ax[+im.dataset.ax];const s=fotoSync(a);if(s)im.src=s;else if(sb&&a.p)fotoSrc(a).then(u=>im.src=u).catch(()=>{})});
       $('lc_ax').querySelectorAll('[data-bl]').forEach(im=>{im.src=URL.createObjectURL(blobs[+im.dataset.bl])});
       $('lc_ax').querySelectorAll('[data-axr]').forEach(b=>b.onclick=()=>{ax.splice(+b.dataset.axr,1);desenha()});$('lc_ax').querySelectorAll('[data-blr]').forEach(b=>b.onclick=()=>{blobs.splice(+b.dataset.blr,1);desenha()});
@@ -3422,12 +3436,12 @@ function formLanc(l,pre={}){const n=!l,cfg=finCfg();l=l||{id:uid(),tipo:pre.tipo
     const zona=$('lc_ax').parentElement;zona.classList.add('campo-fotos');
     zona.addEventListener('dragover',e=>{e.preventDefault();zona.classList.add('over')});zona.addEventListener('dragleave',()=>zona.classList.remove('over'));
     zona.addEventListener('drop',async e=>{e.preventDefault();zona.classList.remove('over');for(const f of [...e.dataTransfer.files]){if(/^image\//.test(f.type))blobs.push(f);else if(f.type==='application/pdf'||/\.pdf$/i.test(f.name)){try{blobs.push(await pdfPagina(f))}catch(x){toast('Não consegui ler esse PDF.')}}}desenha()});
-    const sugere=()=>{if(manual)return;const c=classificar({fornecedor:$('lc_f').value,desc:$('lc_ds').value,doc:$('lc_doc').value,cnae:pre.cnae,itens:l.itens});if(c&&FIN_CATS[c][1]===(tipo()==='entrada'?'e':'s')){$('lc_c').value=c;$('lc_auto').textContent='· sugerida'}carro()};
+    const sugere=()=>{if(manual)return;const c=classificar({fornecedor:$('lc_f').value,desc:$('lc_ds').value,doc:$('lc_doc').value,cnae:pre.cnae,itens:l.itens});if(c&&finCats()[c]&&finCats()[c][1]===(tipo()==='entrada'?'e':'s')){$('lc_c').value=c;$('lc_auto').textContent='· sugerida'}carro()};
     const carro=()=>{if($('lc_carw'))$('lc_carw').hidden=!(tipo()==='saida'&&['combustivel','veiculo'].includes($('lc_c').value))};
-    L.querySelectorAll('input[name=lc_t]').forEach(r=>r.onchange=()=>{$('lc_c').innerHTML='<option value="">Escolha…</option>'+opts(tipo());if(tipo()==='entrada'&&!manual)$('lc_c').value='servicos';sugere();carro()});
+    L.querySelectorAll('input[name=lc_t]').forEach(r=>r.onchange=()=>{$('lc_c').innerHTML='<option value="">Escolha…</option>'+opts(tipo());$('lc_c').dataset.novaCat=tipo()==='entrada'?'e':'s';$('lc_c').parentElement.querySelector('.cat-nova').hidden=true;if(tipo()==='entrada'&&!manual)$('lc_c').value='servicos';sugere();carro()});
     ['lc_f','lc_ds'].forEach(i=>$(i).addEventListener('change',sugere));$('lc_c').onchange=()=>{manual=true;$('lc_auto').textContent='';carro()};
     if(cat&&!l.cat)$('lc_auto').textContent='· sugerida';carro();
-    $('lc_ok').onclick=async()=>{const vl=num($('lc_v').value);if(!(vl>0)){toast('Informe o valor.');return}const c=$('lc_c').value;if(!c){toast('Escolha a categoria.');return}
+    $('lc_ok').onclick=async()=>{const vl=num($('lc_v').value);if(!(vl>0)){toast('Informe o valor.');return}const c=$('lc_c').value;if(!c||c==='__novacat'){toast('Escolha ou crie a categoria.');return}
       const b=$('lc_ok');b.disabled=true;b.textContent='Salvando…';
       const nfN=$('lc_nf').value.trim(),nf=nfN||(l.nf&&l.nf.chave)?{...(l.nf||{}),numero:nfN}:null,doc=soDig($('lc_doc').value)||$('lc_doc').value.trim();
       try{const novos=blobs.length?await subirAnexos(l.id,blobs):[],anexos=[...ax,...novos];
@@ -3560,7 +3574,7 @@ function avisosFinanceiros(){const hoje=hojeISO(),ate=isoDia(new Date(Date.now()
   prox.forEach(o=>{const d=diasAte(o.vence);out.push({cls:d===0?'warn':'info',t:`Pagar ${o.cf.nome}: ${money(o.cf.valor)}`,h:`Vence ${d===0?'hoje':d===1?'amanhã':'em '+dataBR(o.vence)}`})});
   return out}
 function formContaFixa(cf){const n=!cf,cfg=finCfg();cf=cf||{id:uid(),freq:'mensal',dia:10,cat:'',contaId:contaPadrao(),inicio:ymHoje(),ativo:true,criadoEm:new Date().toISOString()};
-  const cats=Object.entries(FIN_CATS).filter(([,v])=>v[1]==='s');
+  const cats=Object.entries(finCats()).filter(([,v])=>v[1]==='s');
   openSheet(n?'Nova conta fixa':cf.nome,`<div class="form">
     <div class="field full"><label for="cx_n">Conta</label><input id="cx_n" value="${esc(cf.nome||'')}" placeholder="Ex.: aluguel, internet, celular, contador, parcela da furadeira"></div>
     <div class="field"><label for="cx_v">Valor (R$)</label><input id="cx_v" inputmode="decimal" value="${cf.valor!=null&&cf.valor!==''?num(cf.valor).toFixed(2).replace('.',','):''}"><span class="hint">Se varia, coloque uma média.</span></div>
@@ -3570,16 +3584,16 @@ function formContaFixa(cf){const n=!cf,cfg=finCfg();cf=cf||{id:uid(),freq:'mensa
     <div class="field" data-fq="unica"><label for="cx_dt">Vence em</label><input id="cx_dt" type="date" value="${esc(cf.data||'')}"></div>
     <div class="field" data-fq="mensal"><label for="cx_i">A partir de</label><input id="cx_i" type="month" value="${esc(cf.inicio||ymHoje())}"></div>
     <div class="field" data-fq="mensal"><label for="cx_p">Número de parcelas</label><input id="cx_p" inputmode="numeric" value="${esc(cf.parcelas||'')}" placeholder="Vazio = sem fim"></div>
-    <div class="field"><label for="cx_c">Categoria</label><select id="cx_c"><option value="">Escolha…</option>${cats.map(([k,[nm]])=>`<option value="${k}" ${cf.cat===k?'selected':''}>${nm}</option>`).join('')}</select></div>
+    <div class="field"><label for="cx_c">Categoria</label><select id="cx_c" data-nova-cat="s"><option value="">Escolha…</option>${cats.map(([k,[nm]])=>`<option value="${k}" ${cf.cat===k?'selected':''}>${esc(nm)}</option>`).join('')}<option value="__novacat">+ Nova categoria…</option></select>${novaCatHTML('s')}</div>
     ${campoConta('cx_ct',cf.contaId,'Sai da conta')}
     <label class="field full chk"><input type="checkbox" id="cx_a" ${cf.ativo!==false?'checked':''}> <span>Ativa <span class="hint">(desmarque quando parar de pagar)</span></span></label>
   </div>`,`${n?'':'<button class="btn danger left" id="cx_del">Excluir</button>'}<button class="btn" data-act="close">Cancelar</button><button class="btn primary" id="cx_ok">Salvar</button>`,L=>{
     const $=id=>L.querySelector('#'+id),mostra=()=>{const f=$('cx_f').value;L.querySelectorAll('[data-fq]').forEach(x=>x.hidden=!x.dataset.fq.split(' ').includes(f))};$('cx_f').onchange=mostra;mostra();
     let iniMexido=!n;$('cx_i').addEventListener('input',()=>iniMexido=true);const iniAuto=()=>{if(iniMexido)return;const d=Math.round(num($('cx_d').value))||1;$('cx_i').value=d<new Date().getDate()?ymMais(ymHoje(),1):ymHoje()};$('cx_d').addEventListener('input',iniAuto);iniAuto();
-    $('cx_n').addEventListener('change',()=>{if(!$('cx_c').value){const c=classificar({desc:$('cx_n').value});if(c&&FIN_CATS[c][1]==='s')$('cx_c').value=c}});
+    $('cx_n').addEventListener('change',()=>{if(!$('cx_c').value){const c=classificar({desc:$('cx_n').value});if(c&&finCats()[c]&&finCats()[c][1]==='s')$('cx_c').value=c}});
     $('cx_ok').onclick=async()=>{const nome=$('cx_n').value.trim(),f=$('cx_f').value;if(!nome){toast('Escreva o nome da conta.');return}
       const dia=Math.min(31,Math.max(1,Math.round(num($('cx_d').value))||1));if(f==='unica'&&!$('cx_dt').value){toast('Escolha a data de vencimento.');return}
-      const o={...cf,nome,valor:num($('cx_v').value),freq:f,dia,mes:+$('cx_m').value,data:$('cx_dt').value,inicio:$('cx_i').value||ymHoje(),parcelas:Math.round(num($('cx_p').value))||'',cat:$('cx_c').value||'outros',contaId:lerConta($('cx_ct')),ativo:$('cx_a').checked,atualizadoEm:new Date().toISOString()};
+      const o={...cf,nome,valor:num($('cx_v').value),freq:f,dia,mes:+$('cx_m').value,data:$('cx_dt').value,inicio:$('cx_i').value||ymHoje(),parcelas:Math.round(num($('cx_p').value))||'',cat:$('cx_c').value&&$('cx_c').value!=='__novacat'?$('cx_c').value:'outros',contaId:lerConta($('cx_ct')),ativo:$('cx_a').checked,atualizadoEm:new Date().toISOString()};
       if(await salvarOp('contasfixas',o,'Conta salva'))closeSheet()};
     if(!n)$('cx_del').onclick=()=>confirmSheet('Excluir conta fixa?',`${esc(cf.nome)} sai da lista. Os pagamentos já lançados continuam no financeiro.`,'Excluir',()=>store.remove('contasfixas',cf.id).then(()=>toast('Excluída'),()=>toast('Não foi possível excluir.')));
   })}
