@@ -450,6 +450,16 @@ body.apresentacao .internal{display:none!important}
 .acc-done{display:flex;flex-direction:column;gap:6px;background:#E3F5EA;color:#14532D;border-radius:10px;padding:14px;font-size:14px}
 .acc-done a{color:#14532D;font-weight:700}
 .recibo .pp-body{gap:16px}
+.po-list{display:flex;flex-direction:column;gap:10px}
+.po-card{display:flex;flex-direction:column;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;box-shadow:var(--shadow);cursor:pointer}.po-card b{font-size:16px}.po-card .muted{font-size:13.5px}
+.po-bls{display:flex;flex-direction:column;gap:10px}.po-bl{display:flex;flex-direction:column;gap:8px;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--surface)}
+.po-bl textarea,.po-bl input:not([type=file]){width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit}.po-bl textarea{min-height:80px}
+.po-bl-t{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--brand)}.po-bl-t svg{width:18px;height:18px}.po-prev{max-width:100%;max-height:180px;border-radius:8px;align-self:flex-start}
+.po-add{flex-wrap:wrap;border:1.5px dashed var(--line);border-radius:12px;padding:10px}
+.post .po-txt{margin:0;line-height:1.6;color:var(--paper-ink)}.post .po-txt b{font-weight:700}
+.po-passo{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;align-items:start;line-height:1.55;color:var(--paper-ink)}.po-n{width:30px;height:30px;border-radius:50%;background:var(--paper-blue);color:#fff;display:grid;place-items:center;font-weight:800}
+.po-img{display:block;max-width:100%;max-height:360px;border-radius:8px;margin:8px 0 0;border:1px solid var(--paper-line)}.po-fig{margin:0;text-align:center}.po-fig .po-img{margin:0 auto}.po-fig figcaption{font-size:12.5px;color:var(--paper-muted);margin-top:6px}
+.po-link{text-align:center}.po-dica{border-left:5px solid var(--paper-accent);background:var(--paper-soft);border-radius:6px;padding:10px 14px;line-height:1.55;color:var(--paper-ink)}.po-dica>b{display:block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--paper-accent);margin-bottom:2px}
 .ficha .fc-foto{display:flex;justify-content:center;background:var(--paper-soft);border-radius:10px;padding:14px}.ficha .fc-foto img{max-width:100%;max-height:230px;object-fit:contain}
 .fc-nome{font-family:var(--f-display);font-size:24px;line-height:1.2;margin:0;color:var(--paper-ink)}.fc-sub{color:var(--paper-muted);font-size:14px;margin-top:4px}
 .fc-ds{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;border:1px solid var(--paper-line);border-radius:10px;padding:14px}.fc-ds img{width:120px;height:120px;flex:none;display:block;image-rendering:pixelated}
@@ -632,6 +642,7 @@ const NAVI={
   agenda:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M8 14h3v3H8z"/>',
   garantias:'<path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/>',
   mais:'<rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><circle cx="17" cy="17" r="3"/>',
+  posts:'<path d="M4 4h12l4 4v12H4z"/><path d="M8 9h6M8 13h8M8 17h5"/>',
   galeria:'<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5-5-8 8"/>',
   financeiro:'<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M16 13.5h2"/><path d="M6 7l9-3.5L17 7"/><path d="M3 11h18"/>',
   operacional:'<path d="M4 16V12l2-5h12l2 5v4z"/><path d="M4 12h16"/><circle cx="8" cy="16.5" r="1.8"/><circle cx="16" cy="16.5" r="1.8"/>',
@@ -687,8 +698,8 @@ function idadePill(d){return d==null?'':`<span class="pill ${d>30?'conf-baixa':'
 
 const DEF_EMPRESA={nome:'DaylinTech',slogan:'Tecnologia que protege',cnpj:'',telefone:'',email:'',endereco:'',margem:30,imposto:6,despesas:0,arredondar:1,descontoPix:5,cartaoMax:12,cartaoSemJuros:3,cartaoJuros:2.99,pixTipo:'cpf',pixChave:'',pixNome:'',cidade:'',whatsapp:'',linkPagamento:'',responsavel:'',assinatura:'',validade:15,pagamento:'Oferecemos 3 formas de pagamento:\n1) 50% na aprovação e 50% na conclusão do serviço (Pix ou transferência).\n2) Pix à vista com 5% de desconto.\n3) Cartão de crédito em até 3x sem juros ou em até 12x com juros da operadora.',garantia:'Equipamentos: 12 meses de garantia do fabricante (verificar com o fabricante). Nos primeiros 30 dias, qualquer defeito tem troca expressa. Após os 30 dias, o equipamento com defeito é retirado e enviado para a análise de garantia do fabricante; durante esse período, o cliente pode ficar sem o equipamento.\nInstalação: 90 dias (3 meses) de garantia total com a DaylinTech: qualquer problema na instalação é resolvido sem custo. Após os 90 dias, é cobrada visita técnica de R$ 130,00 para diagnóstico.',garantiaEquipMeses:12,garantiaServDias:90,prazo:'Início da instalação em até 5 dias úteis após a aprovação.'};
 
-const COLS=['produtos','clientes','orcamentos','veiculos','gastos','compras','lancamentos','contasfixas','galeria'];
-const S={produtos:[],clientes:[],orcamentos:[],veiculos:[],gastos:[],compras:[],lancamentos:[],contasfixas:[],galeria:[],empresa:{...DEF_EMPRESA},ready:{produtos:false,clientes:false,orcamentos:false,veiculos:false,gastos:false,compras:false,lancamentos:false,contasfixas:false,galeria:false,empresa:false}};
+const COLS=['produtos','clientes','orcamentos','veiculos','gastos','compras','lancamentos','contasfixas','galeria','posts'];
+const S={produtos:[],clientes:[],orcamentos:[],veiculos:[],gastos:[],compras:[],lancamentos:[],contasfixas:[],galeria:[],posts:[],empresa:{...DEF_EMPRESA},ready:{produtos:false,clientes:false,orcamentos:false,veiculos:false,gastos:false,compras:false,lancamentos:false,contasfixas:false,galeria:false,posts:false,empresa:false}};
 let view={name:'home'};
 let ui={busca:'',cat:'todas',status:'todos',buscaCli:'',buscaMO:'',grupo:'todos'};
 let draft=null;
@@ -878,9 +889,9 @@ function confirmSheet(title,msg,okLabel,onOk){
 }
 
 /* ---------- Navegação ---------- */
-const TABS=[['home','Início'],['inicio','Orçamentos'],['agenda','Agenda'],['garantias','Garantias'],['catalogo','Catálogo'],['maodeobra','Mão de obra'],['clientes','Clientes'],['impostos','Impostos'],['operacional','Operacional'],['ajustes','Empresa'],['financeiro','Financeiro'],['galeria','Galeria']];
+const TABS=[['home','Início'],['inicio','Orçamentos'],['agenda','Agenda'],['garantias','Garantias'],['catalogo','Catálogo'],['maodeobra','Mão de obra'],['clientes','Clientes'],['impostos','Impostos'],['operacional','Operacional'],['ajustes','Empresa'],['financeiro','Financeiro'],['galeria','Galeria'],['posts','Postagens']];
 const NAV_MAIN=['home','inicio','agenda','financeiro','catalogo'];
-const NAV_MAIS=[['galeria','Fotos e vídeos dos serviços, por pasta'],['maodeobra','Serviços, preços e tempo de instalação'],['clientes','Cadastro, endereço e histórico de cada cliente'],['garantias','Clientes na garantia e notas fiscais'],['operacional','Carro, combustível e lista de compras',1],['impostos','Guias, declarações e CNPJ',1],['ajustes','Dados, Pix, textos padrão e backup',1]];
+const NAV_MAIS=[['galeria','Fotos e vídeos dos serviços, por pasta'],['posts','Aprendizados, ideias e tutoriais em PDF'],['maodeobra','Serviços, preços e tempo de instalação'],['clientes','Cadastro, endereço e histórico de cada cliente'],['garantias','Clientes na garantia e notas fiscais'],['operacional','Carro, combustível e lista de compras',1],['impostos','Guias, declarações e CNPJ',1],['ajustes','Dados, Pix, textos padrão e backup',1]];
 const tabNome=k=>(TABS.find(t=>t[0]===k)||[k,k])[1];
 function abrirMais(){const cur=view.name;
   openSheet('Mais',`<div class="mais">${NAV_MAIS.map(([k,d,int])=>`<button class="mais-i ${int?'internal':''}" data-nav="${k}" ${cur===k?'aria-current="page"':''}>${svg(NAVI[k])}<span><b>${tabNome(k)}</b><span class="hint">${d}</span></span></button>`).join('')}</div>`)}
@@ -909,7 +920,7 @@ function render(fromSnap){
   if(fromSnap&&view.name==='editor'){if(!autoQuieto)renderEditorParts();return}
   const active=document.activeElement&&document.activeElement.id;
   const pos=document.activeElement&&document.activeElement.selectionStart;
-  ({home:vHome,inicio:vInicio,catalogo:vCatalogo,maodeobra:vMaoDeObra,clientes:vClientes,ajustes:vAjustes,editor:vEditor,proposta:vProposta,agenda:vAgenda,os:vOS,garantias:vGarantias,impostos:vImpostos,operacional:vOperacional,financeiro:vFinanceiro,galeria:vGaleria}[view.name]||vHome)(app);
+  ({home:vHome,inicio:vInicio,catalogo:vCatalogo,maodeobra:vMaoDeObra,clientes:vClientes,ajustes:vAjustes,editor:vEditor,proposta:vProposta,agenda:vAgenda,os:vOS,garantias:vGarantias,impostos:vImpostos,operacional:vOperacional,financeiro:vFinanceiro,galeria:vGaleria,posts:vPosts}[view.name]||vHome)(app);
   agendarSync();
   if(active){const el=document.getElementById(active);if(el&&el.tagName==='INPUT'&&el.type==='search'){el.focus();try{el.setSelectionRange(pos,pos)}catch(e){}}}
 }
@@ -3915,6 +3926,91 @@ function nfseSheet(o){const cur=S.orcamentos.find(x=>x.id===o.id)||o,c=S.cliente
 // Aviso: cliente empresa (CNPJ) pagou e ainda não tem nota. O MEI é obrigado a emitir para empresa.
 function avisosNota(){const sem=S.orcamentos.filter(o=>o.pgto&&!o.nfse&&String(o.pgto.data||'')>=ymMais(ymHoje(),-2)).filter(o=>{const c=S.clientes.find(x=>x.id===o.clienteId)||{};return soDig(o.pgto.doc||c.documento).length===14||c.tipo==='PJ'});
   return sem.slice(0,3).map(o=>({cls:'warn',t:`Emitir nota fiscal: ${cliNome(o)}`,h:`Pagou ${money(o.pgto.valor)} em ${dataBR(o.pgto.data)}. Para empresa, o MEI precisa emitir a nota.`,orc:o.id}))}
+/* ---------- Postagens: aprendizados, ideias e tutoriais (com PDF para o cliente) ---------- */
+// Coleção "posts": {titulo, tipo, resumo, blocos:[{t:'texto'|'passo'|'foto'|'link'|'dica', txt, url, foto, leg}], cliente (pode mostrar ao cliente), fixado}.
+// Fotos no bucket os-fotos, pasta posts/ (subirAnexos). Links e endereços escritos no texto viram links clicáveis no PDF.
+const POST_TIPOS={tutorial:'Tutorial',aprendizado:'Aprendizado',ideia:'Ideia',anotacao:'Anotação'};
+const BLOCO_NOMES={texto:'Texto',passo:'Passo',foto:'Foto',link:'Link',dica:'Dica / atenção'};
+const BLOCO_ICON={texto:'<path d="M5 6h14M5 11h14M5 16h9"/>',passo:'<circle cx="12" cy="12" r="8"/><path d="M11 9h1.5v6"/>',foto:'<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5-5-8 8"/>',link:'<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',dica:'<path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/>'};
+// Texto com **negrito** e links (https://… ou www…) clicáveis no app e no PDF.
+function textoRico(t){return esc(t).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/(https?:\/\/[^\s<]+|www\.[^\s<]+)/g,u=>{const h=u.replace(/[.,;:)]+$/,''),r=u.slice(h.length),url=/^https?:/.test(h)?h:'https://'+h;return `<a class="pdf-lk" href="${url}" target="_blank" rel="noopener" data-pdf-link="${url}">${h}</a>${r}`}).replace(/\n/g,'<br>')}
+const postFotos=p=>(p.blocos||[]).filter(b=>b.t==='foto'&&b.foto).map(b=>b.foto);
+function postHTML(p,src){let n=0;const e=S.empresa,blocos=(p.blocos||[]).map(b=>{
+    if(b.t==='passo'){n++;return `<div class="po-passo"><span class="po-n">${n}</span><div>${textoRico(b.txt||'')}${b.foto&&src(b.foto)?`<img class="po-img" src="${src(b.foto)}" alt="">`:''}</div></div>`}
+    if(b.t==='foto')return src(b.foto)?`<figure class="po-fig"><img class="po-img" src="${src(b.foto)}" alt="">${b.leg?`<figcaption>${esc(b.leg)}</figcaption>`:''}</figure>`:'';
+    if(b.t==='link'){const u=normUrl(b.url||'');return u?`<div class="po-link"><a class="fc-ver" href="${esc(u)}" target="_blank" rel="noopener" data-pdf-link="${esc(u)}">${esc(b.txt||'Abrir link')} ↗</a></div>`:''}
+    if(b.t==='dica')return `<div class="po-dica"><b>Atenção</b><div>${textoRico(b.txt||'')}</div></div>`;
+    return `<p class="po-txt">${textoRico(b.txt||'')}</p>`}).join('');
+  return `<div class="paper recibo post"><div class="pp-band"><div class="pp-id"><img class="pp-logo2" src="${LOGO}" alt="${esc(e.nome)}"></div><div class="pp-num"><div class="k">${esc(POST_TIPOS[p.tipo]||'Guia')}</div><div class="n" style="font-size:18px">${esc(e.nome||'DaylinTech')}</div></div></div><div class="pp-stripe"></div>
+    <div class="pp-body"><div><h2 class="fc-nome">${esc(p.titulo||'Sem título')}</h2>${p.resumo?`<div class="fc-sub">${esc(p.resumo)}</div>`:''}</div>${blocos}
+    <div class="fc-rod"><b>${esc(e.nome||'DaylinTech')}</b>${e.slogan?` · ${esc(e.slogan)}`:''}${contatosLinks(e).length?`<br><span>${contatosLinks(e).map(linkPDF).join(' · ')}</span>`:''}</div></div></div>`}
+const postSrc=f=>fotoSync(f);
+async function carregarPostFotos(p){await Promise.all(postFotos(p).map(f=>fotoSync(f)?null:fotoSrc(f).catch(()=>null)))}
+function textoPost(p){let n=0;return [`*${p.titulo}*`,p.resumo||'','',...(p.blocos||[]).map(b=>b.t==='passo'?`${++n}. ${b.txt||''}`:b.t==='link'?`${b.txt||'Link'}: ${normUrl(b.url||'')}`:b.t==='dica'?`⚠️ ${b.txt||''}`:b.t==='foto'?'':b.txt||'').filter(Boolean),'',S.empresa.nome||'DaylinTech'].join('\n').replace(/\n{3,}/g,'\n\n')}
+async function pdfPost(p){await carregarPostFotos(p);const base=(arqNome(p.titulo||'guia').normalize('NFD').replace(/[̀-ͯ]/g,'')||'guia');return new File([await htmlPDF(postHTML(p,postSrc))],base+'.pdf',{type:'application/pdf'})}
+function verPost(p){
+  openSheet(POST_TIPOS[p.tipo]||'Postagem',`<div class="paper-wrap" id="pv_w">${postHTML(p,postSrc)}</div>`,
+    `<button class="btn left internal" id="pv_ed">${svg(UI.edit)}Editar</button><button class="btn" id="pv_cp">${svg(UI.copy)}Texto</button><button class="btn" id="pv_dl">${svg(UI.dl)}Baixar PDF</button><button class="btn primary" id="pv_sh">${svg(ICON_SHARE)}Compartilhar</button>`,L=>{
+    L.querySelector('.sheet').style.maxWidth='860px';const $=id=>L.querySelector('#'+id);
+    carregarPostFotos(p).then(()=>{const w=$('pv_w');if(w)w.innerHTML=postHTML(p,postSrc)});
+    $('pv_ed').onclick=()=>formPost(p);$('pv_cp').onclick=()=>copyText(textoPost(p));
+    const gera=async b=>{b.disabled=true;const t=b.innerHTML;b.textContent='Gerando…';try{return await pdfPost(p)}catch(e){toast('Não foi possível gerar o PDF.');return null}finally{b.disabled=false;b.innerHTML=t}};
+    $('pv_dl').onclick=async()=>{const f=await gera($('pv_dl'));if(f){await baixar(f.name,f,f.type);toast('PDF baixado.')}};
+    $('pv_sh').onclick=async()=>{const f=await gera($('pv_sh'));if(!f)return;const txt=`${p.titulo} — ${S.empresa.nome||'DaylinTech'}`;
+      if(navigator.canShare&&navigator.canShare({files:[f]})){try{await navigator.share({files:[f],title:p.titulo,text:txt});return}catch(e){if(e&&e.name==='AbortError')return}}
+      await baixar(f.name,f,f.type);window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank','noopener');toast('PDF baixado: anexe na conversa.')};
+  })}
+function formPost(p){const n=!p;p=p?JSON.parse(JSON.stringify(p)):{id:uid(),titulo:'',tipo:'tutorial',resumo:'',blocos:[{t:'texto',txt:''}],cliente:true,criadoEm:new Date().toISOString()};
+  const blobs={};// id do bloco → arquivo de foto novo
+  openSheet(n?'Nova postagem':'Editar postagem',`<div class="form">
+    <div class="field full"><label for="po_t">Título</label><input id="po_t" value="${esc(p.titulo)}" placeholder="Ex.: Como acessar as câmeras pelo celular"></div>
+    <div class="field"><label for="po_tp">Tipo</label><select id="po_tp">${Object.entries(POST_TIPOS).map(([k,l])=>`<option value="${k}" ${p.tipo===k?'selected':''}>${l}</option>`).join('')}</select></div>
+    <label class="field chk" style="align-self:end"><input type="checkbox" id="po_cli" ${p.cliente?'checked':''}> <span>Pode mostrar ao cliente</span></label>
+    <div class="field full"><label for="po_r">Resumo (opcional)</label><input id="po_r" value="${esc(p.resumo||'')}" placeholder="Ex.: Passo a passo no app Intelbras iSIC Lite"></div>
+  </div>
+  <div class="sec-k" style="margin-top:6px">Conteúdo</div>
+  <div id="po_bl" class="po-bls"></div>
+  <div class="row po-add" style="gap:6px">${Object.entries(BLOCO_NOMES).map(([k,l])=>`<button type="button" class="btn sm" data-novo="${k}">${svg(BLOCO_ICON[k])}${l}</button>`).join('')}</div>
+  <p class="hint" style="margin:0">Dica: escreva **assim** para negrito. Endereços como https://… ou www… viram links clicáveis no PDF.</p>`,
+  `${n?'':'<button class="btn danger left" id="po_del">Excluir</button>'}<button class="btn" data-act="close">Cancelar</button><button class="btn primary" id="po_ok">Salvar</button>`,L=>{const $=id=>L.querySelector('#'+id),box=$('po_bl');
+    p.blocos.forEach(b=>{if(!b.id)b.id=uid()});
+    const ler=()=>{box.querySelectorAll('[data-b]').forEach(el=>{const b=p.blocos.find(x=>x.id===el.dataset.b);if(!b)return;el.querySelectorAll('[data-k]').forEach(i=>{b[i.dataset.k]=i.value})})};
+    const desenha=()=>{let num=0;box.innerHTML=p.blocos.map((b,i)=>{const idx=b.t==='passo'?++num:0,img=blobs[b.id]?URL.createObjectURL(blobs[b.id]):b.foto?fotoSync(b.foto):'';
+      return `<div class="po-bl" data-b="${b.id}"><div class="spread" style="align-items:center"><b class="po-bl-t">${svg(BLOCO_ICON[b.t])}${BLOCO_NOMES[b.t]}${idx?' '+idx:''}</b><div class="row" style="gap:2px"><button type="button" class="iconbtn" data-up="${i}" aria-label="Subir" ${i?'':'disabled'}>↑</button><button type="button" class="iconbtn" data-dn="${i}" aria-label="Descer" ${i<p.blocos.length-1?'':'disabled'}>↓</button><button type="button" class="iconbtn" data-rmb="${i}" aria-label="Apagar bloco">${svg(UI.trash)}</button></div></div>
+      ${b.t==='link'?`<input data-k="txt" value="${esc(b.txt||'')}" placeholder="Texto do botão (ex.: Baixar o app iSIC Lite)"><input data-k="url" inputmode="url" value="${esc(b.url||'')}" placeholder="https://…">`
+        :b.t==='foto'?`${img?`<img class="po-prev" src="${esc(img)}" alt="">`:''}<div class="row" style="gap:6px"><label class="btn sm">${svg(UI.plus)}${img?'Trocar foto':'Escolher foto'}<input type="file" accept="image/*" hidden data-fot="${b.id}"></label><label class="btn sm">${svg(ICON_CAM)}Tirar foto<input type="file" accept="image/*" capture="environment" hidden data-fot="${b.id}"></label></div><input data-k="leg" value="${esc(b.leg||'')}" placeholder="Legenda (opcional)">`
+        :`<textarea data-k="txt" placeholder="${b.t==='passo'?'Ex.: Abra o app e toque em Adicionar dispositivo':b.t==='dica'?'Ex.: Anote a senha do equipamento antes de resetar':'Escreva aqui…'}">${esc(b.txt||'')}</textarea>${b.t==='passo'?`${img?`<img class="po-prev" src="${esc(img)}" alt="">`:''}<label class="btn sm" style="align-self:flex-start">${svg(UI.plus)}${img?'Trocar foto do passo':'Foto do passo (opcional)'}<input type="file" accept="image/*" hidden data-fot="${b.id}"></label>`:''}`}
+      </div>`}).join('')||'<p class="hint">Adicione blocos com os botões abaixo.</p>';
+      box.querySelectorAll('img.po-prev').forEach(im=>{if(!im.getAttribute('src')){}});
+      p.blocos.forEach(b=>{if(b.foto&&!fotoSync(b.foto)&&sb)fotoSrc(b.foto).then(()=>{if(!blobs[b.id]){ler();desenha()}}).catch(()=>{})})};
+    desenha();
+    box.addEventListener('click',e=>{const t=e.target.closest('[data-up],[data-dn],[data-rmb]');if(!t)return;ler();const i=+(t.dataset.up??t.dataset.dn??t.dataset.rmb);
+      if(t.dataset.up!=null)[p.blocos[i-1],p.blocos[i]]=[p.blocos[i],p.blocos[i-1]];else if(t.dataset.dn!=null)[p.blocos[i+1],p.blocos[i]]=[p.blocos[i],p.blocos[i+1]];else p.blocos.splice(i,1);desenha()});
+    box.addEventListener('change',e=>{const f=e.target.closest('[data-fot]');if(!f||!f.files[0])return;ler();blobs[f.dataset.fot]=f.files[0];desenha()});
+    L.querySelectorAll('[data-novo]').forEach(b=>b.onclick=()=>{ler();p.blocos.push({id:uid(),t:b.dataset.novo,txt:''});desenha();const ult=box.lastElementChild;if(ult){ult.scrollIntoView({block:'center',behavior:'smooth'});const i=ult.querySelector('textarea,input:not([type=file])');if(i)i.focus()}});
+    $('po_ok').onclick=async()=>{ler();const titulo=$('po_t').value.trim();if(!titulo){toast('Dê um título para a postagem.');return}
+      const bt=$('po_ok');bt.disabled=true;bt.textContent='Salvando…';
+      try{for(const b of p.blocos){if(blobs[b.id]){const [a]=await subirAnexos(p.id,[blobs[b.id]],'posts');b.foto=a}}}catch(e){bt.disabled=false;bt.textContent='Salvar';toast('Não foi possível enviar a foto. Confira a internet.');return}
+      const o={...p,titulo,tipo:$('po_tp').value,resumo:$('po_r').value.trim(),cliente:$('po_cli').checked,blocos:p.blocos.filter(b=>b.t==='foto'?b.foto:b.t==='link'?b.url:String(b.txt||'').trim()),atualizadoEm:new Date().toISOString()};
+      if(await salvarOp('posts',o,'Postagem salva')){closeSheet();verPost(o)}else{bt.disabled=false;bt.textContent='Salvar'}};
+    if(!n)$('po_del').onclick=()=>confirmSheet('Excluir postagem?',`"${esc(p.titulo)}" será apagada.`,'Excluir',()=>store.remove('posts',p.id).then(()=>toast('Excluída'),()=>toast('Não foi possível excluir.')));
+  })}
+function vPosts(app){const q=normNome(ui.postBusca||''),tp=ui.postTipo||'todos',ps=[...(S.posts||[])].filter(p=>(tp==='todos'||p.tipo===tp)&&(!q||normNome([p.titulo,p.resumo,...(p.blocos||[]).map(b=>b.txt)].join(' ')).includes(q)))
+    .sort((a,b)=>(b.fixado?1:0)-(a.fixado?1:0)||String(b.atualizadoEm||b.criadoEm).localeCompare(String(a.atualizadoEm||a.criadoEm)));
+  const prev=p=>{const b=(p.blocos||[]).find(x=>x.txt&&x.t!=='link');return p.resumo||(b?b.txt.replace(/\*\*/g,'').slice(0,140):'')};
+  app.innerHTML=`<div class="spread"><div><div class="eyebrow">Aprendizados, ideias e tutoriais</div><h1 class="h1">Postagens</h1></div><button class="btn primary internal" id="ps_novo">${svg(UI.plus)}Nova postagem</button></div>
+    <label class="search">${svg(UI.search)}<input type="search" id="ps_q" placeholder="Buscar postagem" value="${esc(ui.postBusca||'')}" aria-label="Buscar postagem"></label>
+    <div class="chips">${[['todos','Todas'],...Object.entries(POST_TIPOS)].map(([k,l])=>`<button class="chip" data-pt="${k}" aria-pressed="${tp===k}">${l}</button>`).join('')}</div>
+    ${ps.length?`<div class="po-list">${ps.map(p=>`<article class="po-card ${p.cliente?'':'internal'}" data-post="${p.id}" tabindex="0" role="button"><div class="spread" style="align-items:center;gap:8px"><span class="pill st-enviado">${esc(POST_TIPOS[p.tipo]||'Postagem')}</span><span class="hint">${p.fixado?'📌 ':''}${fmtDate(p.atualizadoEm||p.criadoEm)}</span></div><b>${esc(p.titulo)}</b>${prev(p)?`<span class="muted">${esc(prev(p))}</span>`:''}
+      <div class="row" style="gap:6px;justify-content:flex-end"><button class="btn sm internal" data-pfix="${p.id}">${p.fixado?'Desafixar':'Fixar'}</button><button class="btn sm" data-psh="${p.id}">${svg(ICON_SHARE)}PDF</button></div></article>`).join('')}</div>`
+      :`<div class="empty"><b>${(S.posts||[]).length?'Nada encontrado':'Nenhuma postagem ainda'}</b><span class="muted">Guarde aqui o que você aprende no dia a dia e monte tutoriais para mandar ao cliente em PDF, como "Como ver as câmeras pelo celular" ou "Como cadastrar digital na fechadura".</span></div>`}`;
+  const $=id=>app.querySelector('#'+id);$('ps_novo').onclick=()=>formPost();
+  $('ps_q').addEventListener('input',e=>{ui.postBusca=e.target.value;render()});
+  app.querySelectorAll('[data-pt]').forEach(b=>b.onclick=()=>{ui.postTipo=b.dataset.pt;render()});
+  app.querySelectorAll('[data-post]').forEach(c=>c.onclick=e=>{if(e.target.closest('button'))return;verPost(S.posts.find(p=>p.id===c.dataset.post))});
+  app.querySelectorAll('[data-psh]').forEach(b=>b.onclick=()=>verPost(S.posts.find(p=>p.id===b.dataset.psh)));
+  app.querySelectorAll('[data-pfix]').forEach(b=>b.onclick=()=>{const p=S.posts.find(x=>x.id===b.dataset.pfix);salvarOp('posts',{...p,fixado:!p.fixado})});
+}
 function vProposta(app){
   const o=S.orcamentos.find(x=>x.id===view.id);
   if(!o){app.innerHTML=`<div class="empty"><b>Orçamento não encontrado</b><button class="btn" data-nav="inicio">Voltar</button></div>`;return}
