@@ -2863,7 +2863,7 @@ async function consultaCNPJ(cnpj){const d=soDig(cnpj);if(d.length!==14)throw new
     try{const r=await fetch(u);if(r.status===404||r.status===400)throw new Error('naoachou');if(!r.ok)throw new Error('rede');const j=await r.json();if(!j||!j.cnpj&&!j.razao_social)throw new Error('naoachou');return j}catch(e){ult=e;if(e.message==='naoachou')break}}
   throw ult}
 function resumoCNPJ(j){const sim=v=>v===true||v==='S'||v==='Sim';
-  return {cnpj:soDig(j.cnpj),razao:j.razao_social||'',fantasia:j.nome_fantasia||'',situacao:j.descricao_situacao_cadastral||j.situacao_cadastral||'',dataSituacao:j.data_situacao_cadastral||'',
+  return {cnpj:soDig(j.cnpj),razao:j.razao_social||'',fantasia:j.nome_fantasia||'',situacao:j.descricao_situacao_cadastral||j.situacao_cadastral||'',dataSituacao:j.data_situacao_cadastral||'',motivo:j.descricao_motivo_situacao_cadastral&&!/^SEM MOTIVO/i.test(j.descricao_motivo_situacao_cadastral)?j.descricao_motivo_situacao_cadastral:'',
     abertura:j.data_inicio_atividade||'',porte:j.porte||j.descricao_porte||'',natureza:j.natureza_juridica||'',
     cnae:[j.cnae_fiscal,j.cnae_fiscal_descricao].filter(Boolean).join(' · '),secundarios:(j.cnaes_secundarios||[]).filter(c=>c&&c.codigo).map(c=>c.codigo+' · '+(c.descricao||'')),
     mei:sim(j.opcao_pelo_mei),meiDesde:j.data_opcao_pelo_mei||'',meiFim:j.data_exclusao_do_mei||'',simples:sim(j.opcao_pelo_simples),simplesDesde:j.data_opcao_pelo_simples||'',simplesFim:j.data_exclusao_do_simples||'',
@@ -2884,7 +2884,7 @@ function icsFiscal(f){const z=s=>String(s).replace(/[\\,;]/g,m=>'\\'+m),agora=ne
 function textoFiscal(f){const r=resumoFiscal(f),c=f.consulta||{},anos=[...new Set(r.gs.map(g=>g.ym.slice(0,4)))];
   const porAno=anos.map(a=>{const x=r.atr.filter(g=>g.ym.startsWith(a));return x.length?`${a}: ${x.length} (${x.map(g=>ymTxt(g.ym).split('/')[0]).join(', ')})`:''}).filter(Boolean);
   return [`*Situação fiscal — ${S.empresa.nome||'DaylinTech'}*`,
-    `CNPJ: ${fmtCNPJ(c.cnpj||S.empresa.cnpj||'')||'não informado'}${c.situacao?` (${c.situacao})`:''}`,
+    `CNPJ: ${fmtCNPJ(c.cnpj||S.empresa.cnpj||'')||'não informado'}${c.situacao?` (${c.conferidaAtiva&&c.conferidaAtiva>=(c.dataSituacao||'')?'ATIVA, conferida no site da Receita':c.situacao+(c.motivo?' por '+c.motivo.toLowerCase():'')})`:''}`,
     `Regime: ${REGIMES[f.regime]}${f.inicio?` desde ${ymTxt(f.inicio.slice(0,7))}`:''}${c.cnae?`\nAtividade principal: ${c.cnae}`:''}`,
     `Guias em atraso: ${r.atr.length?`${r.atr.length}, cerca de ${money(r.devido)} (${money(r.devido+r.multa)} com multa, fora juros)`:'nenhuma marcada'}`,...porAno.map(x=>'• '+x),
     `${anualNome(f)} pendente: ${r.an.length?r.an.map(x=>x.ano).join(', '):'nenhuma'}`,
@@ -2909,7 +2909,7 @@ function guiaSheet(g,f){const v=g.valor,st=g.st;
 function vImpostos(app){
   const f=fiscal(),c=f.consulta,t=f.titular||{},mei=f.regime==='mei',r=resumoFiscal(f),hoje=hojeISO(),ano=+hoje.slice(0,4);
   const an=anuais(f),ir=irpfs(f),rAno=receitas(String(ano));
-  const sitCls=s=>/ATIVA/i.test(s)&&!/INAPTA/i.test(s)?'ok':'bad';
+  const sitCls=s=>/ATIVA/i.test(s)&&!/INAPTA/i.test(s)?'ok':'bad',conf=c&&c.conferidaAtiva&&c.conferidaAtiva>=(c.dataSituacao||'')?c.conferidaAtiva:'';
   const anos=[...new Set(r.gs.map(g=>g.ym.slice(0,4)))].reverse();
   const meses=anos.map(a=>{const gs=r.gs.filter(g=>g.ym.startsWith(a)),ab=gs.filter(g=>g.atr).length;
     return `<div class="fx-ano"><div class="spread" style="align-items:center"><b>${a}</b><span class="hint">${ab?`<span style="color:var(--bad)">${ab} em atraso</span>`:gs.every(g=>g.st!=='aberto'||!g.atr)?'em dia':''}</span>${ab?`<button class="linkbtn" data-fx-ano="${a}">Marcar todas como pagas</button>`:''}</div>
@@ -2927,7 +2927,7 @@ function vImpostos(app){
     {ok:!!f.lembretes,t:'Ligar os lembretes no celular',h:'Todo dia 15 o celular avisa para pagar a guia, e uma vez por ano lembra das declarações.',a:[],b:'Lembretes'}];
   const feitos=passos.filter(p=>p.ok).length;
   app.innerHTML=`
-  <div class="spread"><div><div class="eyebrow">${REGIMES[f.regime]}${c&&c.situacao?' · '+esc(c.situacao):''}</div><h1 class="h1">Impostos</h1></div><button class="btn" id="fx_res">${svg(UI.copy)}Copiar resumo</button></div>
+  <div class="spread"><div><div class="eyebrow">${REGIMES[f.regime]}${c&&c.situacao?' · '+esc(conf?'ATIVA':c.situacao):''}</div><h1 class="h1">Impostos</h1></div><button class="btn" id="fx_res">${svg(UI.copy)}Copiar resumo</button></div>
   <div class="fx-cards">
     <div class="fx-card ${r.atr.length?'bad':'ok'}"><span>Guias em atraso</span><b>${r.atr.length}</b><span>${r.atr.length?`≈ ${money(r.devido+r.multa)} com multa`:f.inicio?'Nenhuma marcada':'Consulte o CNPJ'}</span></div>
     <div class="fx-card"><span>Próxima guia</span><b>${r.prox?dataBR(r.prox.vence).slice(0,5):'—'}</b><span>${r.prox?`${ymTxt(r.prox.ym)} · ≈ ${money(r.prox.valor)}`:'—'}</span></div>
@@ -2944,7 +2944,7 @@ function vImpostos(app){
     <div class="row" style="gap:8px;flex-wrap:nowrap"><input id="fx_cnpj" value="${esc(fmtCNPJ(S.empresa.cnpj||(c&&c.cnpj)||''))}" inputmode="numeric" placeholder="00.000.000/0000-00" aria-label="CNPJ" style="flex:1;min-width:0"><button class="btn primary" id="fx_cons">${svg(UI.search)}Consultar</button></div>
     ${c?`<dl class="fx-dl">
       <div><dt>Razão social</dt><dd>${esc(c.razao)}${c.fantasia?` (${esc(c.fantasia)})`:''}</dd></div>
-      <div><dt>Situação</dt><dd><span class="pill fx-${sitCls(c.situacao)}">${esc(c.situacao||'—')}</span>${c.dataSituacao?` desde ${dataBR(c.dataSituacao)}`:''}</dd></div>
+      <div><dt>Situação</dt><dd>${conf&&sitCls(c.situacao)!=='ok'?`<span class="pill fx-ok">ATIVA</span> conferida por você no site da Receita em ${dataBR(conf)}<br><span class="hint">Nos dados públicos ainda consta ${esc(c.situacao)} desde ${dataBR(c.dataSituacao)}</span>`:`<span class="pill fx-${sitCls(c.situacao)}">${esc(c.situacao||'—')}</span>${c.dataSituacao?` desde ${dataBR(c.dataSituacao)}`:''}${c.motivo?`<br><span class="hint">Motivo: ${esc(cap(c.motivo.toLowerCase()))}</span>`:''}`}</dd></div>
       <div><dt>Aberta em</dt><dd>${dataBR(c.abertura)||'—'}</dd></div>
       <div><dt>MEI</dt><dd>${c.mei?`Sim, desde ${dataBR(c.meiDesde)}`:c.meiFim?`Saiu em ${dataBR(c.meiFim)}`:'Não'}</dd></div>
       <div><dt>Simples Nacional</dt><dd>${c.simples?`Sim${c.simplesDesde?`, desde ${dataBR(c.simplesDesde)}`:''}`:c.simplesFim?`Saiu em ${dataBR(c.simplesFim)}`:'Não'}</dd></div>
@@ -2952,7 +2952,7 @@ function vImpostos(app){
       <div class="full"><dt>Atividade principal</dt><dd>${esc(c.cnae||'—')}</dd></div>
       ${c.secundarios&&c.secundarios.length?`<div class="full"><dt>Atividades secundárias</dt><dd>${c.secundarios.map(esc).join('<br>')}</dd></div>`:''}
       ${c.endereco?`<div class="full"><dt>Endereço</dt><dd>${esc(c.endereco)}</dd></div>`:''}
-    </dl>${!sitCls(c.situacao).includes('ok')?`<p class="note" style="margin:0;color:var(--bad)">O CNPJ não está ativo. Isso costuma acontecer por falta de declarações. Entregue as declarações pendentes e consulte de novo.</p>`:''}`:'<p class="hint" style="margin:0">A consulta usa os dados públicos da Receita Federal (os mesmos do cartão CNPJ). Débitos não aparecem aqui: eles ficam no PGMEI, que pede o CNPJ e uma verificação de segurança.</p>'}
+    </dl>${sitCls(c.situacao)!=='ok'&&!conf?`<div class="note" style="margin:0"><b style="color:var(--bad)">O CNPJ aparece como ${esc(c.situacao)}${c.motivo?` por ${esc(c.motivo.toLowerCase())}`:''}.</b> ${/omiss/i.test(c.motivo||'')?'Isso acontece quando falta entregar declaração (no MEI, a DASN-SIMEI). Entregue as que faltam no passo a passo acima.':'Entregue as declarações pendentes e consulte de novo.'}<br><br>Estes dados públicos são atualizados pela Receita <b>uma vez por mês</b>. Se você já regularizou e o Cartão CNPJ no site da Receita mostra <b>ATIVA</b>, marque aqui:<div class="row" style="gap:6px;margin-top:8px"><a class="btn sm" href="${FX_LINK.cartao}" target="_blank" rel="noopener">Abrir Cartão CNPJ</a><button class="btn sm primary" id="fx_conf">Conferi: está ATIVA</button></div></div>`:''}${conf&&sitCls(c.situacao)!=='ok'?`<p class="hint" style="margin:0">Quando os dados públicos atualizarem, consulte de novo. <button class="linkbtn" id="fx_desconf">Desfazer a conferência</button></p>`:''}`:'<p class="hint" style="margin:0">A consulta usa os dados públicos da Receita Federal (os mesmos do cartão CNPJ). Débitos não aparecem aqui: eles ficam no PGMEI, que pede o CNPJ e uma verificação de segurança.</p>'}
     <div class="row" style="gap:6px"><a class="btn sm" href="${FX_LINK.cartao}" target="_blank" rel="noopener">Cartão CNPJ na Receita</a><a class="btn sm" href="${FX_LINK.ecac}" target="_blank" rel="noopener">e-CAC</a></div>
   </section>
   <section class="panel">
@@ -2997,6 +2997,8 @@ function vImpostos(app){
   </section>`;
   const $=id=>app.querySelector('#'+id),salva=async(m,msg)=>{try{await salvarFiscal(m);if(msg)toast(msg)}catch(e){toast('Não foi possível salvar. Tente de novo.')}};
   $('fx_res').onclick=()=>copyText(textoFiscal(f));
+  if($('fx_conf'))$('fx_conf').onclick=()=>salva({consulta:{...c,conferidaAtiva:hojeISO()}},'Anotado: CNPJ ativo conferido no site da Receita');
+  if($('fx_desconf'))$('fx_desconf').onclick=()=>{const n={...c};delete n.conferidaAtiva;salva({consulta:n})};
   $('fx_cons').onclick=async()=>{const b=$('fx_cons'),v=$('fx_cnpj').value;if(soDig(v).length!==14){toast('Digite os 14 números do CNPJ.');return}
     b.disabled=true;b.textContent='Consultando…';
     try{const j=resumoCNPJ(await consultaCNPJ(v)),m={consulta:j};
