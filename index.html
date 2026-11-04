@@ -292,6 +292,7 @@ body.apresentacao .internal{display:none!important}
 .nf-ls{display:flex;flex-direction:column}.nf-l{display:grid;grid-template-columns:110px minmax(0,1fr) auto;gap:2px 10px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}.nf-ls .nf-l:first-child{border-top:0}
 .nf-l b{font-weight:600;overflow-wrap:anywhere}.nf-l>.hint:nth-child(3){grid-column:2}.nf-l>.btn{grid-row:1;grid-column:3}
 @media (max-width:560px){.nf-l{grid-template-columns:minmax(0,1fr) auto}.nf-l>.hint:first-child{grid-column:1/-1}.nf-l>b{grid-column:1}.nf-l>.hint:nth-child(3){grid-column:1}.nf-l>.btn{grid-column:2;grid-row:2}}
+.so-cliente{display:none!important}body.apresentacao .so-cliente{display:block!important}
 .gal-pastas{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
 .gal-pc{display:flex;flex-direction:column;padding:0;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);color:var(--ink);overflow:hidden;cursor:pointer;text-align:left;font:inherit;box-shadow:var(--shadow)}
 .gal-pc>img,.gal-pc-v{width:100%;aspect-ratio:4/3;object-fit:cover;display:grid;place-items:center;background:var(--brand-soft);color:var(--brand)}.gal-pc-v svg{width:34px;height:34px}
@@ -3785,8 +3786,10 @@ const galPastas=()=>(S.empresa.galeria&&S.empresa.galeria.pastas)||GAL_PADRAO;
 const galPasta=id=>galPastas().find(p=>p.id===id);
 async function salvarPastas(pastas){S.empresa={...S.empresa,galeria:{...(S.empresa.galeria||{}),pastas}};await store.saveEmpresa(S.empresa);render()}
 const galItens=pasta=>(S.galeria||[]).filter(x=>x.pasta===pasta).sort((a,b)=>String(b.criadoEm).localeCompare(String(a.criadoEm)));
-const galTodos=pasta=>(S.galeria||[]).filter(x=>x.pasta===pasta||(galPasta(x.pasta)||{}).pai===pasta);
-const galCaminho=id=>{const p=galPasta(id);if(!p)return 'Sem pasta';const pai=p.pai&&galPasta(p.pai);return pai?`${pai.nome} › ${p.nome}`:p.nome};
+const galAncestrais=id=>{const out=[];let p=galPasta(id),g=0;while(p&&g++<20){out.unshift(p);p=p.pai&&galPasta(p.pai)}return out};
+const galDesc=id=>{const ids=new Set([id]);let mudou=true;while(mudou){mudou=false;galPastas().forEach(p=>{if(p.pai&&ids.has(p.pai)&&!ids.has(p.id)){ids.add(p.id);mudou=true}})}return ids};
+const galTodos=pasta=>{const ids=galDesc(pasta);return (S.galeria||[]).filter(x=>ids.has(x.pasta))};
+const galCaminho=id=>{const ps=galAncestrais(id);return ps.length?ps.map(p=>p.nome).join(' › '):'Sem pasta'};
 async function galSrc(path){if(!path)return '';if(/^data:/.test(path))return path;const k='g:'+path;if(fotoCache[k])return fotoCache[k];
   const {data,error}=await sb.storage.from(GAL_BUCKET).download(path);if(error)throw error;return fotoCache[k]=await blobDataURL(data)}
 const galImg=(img,path)=>{const k='g:'+path;if(/^data:/.test(path||''))img.src=path;else if(fotoCache[k])img.src=fotoCache[k];else if(sb&&path)galSrc(path).then(u=>img.src=u).catch(()=>{img.alt='Não carregou'})};
@@ -3840,7 +3843,7 @@ function galVer(lista,i){const x=lista[i];if(!x)return;const temOutro=lista.leng
     L.addEventListener('keydown',e=>{if(!temOutro)return;if(e.key==='ArrowLeft')$('gv_ant').click();if(e.key==='ArrowRight')$('gv_prox').click()});
   })}
 const galLista=()=>galItens(ui.galPasta||'');
-function galOpcoesPasta(sel){return galPastas().filter(p=>!p.pai).map(p=>`<option value="${p.id}" ${sel===p.id?'selected':''}>${esc(p.nome)}</option>${galPastas().filter(s=>s.pai===p.id).map(s=>`<option value="${s.id}" ${sel===s.id?'selected':''}>   ${esc(p.nome)} › ${esc(s.nome)}</option>`).join('')}`).join('')}
+function galOpcoesPasta(sel){const nivel=(pai,d)=>galPastas().filter(p=>(p.pai||'')===pai).map(p=>`<option value="${p.id}" ${sel===p.id?'selected':''}>${'\u00a0\u00a0\u00a0'.repeat(d)}${esc(galCaminho(p.id))}</option>${nivel(p.id,d+1)}`).join('');return nivel('',0)}
 function galEditar(x,depois){const cs=[...S.clientes].sort((a,b)=>a.nome.localeCompare(b.nome));
   openSheet('Editar',`<div class="form">
     <div class="field full"><label for="ge_n">Nome</label><input id="ge_n" value="${esc(x.nome||'')}" placeholder="Ex.: Fechadura de embutir na porta de madeira"></div>
@@ -3867,19 +3870,20 @@ function galPastaSheet(p,pai){const n=!p;p=p||{id:'p'+uid(),nome:'',pai:pai||''}
 function galCapa(pid){const it=[...galTodos(pid)].sort((a,b)=>String(b.criadoEm).localeCompare(String(a.criadoEm)))[0];return it?it.t||it.p:''}
 let galSel=null;
 function vGaleria(app){const atual=galPasta(ui.galPasta)?ui.galPasta:'';if(atual!==ui.galPasta)ui.galPasta=atual;
-  const p=galPasta(atual),pai=p&&p.pai&&galPasta(p.pai),subs=galPastas().filter(s=>(s.pai||'')===atual),itens=atual?galItens(atual):[];
+  const p=galPasta(atual),trilha=atual?galAncestrais(atual).slice(0,-1):[],subs=galPastas().filter(s=>(s.pai||'')===atual),itens=atual?galItens(atual):[];
   const q=normNome(ui.galBusca||''),achados=q?(S.galeria||[]).filter(x=>normNome([x.nome,x.desc,galCaminho(x.pasta),(S.clientes.find(c=>c.id===x.clienteId)||{}).nome].join(' ')).includes(q)):null;
   const card=s=>{const n=galTodos(s.id).length,cap=galCapa(s.id);return `<button class="gal-pc" data-gp="${s.id}">${cap?`<img data-gimg="${esc(cap)}" alt="">`:`<span class="gal-pc-v">${svg(ICON[s.id]||(s.pai?NAVI.galeria:ICON[s.pai]||NAVI.galeria))}</span>`}<span class="gal-pc-t"><b>${esc(s.nome)}</b><span>${n} ${n===1?'item':'itens'}</span></span></button>`};
   const grade=l=>`<div class="gal-grid">${l.map(x=>`<button class="gal-it ${galSel&&galSel.has(x.id)?'sel':''}" data-gi="${x.id}" aria-label="${esc(x.nome||(x.tipo==='video'?'Vídeo':'Foto'))}">${x.t||x.p&&x.tipo==='foto'?`<img data-gimg="${esc(x.t||x.p)}" alt="">`:'<span class="gal-sem">vídeo</span>'}${x.tipo==='video'?'<i class="gal-play">▶</i>':''}${galSel?`<i class="gal-ck">${galSel.has(x.id)?'✓':''}</i>`:''}</button>`).join('')}</div>`;
   app.innerHTML=`
-  <div class="spread"><div><div class="eyebrow">${atual?`<button class="linkbtn" data-gp="">Galeria</button>${pai?` › <button class="linkbtn" data-gp="${pai.id}">${esc(pai.nome)}</button>`:''}`:'Fotos e vídeos dos serviços'}</div><h1 class="h1">${atual?esc(p.nome):'Galeria'}</h1></div>
+  <div class="spread"><div><div class="eyebrow">${atual?`<button class="linkbtn" data-gp="">Galeria</button>${trilha.map(t=>` › <button class="linkbtn" data-gp="${t.id}">${esc(t.nome)}</button>`).join('')}`:'Fotos e vídeos dos serviços'}</div><h1 class="h1">${atual?esc(p.nome):'Galeria'}</h1></div>
     <div class="row" style="gap:8px">${atual&&p.drive?`<a class="btn" href="${esc(p.drive)}" target="_blank" rel="noopener">Abrir no Drive</a>`:''}${atual?`<button class="btn internal" id="gl_ped">${svg(UI.edit)}Pasta</button>`:''}</div></div>
   ${atual?'':`<label class="search">${svg(UI.search)}<input type="search" id="gl_q" placeholder="Buscar foto, cliente ou pasta" value="${esc(ui.galBusca||'')}" aria-label="Buscar"></label>`}
   ${achados?(achados.length?grade(achados):`<div class="empty" style="padding:18px">Nada encontrado.</div>`):`
-  ${subs.length||!p||!p.pai?`<div class="gal-pastas">${subs.map(card).join('')}${!p||!p.pai?`<button class="gal-pc nova internal" id="gl_np"><span class="gal-pc-v">${svg(UI.plus)}</span><span class="gal-pc-t"><b>${atual?'Nova subpasta':'Nova pasta'}</b><span>${atual?'Ex.: Sobrepor':'Ex.: Portão'}</span></span></button>`:''}</div>`:''}
+  <p class="note so-cliente" style="margin:0">O <b>Modo cliente</b> está ligado: dá para ver e compartilhar. Para adicionar fotos e criar pastas, desligue o Modo cliente no topo.</p>
+  ${subs.length||!atual?`<div class="gal-pastas">${subs.map(card).join('')}<button class="gal-pc nova internal" id="gl_np"><span class="gal-pc-v">${svg(UI.plus)}</span><span class="gal-pc-t"><b>${atual?'Nova pasta aqui':'Nova pasta'}</b><span>${atual?'Ex.: por marca ou modelo':'Ex.: Portão'}</span></span></button></div>`:`<div class="row internal" style="gap:8px"><button class="btn sm" id="gl_np">${svg(UI.plus)}Nova pasta aqui</button><span class="hint">ex.: separar por marca ou modelo</span></div>`}
   ${atual?`<div class="gal-drop internal" id="gl_drop"><div class="row" style="gap:8px;align-items:center"><label class="btn primary">${svg(UI.plus)}Adicionar fotos e vídeos<input type="file" accept="image/*,video/*" multiple hidden id="gl_f"></label><label class="btn">${svg(ICON_CAM)}Tirar foto<input type="file" accept="image/*" capture="environment" hidden id="gl_cam"></label><label class="btn">▶ Gravar vídeo<input type="file" accept="video/*" capture="environment" hidden id="gl_vid"></label><span class="hint" id="gl_st">ou arraste para cá</span></div></div>
-    ${itens.length?`<div class="spread" style="align-items:center"><span class="hint">${itens.length} ${itens.length===1?'item':'itens'}${galSel?` · ${galSel.size} selecionado${galSel.size===1?'':'s'}`:''}</span><div class="row" style="gap:6px">${galSel?`<button class="btn sm primary" id="gl_shs" ${galSel.size?'':'disabled'}>Compartilhar</button><button class="btn sm internal" id="gl_mv" ${galSel.size?'':'disabled'}>Mover</button><button class="btn sm danger internal" id="gl_dels" ${galSel.size?'':'disabled'}>Apagar</button><button class="btn sm" id="gl_selx">Cancelar</button>`:`<button class="btn sm" id="gl_sel">Selecionar várias</button>`}</div></div>${grade(itens)}`
-    :`<div class="empty" style="padding:18px">${subs.length?'Escolha uma subpasta acima ou adicione aqui as fotos gerais desta pasta.':'Nenhuma foto ainda. Toque em "Adicionar" ou "Tirar foto".'}</div>`}`
+    ${itens.length?`<div class="spread" style="align-items:center"><span class="hint">${itens.length} ${itens.length===1?'item':'itens'}${galSel?` · ${galSel.size} selecionado${galSel.size===1?'':'s'}`:''}</span><div class="row" style="gap:6px">${galSel?`<button class="btn sm primary" id="gl_shs" ${galSel.size?'':'disabled'}>Compartilhar</button><button class="btn sm internal" id="gl_mv" ${galSel.size?'':'disabled'}>Mover</button><button class="btn sm danger internal" id="gl_dels" ${galSel.size?'':'disabled'}>Apagar</button><button class="btn sm" id="gl_selx">Cancelar</button>`:`<button class="btn sm" id="gl_all">${svg(ICON_SHARE)}Compartilhar todas</button><button class="btn sm" id="gl_sel">Selecionar várias</button>`}</div></div>${grade(itens)}`
+    :`<div class="empty" style="padding:18px">${subs.length?'Escolha uma pasta acima ou adicione aqui as fotos gerais desta pasta.':'Nenhuma foto ainda. Toque em "Adicionar" ou "Tirar foto".'}</div>`}`
   :`<p class="hint" style="margin:0">Organize por tipo de serviço. Para mandar fotos ao cliente, abra a foto e toque em "Compartilhar", ou use "Selecionar várias".</p>`}`}`;
   const $=id=>app.querySelector('#'+id);
   app.querySelectorAll('img[data-gimg]').forEach(im=>galImg(im,im.dataset.gimg));
@@ -3891,7 +3895,7 @@ function vGaleria(app){const atual=galPasta(ui.galPasta)?ui.galPasta:'';if(atual
   const envia=async fs=>{const st=$('gl_st');const n=await galAdicionar(fs,atual,t=>{if(st)st.textContent=t});if(n)toast(n>1?`${n} arquivos adicionados`:'Adicionado');const s2=document.getElementById('gl_st');if(s2)s2.textContent='ou arraste para cá'};
   ['gl_f','gl_cam','gl_vid'].forEach(i=>{if($(i))$(i).onchange=e=>{const fs=[...e.target.files];e.target.value='';envia(fs)}});
   const d=$('gl_drop');if(d){d.addEventListener('dragover',e=>{e.preventDefault();d.classList.add('over')});d.addEventListener('dragleave',()=>d.classList.remove('over'));d.addEventListener('drop',e=>{e.preventDefault();d.classList.remove('over');envia(e.dataTransfer.files)})}
-  if($('gl_sel'))$('gl_sel').onclick=()=>{galSel=new Set();render()};if($('gl_selx'))$('gl_selx').onclick=()=>{galSel=null;render()};
+  if($('gl_sel'))$('gl_sel').onclick=()=>{galSel=new Set();render()};if($('gl_all'))$('gl_all').onclick=()=>galCompartilhar(itens);if($('gl_selx'))$('gl_selx').onclick=()=>{galSel=null;render()};
   const sel=()=>(S.galeria||[]).filter(x=>galSel&&galSel.has(x.id));
   if($('gl_shs'))$('gl_shs').onclick=()=>galCompartilhar(sel());
   if($('gl_dels'))$('gl_dels').onclick=()=>{const l=sel();confirmSheet(`Apagar ${l.length} ${l.length===1?'item':'itens'}?`,'Saem da galeria e não dá para desfazer.','Apagar',async()=>{for(const x of l){await store.remove('galeria',x.id);galApagarArq(x)}galSel=null;render();toast('Apagado')})};
