@@ -4021,8 +4021,14 @@ const IG_TIPOS={
   eletrica:{nome:'Instalações elétricas',abre:['⚡ Instalação elétrica feita do jeito certo.','⚡ Segurança começa pela parte elétrica.','⚡ Serviço elétrico concluído!'],benef:'Quadros, tomadas, iluminação e reparos com material de qualidade e acabamento caprichado.',tags:'#eletricista #instalacaoeletrica #quadrodeenergia #eletrica #manutencaoeletrica'},
   wifi:{nome:'Câmeras Wi-Fi',abre:['📶 Câmera Wi-Fi: prática e sem obra.','📶 Instalamos e configuramos no seu celular.','📶 Segurança sem complicação.'],benef:'Instalação, configuração no aplicativo e verificação do sinal Wi-Fi no local.',tags:'#camerawifi #cameraip #casainteligente #monitoramento #seguranca'},
   geral:{nome:'Outro / geral',abre:['🛡️ Tecnologia que protege.','🛡️ Mais um serviço entregue com capricho!','🛡️ Segurança para a sua casa, comércio e condomínio.'],benef:'Câmeras, fechaduras digitais, interfones, alarmes e elétrica, com atendimento no local.',tags:'#segurancaeletronica #tecnologia #seguranca #casainteligente #instalacao'}};
-let IG={fmt:'retrato',mod:'faixa',fotos:[null,null],zoom:[1,1],off:[[0,0],[0,0]],titulo:'',sub:'',contatos:true,tipo:'cameras',sobre:'',var:0};
+let IG={fmt:'retrato',mod:'faixa',fotos:[null,null],zoom:[1,1],off:[[0,0],[0,0]],titulo:'',sub:'',contatos:true,tipo:'cameras',sobre:'',var:0,logo:null,logoW:null,logoFundo:'branco'};
 const igLogo=new Image();igLogo.src=LOGO;
+const igLogoV={};
+function igLogoSem(branca){const k=branca?'b':'c';if(igLogoV[k])return igLogoV[k];if(!igLogo.complete||!igLogo.width)return null;
+  const c=document.createElement('canvas');c.width=igLogo.width;c.height=igLogo.height;const x=c.getContext('2d');x.drawImage(igLogo,0,0);const d=x.getImageData(0,0,c.width,c.height),px=d.data;
+  for(let i=0;i<px.length;i+=4){const mn=Math.min(px[i],px[i+1],px[i+2]),a=Math.max(0,Math.min(255,(255-mn)*2.2-20));px[i+3]=a;if(branca){px[i]=px[i+1]=px[i+2]=255}}
+  x.putImageData(d,0,0);return igLogoV[k]=c}
+const IG_LOGO_FUNDO={branco:'Fundo branco',sem:'Sem fundo',branca:'Sem fundo, branca'};
 function igCidade(){const c=String(S.empresa.cidade||'').trim()||String(S.empresa.endereco||'').split(/[,-]/).pop().trim();return c||'Teresópolis'}
 function igLegenda(){const t=IG_TIPOS[IG.tipo]||IG_TIPOS.geral,e=S.empresa,cid=igCidade(),tel=e.whatsapp||e.telefone,site=String(e.site||'').replace(/^https?:\/\//,'').replace(/\/$/,''),ig=String(e.instagram||'').replace(/^@|https?:\/\/(www\.)?instagram\.com\//g,'').replace(/[/?#].*$/,'');
   const tagCid='#'+normNome(cid).replace(/[^a-z0-9]/g,'');
@@ -4032,10 +4038,14 @@ function igTexto(g,txt,x,y,maxW,lh,maxL){const ps=String(txt).split(/\s+/);let l
 function igCobrir(g,img,x,y,w,h,zoom,off){g.save();g.beginPath();g.rect(x,y,w,h);g.clip();
   if(img){const k=Math.max(w/img.width,h/img.height)*zoom,iw=img.width*k,ih=img.height*k;g.drawImage(img,x+(w-iw)/2+off[0]*(iw-w)/2,y+(h-ih)/2+off[1]*(ih-h)/2,iw,ih)}
   else{g.fillStyle='#DDE3EC';g.fillRect(x,y,w,h);g.fillStyle='#7B8798';g.font='600 40px Barlow, sans-serif';g.textAlign='center';g.fillText('Escolha uma foto',x+w/2,y+h/2);g.textAlign='left'}g.restore()}
-function igPlaca(g,x,y,w){const h=w*170/506,p=w*0.08;g.fillStyle='#fff';igRet(g,x,y,w+p*2,h+p*1.2,22);g.fill();g.drawImage(igLogo,x+p,y+p*0.6,w,h);return h+p*1.2}
+function igPlaca(g,x,y,w){const W=g.canvas.width,H=g.canvas.height;if(IG.logoW)w=IG.logoW;const h=w*170/506,p=w*0.08,bw=w+p*2,bh=h+p*1.2;
+  if(IG.logo){x=IG.logo[0]*W;y=IG.logo[1]*H}x=Math.max(0,Math.min(W-bw,x));y=Math.max(0,Math.min(H-bh,y));IG._logoR=[x,y,bw,bh];
+  if(IG.logoFundo==='branco'){g.fillStyle='#fff';igRet(g,x,y,bw,bh,22);g.fill();g.drawImage(igLogo,x+p,y+p*0.6,w,h)}
+  else{const im=igLogoSem(IG.logoFundo==='branca');g.drawImage(im||igLogo,x+p,y+p*0.6,w,h)}
+  return h+p*1.2}
 function igRet(g,x,y,w,h,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath()}
 function igContatos(){const e=S.empresa,ig=String(e.instagram||'').replace(/^@|https?:\/\/(www\.)?instagram\.com\//g,'').replace(/[/?#].*$/,'');return [e.whatsapp||e.telefone,ig?'@'+ig:'',String(e.site||'').replace(/^https?:\/\//,'').replace(/\/$/,'')].filter(Boolean).join('   •   ')}
-function igDesenhar(cv){const [W,H]=IG_FMT[IG.fmt],g=cv.getContext('2d');cv.width=W;cv.height=H;g.textBaseline='top';const M=60,disp='Montserrat, sans-serif',corpo='Barlow, sans-serif';
+function igDesenhar(cv){const [W,H]=IG_FMT[IG.fmt],g=cv.getContext('2d');IG._logoR=null;cv.width=W;cv.height=H;g.textBaseline='top';const M=60,disp='Montserrat, sans-serif',corpo='Barlow, sans-serif';
   if(IG.mod==='antesdepois'){const lado=IG.fmt==='quadrado',fw=lado?W/2:W,fh=lado?H*0.8:H*0.4;
     for(let i=0;i<2;i++)igCobrir(g,IG.fotos[i],lado?i*fw:0,lado?0:i*fh,fw,fh,IG.zoom[i],IG.off[i]);
     g.fillStyle='#fff';lado?g.fillRect(W/2-3,0,6,fh):g.fillRect(0,fh-3,W,6);
@@ -4074,6 +4084,9 @@ function vInsta(el){const dois=IG.mod==='antesdepois';
       <div class="field"><label for="ig_t">Título na arte</label><input id="ig_t" value="${esc(IG.titulo)}" placeholder="Ex.: Fechadura digital instalada"></div>
       <div class="field"><label for="ig_s">Linha de baixo (opcional)</label><input id="ig_s" value="${esc(IG.sub)}" placeholder="Ex.: Teresópolis - RJ"></div>
       <label class="chk" style="display:flex"><input type="checkbox" id="ig_c" ${IG.contatos?'checked':''}> <span>Mostrar WhatsApp, @ e site na arte</span></label>
+      <div class="field"><label>Logo</label><div class="seg">${Object.entries(IG_LOGO_FUNDO).map(([k,v])=>`<label><input type="radio" name="ig_lf" value="${k}" ${IG.logoFundo===k?'checked':''}><span>${v}</span></label>`).join('')}</div>
+        <label class="ig-zoom"><span class="hint">Tamanho</span><input type="range" min="140" max="620" step="10" value="${IG.logoW||260}" id="ig_lw"></label>
+        <span class="hint">Arraste a logo na prévia para mudar de lugar. <button class="linkbtn" type="button" id="ig_lr">Voltar ao lugar padrão</button></span></div>
       <div class="sec-k">Legenda</div>
       <div class="field"><label for="ig_tp">Tipo de serviço</label><select id="ig_tp">${Object.entries(IG_TIPOS).map(([k,v])=>`<option value="${k}" ${IG.tipo===k?'selected':''}>${v.nome}</option>`).join('')}</select></div>
       <div class="field"><label for="ig_so">Sobre este serviço (opcional)</label><input id="ig_so" value="${esc(IG.sobre)}" placeholder="Ex.: 4 câmeras Full HD num comércio no Alto"></div>
@@ -4090,12 +4103,18 @@ function vInsta(el){const dois=IG.mod==='antesdepois';
   el.querySelectorAll('[data-igf]').forEach(inp=>inp.onchange=async()=>{const f=inp.files[0],i=+inp.dataset.igf;inp.value='';if(!f)return;try{IG.fotos[i]=await igImagem(f);IG.zoom[i]=1;IG.off[i]=[0,0];vInsta(el)}catch(e){toast('Não foi possível abrir a foto.')}});
   el.querySelectorAll('[data-igg]').forEach(b=>b.onclick=()=>igEscolherGaleria(+b.dataset.igg,()=>vInsta(el)));
   el.querySelectorAll('[data-igz]').forEach(r=>r.oninput=()=>{IG.zoom[+r.dataset.igz]=+r.value;pinta()});
+  el.querySelectorAll('input[name=ig_lf]').forEach(r=>r.onchange=()=>{IG.logoFundo=r.value;pinta()});
+  $('ig_lw').oninput=e=>{IG.logoW=+e.target.value;pinta()};$('ig_lr').onclick=()=>{IG.logo=null;IG.logoW=null;$('ig_lw').value=260;pinta()};
   $('ig_t').oninput=e=>{IG.titulo=e.target.value;pinta()};$('ig_s').oninput=e=>{IG.sub=e.target.value;pinta()};$('ig_c').onchange=e=>{IG.contatos=e.target.checked;pinta()};
   $('ig_tp').onchange=e=>{IG.tipo=e.target.value;leg()};$('ig_so').oninput=e=>{IG.sobre=e.target.value;leg()};$('ig_out').onclick=()=>{IG.var++;leg()};
   // Arrastar na prévia: move a foto (no antes e depois, a metade tocada).
   let arr=null;cv.addEventListener('pointerdown',e=>{const r=cv.getBoundingClientRect(),[W,H]=IG_FMT[IG.fmt],lado=IG.fmt==='quadrado';let i=0;
+    const cx=(e.clientX-r.left)/r.width*W,cy=(e.clientY-r.top)/r.height*H,L=IG._logoR;
+    if(L&&cx>=L[0]&&cx<=L[0]+L[2]&&cy>=L[1]&&cy<=L[1]+L[3]){arr={logo:true,dx:cx-L[0],dy:cy-L[1],r,W,H};cv.setPointerCapture(e.pointerId);return}
     if(dois){const px=(e.clientX-r.left)/r.width,py=(e.clientY-r.top)/r.height;i=lado?(px>0.5?1:0):(py>0.4?1:0)}arr={i,x:e.clientX,y:e.clientY,o:[...IG.off[i]],w:r.width,h:r.height};cv.setPointerCapture(e.pointerId)});
-  cv.addEventListener('pointermove',e=>{if(!arr)return;const o=IG.off[arr.i],z=IG.zoom[arr.i];o[0]=Math.max(-1,Math.min(1,arr.o[0]+(e.clientX-arr.x)/arr.w*2*Math.max(1,z)));o[1]=Math.max(-1,Math.min(1,arr.o[1]+(e.clientY-arr.y)/arr.h*2*Math.max(1,z)));pinta()});
+  cv.addEventListener('pointermove',e=>{if(!arr)return;
+    if(arr.logo){const cx=(e.clientX-arr.r.left)/arr.r.width*arr.W,cy=(e.clientY-arr.r.top)/arr.r.height*arr.H;IG.logo=[(cx-arr.dx)/arr.W,(cy-arr.dy)/arr.H];pinta();return}
+    const o=IG.off[arr.i],z=IG.zoom[arr.i];o[0]=Math.max(-1,Math.min(1,arr.o[0]+(e.clientX-arr.x)/arr.w*2*Math.max(1,z)));o[1]=Math.max(-1,Math.min(1,arr.o[1]+(e.clientY-arr.y)/arr.h*2*Math.max(1,z)));pinta()});
   cv.addEventListener('pointerup',()=>arr=null);cv.addEventListener('pointercancel',()=>arr=null);
   const arquivo=async()=>{await prontoFontes;pinta();const b=await new Promise(r=>cv.toBlob(r,'image/jpeg',0.92));return new File([b],`daylintech-${IG.fmt}-${hojeISO()}.jpg`,{type:'image/jpeg'})};
   const copiar=async()=>{try{await navigator.clipboard.writeText($('ig_lg').value);return true}catch(e){return false}};
