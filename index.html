@@ -451,6 +451,12 @@ body.apresentacao .internal{display:none!important}
 .acc-done{display:flex;flex-direction:column;gap:6px;background:#E3F5EA;color:#14532D;border-radius:10px;padding:14px;font-size:14px}
 .acc-done a{color:#14532D;font-weight:700}
 .recibo .pp-body{gap:16px}
+.ig-wrap{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;align-items:start}
+.ig-prev{position:sticky;top:76px;display:flex;flex-direction:column;gap:6px;align-items:center}.ig-prev canvas{width:100%;max-width:440px;height:auto;border-radius:10px;box-shadow:var(--shadow);touch-action:none;cursor:grab;background:#eee}
+.ig-ctl{display:flex;flex-direction:column;gap:12px}.ig-ctl .field>label:first-child{font-weight:600}.ig-ctl input:not([type]),.ig-ctl input[type=search],.ig-ctl select,.ig-ctl textarea,.ig-ctl #ig_t,.ig-ctl #ig_s,.ig-ctl #ig_so{width:100%;padding:10px 11px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit}
+.ig-zoom{display:flex;align-items:center;gap:10px;margin-top:6px}.ig-zoom input{flex:1}
+.ig-ctl .seg label{min-width:110px}
+@media (max-width:760px){.ig-wrap{grid-template-columns:1fr}.ig-prev{position:static}.ig-prev canvas{max-width:360px}}
 .po-list{display:flex;flex-direction:column;gap:10px}
 .po-card{display:flex;flex-direction:column;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;box-shadow:var(--shadow);cursor:pointer}.po-card b{font-size:16px}.po-card .muted{font-size:13.5px}
 .po-bls{display:flex;flex-direction:column;gap:10px}.po-bl{display:flex;flex-direction:column;gap:8px;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--surface)}
@@ -4001,16 +4007,117 @@ function formPost(p){const n=!p;p=p?JSON.parse(JSON.stringify(p)):{id:uid(),titu
       if(await salvarOp('posts',o,'Postagem salva')){closeSheet();verPost(o)}else{bt.disabled=false;bt.textContent='Salvar'}};
     if(!n)$('po_del').onclick=()=>confirmSheet('Excluir postagem?',`"${esc(p.titulo)}" será apagada.`,'Excluir',()=>store.remove('posts',p.id).then(()=>toast('Excluída'),()=>toast('Não foi possível excluir.')));
   })}
-function vPosts(app){const q=normNome(ui.postBusca||''),tp=ui.postTipo||'todos',ps=[...(S.posts||[])].filter(p=>(tp==='todos'||p.tipo===tp)&&(!q||normNome([p.titulo,p.resumo,...(p.blocos||[]).map(b=>b.txt)].join(' ')).includes(q)))
+/* ---------- Gerador de postagens para o Instagram (Postagens → aba Instagram) ---------- */
+// A arte é desenhada num <canvas> no próprio aparelho (sem IA): foto + logo + faixa nas cores da marca.
+// A legenda sai de modelos por tipo de serviço. Publicar: Compartilhar (abre o Instagram com a imagem) + legenda copiada.
+const IG_FMT={quadrado:[1080,1080,'Feed quadrado'],retrato:[1080,1350,'Feed em pé'],stories:[1080,1920,'Stories']};
+const IG_MOD={faixa:'Faixa com a logo',titulo:'Título na foto',antesdepois:'Antes e depois',limpo:'Só a logo'};
+const IG_COR={navy:'#0A1C3D',azul:'#1452B0',laranja:'#F07A12'};
+const IG_TIPOS={
+  cameras:{nome:'Câmeras',abre:['📹 Mais segurança e tranquilidade, de onde você estiver.','📹 Sistema de câmeras instalado e funcionando!','📹 Acompanhe tudo pelo celular, 24 horas por dia.'],benef:'Câmeras com imagem nítida de dia e de noite, gravação contínua e acesso pelo celular.',tags:'#cameras #cftv #cameradeseguranca #monitoramento #segurancaeletronica'},
+  fechaduras:{nome:'Fechaduras digitais',abre:['🔐 Chega de chave perdida!','🔐 Fechadura digital instalada com capricho.','🔐 Praticidade e segurança na sua porta.'],benef:'Abra com senha, digital, cartão ou pelo celular, e controle quem entra.',tags:'#fechaduradigital #fechaduraeletronica #smartlock #casainteligente #seguranca'},
+  interfones:{nome:'Interfones e vídeo porteiros',abre:['🔔 Saiba quem está no portão antes de abrir.','🔔 Vídeo porteiro instalado!','🔔 Mais segurança para receber visitas e entregas.'],benef:'Veja e fale com quem está no portão, e abra pelo interfone ou pelo celular.',tags:'#videoporteiro #interfone #porteiroeletronico #condominio #seguranca'},
+  alarmes:{nome:'Alarmes e controle de acesso',abre:['🚨 Proteção mesmo quando você não está.','🚨 Alarme instalado e configurado!','🚨 Controle de acesso para mais segurança.'],benef:'Sensores, sirene e aviso no celular, com controle de quem entra e sai.',tags:'#alarme #controledeacesso #alarmemonitorado #segurancaeletronica #protecao'},
+  eletrica:{nome:'Instalações elétricas',abre:['⚡ Instalação elétrica feita do jeito certo.','⚡ Segurança começa pela parte elétrica.','⚡ Serviço elétrico concluído!'],benef:'Quadros, tomadas, iluminação e reparos com material de qualidade e acabamento caprichado.',tags:'#eletricista #instalacaoeletrica #quadrodeenergia #eletrica #manutencaoeletrica'},
+  wifi:{nome:'Câmeras Wi-Fi',abre:['📶 Câmera Wi-Fi: prática e sem obra.','📶 Instalamos e configuramos no seu celular.','📶 Segurança sem complicação.'],benef:'Instalação, configuração no aplicativo e verificação do sinal Wi-Fi no local.',tags:'#camerawifi #cameraip #casainteligente #monitoramento #seguranca'},
+  geral:{nome:'Outro / geral',abre:['🛡️ Tecnologia que protege.','🛡️ Mais um serviço entregue com capricho!','🛡️ Segurança para a sua casa, comércio e condomínio.'],benef:'Câmeras, fechaduras digitais, interfones, alarmes e elétrica, com atendimento no local.',tags:'#segurancaeletronica #tecnologia #seguranca #casainteligente #instalacao'}};
+let IG={fmt:'retrato',mod:'faixa',fotos:[null,null],zoom:[1,1],off:[[0,0],[0,0]],titulo:'',sub:'',contatos:true,tipo:'cameras',sobre:'',var:0};
+const igLogo=new Image();igLogo.src=LOGO;
+function igCidade(){const c=String(S.empresa.cidade||'').trim()||String(S.empresa.endereco||'').split(/[,-]/).pop().trim();return c||'Teresópolis'}
+function igLegenda(){const t=IG_TIPOS[IG.tipo]||IG_TIPOS.geral,e=S.empresa,cid=igCidade(),tel=e.whatsapp||e.telefone,site=String(e.site||'').replace(/^https?:\/\//,'').replace(/\/$/,''),ig=String(e.instagram||'').replace(/^@|https?:\/\/(www\.)?instagram\.com\//g,'').replace(/[/?#].*$/,'');
+  const tagCid='#'+normNome(cid).replace(/[^a-z0-9]/g,'');
+  return [t.abre[IG.var%t.abre.length],IG.sobre.trim(),t.benef,`📍 Atendemos ${cid} e região.`,[tel?`📲 Orçamento pelo WhatsApp: ${tel}`:'',site?`🌐 ${site}`:''].filter(Boolean).join('\n'),`${t.tags} ${tagCid} #${normNome(e.nome||'daylintech').replace(/[^a-z0-9]/g,'')}${ig&&normNome(ig)!==normNome(e.nome||'')?' @'+ig:''}`].filter(Boolean).join('\n\n')}
+function igTexto(g,txt,x,y,maxW,lh,maxL){const ps=String(txt).split(/\s+/);let l='',n=0,out=[];for(const p of ps){const t=l?l+' '+p:p;if(g.measureText(t).width>maxW&&l){out.push(l);l=p}else l=t}if(l)out.push(l);out=out.slice(0,maxL||9);
+  out.forEach((s,i)=>g.fillText(s,x,y+i*lh));return out.length}
+function igCobrir(g,img,x,y,w,h,zoom,off){g.save();g.beginPath();g.rect(x,y,w,h);g.clip();
+  if(img){const k=Math.max(w/img.width,h/img.height)*zoom,iw=img.width*k,ih=img.height*k;g.drawImage(img,x+(w-iw)/2+off[0]*(iw-w)/2,y+(h-ih)/2+off[1]*(ih-h)/2,iw,ih)}
+  else{g.fillStyle='#DDE3EC';g.fillRect(x,y,w,h);g.fillStyle='#7B8798';g.font='600 40px Barlow, sans-serif';g.textAlign='center';g.fillText('Escolha uma foto',x+w/2,y+h/2);g.textAlign='left'}g.restore()}
+function igPlaca(g,x,y,w){const h=w*170/506,p=w*0.08;g.fillStyle='#fff';igRet(g,x,y,w+p*2,h+p*1.2,22);g.fill();g.drawImage(igLogo,x+p,y+p*0.6,w,h);return h+p*1.2}
+function igRet(g,x,y,w,h,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath()}
+function igContatos(){const e=S.empresa,ig=String(e.instagram||'').replace(/^@|https?:\/\/(www\.)?instagram\.com\//g,'').replace(/[/?#].*$/,'');return [e.whatsapp||e.telefone,ig?'@'+ig:'',String(e.site||'').replace(/^https?:\/\//,'').replace(/\/$/,'')].filter(Boolean).join('   •   ')}
+function igDesenhar(cv){const [W,H]=IG_FMT[IG.fmt],g=cv.getContext('2d');cv.width=W;cv.height=H;g.textBaseline='top';const M=60,disp='Montserrat, sans-serif',corpo='Barlow, sans-serif';
+  if(IG.mod==='antesdepois'){const lado=IG.fmt==='quadrado',fw=lado?W/2:W,fh=lado?H*0.8:H*0.4;
+    for(let i=0;i<2;i++)igCobrir(g,IG.fotos[i],lado?i*fw:0,lado?0:i*fh,fw,fh,IG.zoom[i],IG.off[i]);
+    g.fillStyle='#fff';lado?g.fillRect(W/2-3,0,6,fh):g.fillRect(0,fh-3,W,6);
+    [['ANTES',IG_COR.laranja],['DEPOIS',IG_COR.azul]].forEach(([t,c],i)=>{g.font=`800 40px ${disp}`;const tw=g.measureText(t).width+44,x=lado?i*fw+28:28,y=lado?28:i*fh+28;g.fillStyle=c;igRet(g,x,y,tw,64,32);g.fill();g.fillStyle='#fff';g.fillText(t,x+22,y+12)});
+    const by=lado?fh:fh*2;g.fillStyle=IG_COR.navy;g.fillRect(0,by,W,H-by);g.fillStyle=IG_COR.laranja;g.fillRect(0,by,W,10);
+    const lw=lado?230:300,ph=igPlaca(g,W-lw-M-lw*0.16,by+38,lw);
+    g.fillStyle='#fff';g.font=`800 ${lado?50:60}px ${disp}`;const nl=igTexto(g,IG.titulo||'Antes e depois',M,by+44,W-lw-M*3,lado?58:70,2);
+    if(IG.sub){g.fillStyle=IG_COR.laranja;g.font=`600 ${lado?32:38}px ${corpo}`;g.fillText(IG.sub,M,by+44+nl*(lado?58:70)+6)}
+    if(IG.contatos){g.fillStyle='rgba(255,255,255,.85)';g.font=`600 ${lado?26:32}px ${corpo}`;g.fillText(igContatos(),M,H-(lado?50:80))}
+    return}
+  igCobrir(g,IG.fotos[0],0,0,W,H,IG.zoom[0],IG.off[0]);
+  if(IG.mod==='faixa'){const bh=Math.round(H*(IG.fmt==='stories'?0.2:0.25)),by=H-bh;g.fillStyle=IG_COR.navy;g.fillRect(0,by,W,bh);g.fillStyle=IG_COR.laranja;g.fillRect(0,by,W,12);
+    igPlaca(g,M,M+(IG.fmt==='stories'?120:0),260);
+    g.fillStyle='#fff';g.font=`800 60px ${disp}`;const nl=igTexto(g,IG.titulo||'Tecnologia que protege',M,by+48,W-M*2,70,2);
+    if(IG.sub){g.fillStyle=IG_COR.laranja;g.font=`600 38px ${corpo}`;g.fillText(IG.sub,M,by+48+nl*70+8)}
+    if(IG.contatos){g.fillStyle='rgba(255,255,255,.85)';g.font=`600 30px ${corpo}`;g.fillText(igContatos(),M,H-(IG.fmt==='stories'?120:64))}}
+  else if(IG.mod==='titulo'){const gr=g.createLinearGradient(0,H*0.45,0,H);gr.addColorStop(0,'rgba(10,28,61,0)');gr.addColorStop(1,'rgba(10,28,61,.92)');g.fillStyle=gr;g.fillRect(0,H*0.45,W,H*0.55);
+    igPlaca(g,M,M+(IG.fmt==='stories'?120:0),260);
+    const base=H-(IG.fmt==='stories'?260:(IG.contatos?150:90));g.font=`800 78px ${disp}`;const linhas=Math.min(3,Math.ceil(g.measureText(IG.titulo||'Tecnologia que protege').width/(W-M*2))+0);
+    const ty=base-linhas*88-(IG.sub?56:0);g.fillStyle=IG_COR.laranja;g.fillRect(M,ty-30,120,10);g.fillStyle='#fff';const nl=igTexto(g,IG.titulo||'Tecnologia que protege',M,ty,W-M*2,88,3);
+    if(IG.sub){g.fillStyle='#FFD1A6';g.font=`600 42px ${corpo}`;g.fillText(IG.sub,M,ty+nl*88+8)}
+    if(IG.contatos){g.fillStyle='rgba(255,255,255,.9)';g.font=`600 30px ${corpo}`;g.fillText(igContatos(),M,H-(IG.fmt==='stories'?130:74))}}
+  else{igPlaca(g,W-260-M-42,H-(IG.fmt==='stories'?260:M+110),260)}}
+async function igImagem(f){const u=typeof f==='string'?f:URL.createObjectURL(f);const im=new Image();await new Promise((ok,er)=>{im.onload=ok;im.onerror=er;im.src=u});return im}
+function igEscolherGaleria(i,depois){const its=(S.galeria||[]).filter(x=>x.tipo==='foto').sort((a,b)=>String(b.criadoEm).localeCompare(String(a.criadoEm))).slice(0,120);
+  openSheet('Escolher da galeria',its.length?`<div class="gal-grid">${its.map(x=>`<button class="gal-it" data-gx="${x.id}" title="${esc(galCaminho(x.pasta))}"><img data-gimg="${esc(x.t||x.p)}" alt=""></button>`).join('')}</div>`:'<p class="muted">A galeria ainda não tem fotos.</p>',`<button class="btn" data-act="close">Cancelar</button>`,L=>{
+    L.querySelectorAll('img[data-gimg]').forEach(im=>galImg(im,im.dataset.gimg));
+    L.querySelectorAll('[data-gx]').forEach(b=>b.onclick=async()=>{const x=its.find(y=>y.id===b.dataset.gx);b.disabled=true;try{IG.fotos[i]=await igImagem(await galSrc(x.p));IG.zoom[i]=1;IG.off[i]=[0,0];if(!IG.sub)IG.sub=galCaminho(x.pasta).split(' › ').pop();closeSheet();depois()}catch(e){toast('Não foi possível abrir a foto.')}})})}
+function vInsta(el){const dois=IG.mod==='antesdepois';
+  el.innerHTML=`<div class="ig-wrap"><div class="ig-prev"><canvas id="ig_cv" aria-label="Prévia da arte"></canvas><span class="hint">Arraste a foto na prévia para ajustar</span></div>
+    <div class="ig-ctl">
+      <div class="field"><label>Formato</label><div class="seg">${Object.entries(IG_FMT).map(([k,v])=>`<label><input type="radio" name="ig_f" value="${k}" ${IG.fmt===k?'checked':''}><span>${v[2]}</span></label>`).join('')}</div></div>
+      <div class="field"><label>Modelo</label><div class="seg">${Object.entries(IG_MOD).map(([k,v])=>`<label><input type="radio" name="ig_m" value="${k}" ${IG.mod===k?'checked':''}><span>${v}</span></label>`).join('')}</div></div>
+      ${[0,1].slice(0,dois?2:1).map(i=>`<div class="field"><label>${dois?(i?'Foto do depois':'Foto do antes'):'Foto'}</label><div class="row" style="gap:6px"><label class="btn sm">${svg(UI.plus)}Escolher<input type="file" accept="image/*" hidden data-igf="${i}"></label><label class="btn sm">${svg(ICON_CAM)}Tirar<input type="file" accept="image/*" capture="environment" hidden data-igf="${i}"></label><button class="btn sm" type="button" data-igg="${i}">${svg(NAVI.galeria)}Da galeria</button></div>
+        <label class="ig-zoom"><span class="hint">Zoom</span><input type="range" min="1" max="3" step="0.05" value="${IG.zoom[i]}" data-igz="${i}"></label></div>`).join('')}
+      <div class="field"><label for="ig_t">Título na arte</label><input id="ig_t" value="${esc(IG.titulo)}" placeholder="Ex.: Fechadura digital instalada"></div>
+      <div class="field"><label for="ig_s">Linha de baixo (opcional)</label><input id="ig_s" value="${esc(IG.sub)}" placeholder="Ex.: Teresópolis - RJ"></div>
+      <label class="chk" style="display:flex"><input type="checkbox" id="ig_c" ${IG.contatos?'checked':''}> <span>Mostrar WhatsApp, @ e site na arte</span></label>
+      <div class="sec-k">Legenda</div>
+      <div class="field"><label for="ig_tp">Tipo de serviço</label><select id="ig_tp">${Object.entries(IG_TIPOS).map(([k,v])=>`<option value="${k}" ${IG.tipo===k?'selected':''}>${v.nome}</option>`).join('')}</select></div>
+      <div class="field"><label for="ig_so">Sobre este serviço (opcional)</label><input id="ig_so" value="${esc(IG.sobre)}" placeholder="Ex.: 4 câmeras Full HD num comércio no Alto"></div>
+      <div class="field"><textarea id="ig_lg" style="min-height:220px" aria-label="Legenda">${esc(igLegenda())}</textarea><button class="linkbtn" type="button" id="ig_out">↻ Gerar outra legenda</button></div>
+      <div class="row ig-acts" style="gap:8px"><button class="btn" id="ig_cp">${svg(UI.copy)}Copiar legenda</button><button class="btn" id="ig_dl">${svg(UI.dl)}Baixar imagem</button><button class="btn primary" id="ig_sh">${svg(ICON_SHARE)}Postar no Instagram</button></div>
+      <p class="hint" style="margin:0">"Postar no Instagram" abre o compartilhar com a imagem: escolha Instagram (Feed ou Stories) e cole a legenda, que já fica copiada.</p>
+    </div></div>`;
+  const $=id=>el.querySelector('#'+id),cv=$('ig_cv');
+  const pinta=()=>{igDesenhar(cv)};const prontoFontes=Promise.all([document.fonts.load('800 60px Montserrat'),document.fonts.load('600 30px Barlow')]).catch(()=>{});
+  (igLogo.complete?Promise.resolve():new Promise(r=>igLogo.onload=r)).then(()=>prontoFontes).then(pinta);pinta();
+  const leg=()=>{$('ig_lg').value=igLegenda()};
+  el.querySelectorAll('input[name=ig_f]').forEach(r=>r.onchange=()=>{IG.fmt=r.value;pinta()});
+  el.querySelectorAll('input[name=ig_m]').forEach(r=>r.onchange=()=>{IG.mod=r.value;vInsta(el)});
+  el.querySelectorAll('[data-igf]').forEach(inp=>inp.onchange=async()=>{const f=inp.files[0],i=+inp.dataset.igf;inp.value='';if(!f)return;try{IG.fotos[i]=await igImagem(f);IG.zoom[i]=1;IG.off[i]=[0,0];vInsta(el)}catch(e){toast('Não foi possível abrir a foto.')}});
+  el.querySelectorAll('[data-igg]').forEach(b=>b.onclick=()=>igEscolherGaleria(+b.dataset.igg,()=>vInsta(el)));
+  el.querySelectorAll('[data-igz]').forEach(r=>r.oninput=()=>{IG.zoom[+r.dataset.igz]=+r.value;pinta()});
+  $('ig_t').oninput=e=>{IG.titulo=e.target.value;pinta()};$('ig_s').oninput=e=>{IG.sub=e.target.value;pinta()};$('ig_c').onchange=e=>{IG.contatos=e.target.checked;pinta()};
+  $('ig_tp').onchange=e=>{IG.tipo=e.target.value;leg()};$('ig_so').oninput=e=>{IG.sobre=e.target.value;leg()};$('ig_out').onclick=()=>{IG.var++;leg()};
+  // Arrastar na prévia: move a foto (no antes e depois, a metade tocada).
+  let arr=null;cv.addEventListener('pointerdown',e=>{const r=cv.getBoundingClientRect(),[W,H]=IG_FMT[IG.fmt],lado=IG.fmt==='quadrado';let i=0;
+    if(dois){const px=(e.clientX-r.left)/r.width,py=(e.clientY-r.top)/r.height;i=lado?(px>0.5?1:0):(py>0.4?1:0)}arr={i,x:e.clientX,y:e.clientY,o:[...IG.off[i]],w:r.width,h:r.height};cv.setPointerCapture(e.pointerId)});
+  cv.addEventListener('pointermove',e=>{if(!arr)return;const o=IG.off[arr.i],z=IG.zoom[arr.i];o[0]=Math.max(-1,Math.min(1,arr.o[0]+(e.clientX-arr.x)/arr.w*2*Math.max(1,z)));o[1]=Math.max(-1,Math.min(1,arr.o[1]+(e.clientY-arr.y)/arr.h*2*Math.max(1,z)));pinta()});
+  cv.addEventListener('pointerup',()=>arr=null);cv.addEventListener('pointercancel',()=>arr=null);
+  const arquivo=async()=>{await prontoFontes;pinta();const b=await new Promise(r=>cv.toBlob(r,'image/jpeg',0.92));return new File([b],`daylintech-${IG.fmt}-${hojeISO()}.jpg`,{type:'image/jpeg'})};
+  const copiar=async()=>{try{await navigator.clipboard.writeText($('ig_lg').value);return true}catch(e){return false}};
+  $('ig_cp').onclick=async()=>{if(await copiar())toast('Legenda copiada');else copyText($('ig_lg').value)};
+  $('ig_dl').onclick=async()=>{if(!IG.fotos[0]){toast('Escolha a foto primeiro.');return}const f=await arquivo();await baixar(f.name,f,f.type);toast('Imagem baixada.')};
+  $('ig_sh').onclick=async()=>{if(!IG.fotos[0]){toast('Escolha a foto primeiro.');return}const ok=await copiar(),f=await arquivo();
+    if(navigator.canShare&&navigator.canShare({files:[f]})){try{toast(ok?'Legenda copiada: cole no Instagram.':'Copie a legenda antes de postar.');await navigator.share({files:[f]});return}catch(e){if(e&&e.name==='AbortError')return}}
+    await baixar(f.name,f,f.type);toast('Imagem baixada'+(ok?' e legenda copiada':'')+'. Poste pelo Instagram.')};
+}
+const postTabs=a=>`<div class="op-tabs internal" role="tablist">${[['guias','Guias e anotações'],['insta','Instagram']].map(([k,l])=>`<button role="tab" aria-selected="${a===k}" data-pab="${k}">${l}</button>`).join('')}</div>`;
+function vPosts(app){
+  if(ui.postAba==='insta'&&!document.body.classList.contains('apresentacao')){app.innerHTML=`<div><div class="eyebrow">Arte com a logo e legenda prontas</div><h1 class="h1">Postagens</h1></div>${postTabs('insta')}<div id="ps_ig"></div>`;
+    app.querySelectorAll('[data-pab]').forEach(b=>b.onclick=()=>{ui.postAba=b.dataset.pab;render()});vInsta(app.querySelector('#ps_ig'));return}const q=normNome(ui.postBusca||''),tp=ui.postTipo||'todos',ps=[...(S.posts||[])].filter(p=>(tp==='todos'||p.tipo===tp)&&(!q||normNome([p.titulo,p.resumo,...(p.blocos||[]).map(b=>b.txt)].join(' ')).includes(q)))
     .sort((a,b)=>(b.fixado?1:0)-(a.fixado?1:0)||String(b.atualizadoEm||b.criadoEm).localeCompare(String(a.atualizadoEm||a.criadoEm)));
   const prev=p=>{const b=(p.blocos||[]).find(x=>x.txt&&x.t!=='link');return p.resumo||(b?b.txt.replace(/\*\*/g,'').slice(0,140):'')};
-  app.innerHTML=`<div class="spread"><div><div class="eyebrow">Aprendizados, ideias e tutoriais</div><h1 class="h1">Postagens</h1></div><button class="btn primary internal" id="ps_novo">${svg(UI.plus)}Nova postagem</button></div>
+  app.innerHTML=`<div class="spread"><div><div class="eyebrow">Aprendizados, ideias e tutoriais</div><h1 class="h1">Postagens</h1></div><button class="btn primary internal" id="ps_novo">${svg(UI.plus)}Nova postagem</button></div>${postTabs('guias')}
     <label class="search">${svg(UI.search)}<input type="search" id="ps_q" placeholder="Buscar postagem" value="${esc(ui.postBusca||'')}" aria-label="Buscar postagem"></label>
     <div class="chips">${[['todos','Todas'],...Object.entries(POST_TIPOS)].map(([k,l])=>`<button class="chip" data-pt="${k}" aria-pressed="${tp===k}">${l}</button>`).join('')}</div>
     ${ps.length?`<div class="po-list">${ps.map(p=>`<article class="po-card ${p.cliente?'':'internal'}" data-post="${p.id}" tabindex="0" role="button"><div class="spread" style="align-items:center;gap:8px"><span class="pill st-enviado">${esc(POST_TIPOS[p.tipo]||'Postagem')}</span><span class="hint">${p.fixado?'📌 ':''}${fmtDate(p.atualizadoEm||p.criadoEm)}</span></div><b>${esc(p.titulo)}</b>${prev(p)?`<span class="muted">${esc(prev(p))}</span>`:''}
       <div class="row" style="gap:6px;justify-content:flex-end"><button class="btn sm internal" data-pfix="${p.id}">${p.fixado?'Desafixar':'Fixar'}</button><button class="btn sm" data-psh="${p.id}">${svg(ICON_SHARE)}PDF</button></div></article>`).join('')}</div>`
       :`<div class="empty"><b>${(S.posts||[]).length?'Nada encontrado':'Nenhuma postagem ainda'}</b><span class="muted">Guarde aqui o que você aprende no dia a dia e monte tutoriais para mandar ao cliente em PDF, como "Como ver as câmeras pelo celular" ou "Como cadastrar digital na fechadura".</span></div>`}`;
-  const $=id=>app.querySelector('#'+id);$('ps_novo').onclick=()=>formPost();
+  const $=id=>app.querySelector('#'+id);$('ps_novo').onclick=()=>formPost();app.querySelectorAll('[data-pab]').forEach(b=>b.onclick=()=>{ui.postAba=b.dataset.pab;render()});
   $('ps_q').addEventListener('input',e=>{ui.postBusca=e.target.value;render()});
   app.querySelectorAll('[data-pt]').forEach(b=>b.onclick=()=>{ui.postTipo=b.dataset.pt;render()});
   app.querySelectorAll('[data-post]').forEach(c=>c.onclick=e=>{if(e.target.closest('button'))return;verPost(S.posts.find(p=>p.id===c.dataset.post))});
