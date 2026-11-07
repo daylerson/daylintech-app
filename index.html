@@ -319,6 +319,7 @@ body.apresentacao .internal{display:none!important}
 .lightbox{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.88);display:flex;align-items:center;justify-content:center;padding:16px;cursor:zoom-out}.lightbox img{max-width:100%;max-height:100%;border-radius:8px}
 .lightbox .iconbtn{position:absolute;top:12px;right:12px;background:rgba(255,255,255,.15);color:#fff}
 .fin-contas{display:flex;flex-wrap:wrap;gap:10px}.fin-saldo{flex:1 1 240px}.fin-saldo b{font-size:30px}.fin-saldo b.neg{color:var(--bad)}
+.fin-ext{cursor:pointer}.fin-ext:hover{border-color:var(--brand)}.fin-ver{font-size:11px;color:var(--brand);font-weight:700;text-transform:none;letter-spacing:0;margin-left:4px}.ex-list .r .hint{font-size:11.5px}
 .fin-mes b{min-width:150px;text-align:center;font-size:16px}
 .fin-cats{display:flex;flex-direction:column;gap:8px}
 .fin-c{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,2fr) auto 38px;gap:10px;align-items:center;font-size:13.5px}
@@ -3285,7 +3286,7 @@ function vCompras(el){
 const FIN_CATS={servicos:['Serviços e vendas','e'],outras_ent:['Outras entradas','e'],aporte:['Dinheiro do dono (aporte)','e'],
   material:['Material para obras','s'],ferramentas:['Ferramentas e equipamentos','s'],combustivel:['Combustível','s'],veiculo:['Veículo (mecânica, IPVA, seguro, multas)','s'],
   impostos:['Impostos e taxas','s'],alimentacao:['Alimentação','s'],telefone:['Telefone e internet','s'],marketing:['Marketing e anúncios','s'],contador:['Contador','s'],
-  tarifas:['Tarifas do banco e maquininha','s'],escritorio:['Escritório, aluguel e contas','s'],retirada:['Retirada do dono (pró-labore)','s'],outros:['Outras despesas','s'],ajuste:['Ajuste de saldo','x']};
+  tarifas:['Tarifas do banco e maquininha','s'],escritorio:['Escritório, aluguel e contas','s'],retirada:['Retirada do dono (pró-labore)','s'],outros:['Outras despesas','s'],ajuste:['Ajuste de saldo','x'],transf:['Transferência entre contas','x']};
 const FIN_FORMAS={pix:'Pix',dinheiro:'Dinheiro',debito:'Cartão de débito',credito:'Cartão de crédito',boleto:'Boleto',transferencia:'Transferência'};
 // Categorias padrão + as criadas pelo dono (S.empresa.financeiro.cats: [{id, nome, tipo 'e'|'s'}]).
 const finCats=()=>{const m={...FIN_CATS};((S.empresa.financeiro||{}).cats||[]).forEach(c=>{m[c.id]=[c.nome,c.tipo]});return m};
@@ -3325,7 +3326,9 @@ async function salvarFinCfg(m){const f={...finCfg(),...m};S.empresa={...S.empres
 const contaPadrao=()=>{const c=finCfg().contas;return c[0]?c[0].id:''};
 // Todos os lançamentos, manuais e automáticos, no mesmo formato.
 function movimentos(){const out=[],cp=contaPadrao();
-  (S.lancamentos||[]).forEach(l=>out.push({...l,src:'fin',contaId:l.contaId||cp}));
+  (S.lancamentos||[]).forEach(l=>{if(l.tipo!=='transf'){out.push({...l,src:'fin',contaId:l.contaId||cp});return}
+    const de=contaNome(l.contaId)||'outra conta',para=contaNome(l.contaDestino)||'outra conta',base={data:l.data,valor:num(l.valor),cat:'transf',src:'transf',ref:l.id,criadoEm:l.criadoEm,anexos:l.anexos};
+    out.push({...base,id:l.id+'#s',tipo:'saida',contaId:l.contaId||cp,desc:`Transferência para ${para}${l.desc?' · '+l.desc:''}`},{...base,id:l.id+'#e',tipo:'entrada',contaId:l.contaDestino,desc:`Transferência de ${de}${l.desc?' · '+l.desc:''}`})});
   S.orcamentos.forEach(o=>{const p=o.pgto;if(!p||!(num(p.valor)>0))return;out.push({id:'orc-'+o.id,src:'orc',ref:o.id,tipo:'entrada',data:String(p.data||'').slice(0,10),valor:num(p.valor),cat:'servicos',contaId:p.contaId||cp,
     desc:`${o.tipo==='os'?osTipoNome(o)+' · OS':'Orçamento'} Nº ${nOrc(o.numero)} · ${cliNome(o)}${p.tipo==='parcial'?' (parcial)':''}`,forma:p.forma==='cartao'?'credito':p.forma,fornecedor:p.nome||cliNome(o),doc:p.doc,nf:o.nfse?{numero:o.nfse.numero,chave:o.nfse.chave}:null})});
   (S.gastos||[]).forEach(g=>{const v=(S.veiculos||[]).find(x=>x.id===g.veiculoId);out.push({id:'car-'+g.id,src:'carro',ref:g.id,tipo:'saida',data:g.data,valor:num(g.valor),cat:g.tipo==='combustivel'?'combustivel':'veiculo',contaId:g.contaId||cp,
@@ -3429,7 +3432,7 @@ document.addEventListener('click',async e=>{const b=e.target.closest('.cc-nova b
   try{await salvarFinCfg({contas:[...finCfg().contas,c]});document.querySelectorAll('select[data-conta]').forEach(sl=>{const op=document.createElement('option');op.value=c.id;op.textContent=nome;const nv=sl.querySelector('option[value="__nova"]');sl.insertBefore(op,nv);const vazio=sl.querySelector('option[value=""]');if(vazio)vazio.remove()});
     const sl=box.parentElement.querySelector('select[data-conta]');sl.value=c.id;box.hidden=true;inp.value='';toast('Conta criada. Informe o saldo dela em Financeiro → editar.')}
   catch(x){toast('Não foi possível criar a conta.')}finally{b.disabled=false}});
-function formLanc(l,pre={}){const n=!l,cfg=finCfg();l=l||{id:uid(),tipo:pre.tipo||'saida',data:pre.data||hojeISO(),valor:pre.valor||'',desc:pre.desc||'',fornecedor:pre.fornecedor||'',doc:pre.doc||'',forma:'pix',contaId:contaPadrao(),
+function formLanc(l,pre={}){const n=!l,cfg=finCfg();l=l||{id:uid(),tipo:pre.tipo||'saida',data:pre.data||hojeISO(),valor:pre.valor||'',desc:pre.desc||'',fornecedor:pre.fornecedor||'',doc:pre.doc||'',forma:'pix',contaId:pre.contaId||contaPadrao(),
     nf:pre.chave||pre.numero?{numero:pre.numero||'',chave:pre.chave||''}:null,itens:pre.itens&&pre.itens.length?pre.itens:undefined,criadoEm:new Date().toISOString()};
   let blobs=[...(pre.blobs||[])],cat=l.cat||classificar({...l,cnae:pre.cnae}),manual=!!l.cat;const vs=veiculos();
   const achou=pre.lida?[pre.valor?'valor':'',pre.data?'data':'',pre.fornecedor?'fornecedor':'',pre.chave||pre.numero?'número da nota':''].filter(Boolean):null;
@@ -3498,7 +3501,7 @@ function conferirSaldo(c){const atual=saldoConta(c,hojeISO());
     if(!L.querySelector('#cf_v').value.trim()){toast('Informe o saldo do banco.');return}if(!dif){closeSheet();toast('Saldo certinho!');return}
     if(await salvarOp('lancamentos',{id:uid(),tipo:dif>0?'entrada':'saida',valor:Math.abs(dif),data:hojeISO(),desc:'Ajuste de saldo (conferência com o banco)',cat:'ajuste',contaId:c.id,criadoEm:new Date().toISOString()},'Saldo acertado'))closeSheet()}})}
 const mesNomeFin=ym=>cap(new Date(+ym.slice(0,4),+ym.slice(5,7)-1,15).toLocaleDateString('pt-BR',{month:'long',year:'numeric'}));
-function resumoMes(ym,ms){ms=ms||movimentos();const doMes=ms.filter(m=>m.data.startsWith(ym)),sem=doMes.filter(m=>m.cat!=='ajuste');
+function resumoMes(ym,ms){ms=ms||movimentos();const doMes=ms.filter(m=>m.data.startsWith(ym)),sem=doMes.filter(m=>m.cat!=='ajuste'&&m.cat!=='transf');
   const ent=sem.filter(m=>m.tipo==='entrada'),sai=sem.filter(m=>m.tipo==='saida'),soma=l=>l.reduce((t,m)=>t+m.valor,0);
   const porCat=l=>Object.entries(l.reduce((a,m)=>{a[m.cat]=(a[m.cat]||0)+m.valor;return a},{})).sort((a,b)=>b[1]-a[1]);
   return {doMes,ent:soma(ent),sai:soma(sai),catE:porCat(ent),catS:porCat(sai),semNota:sai.filter(m=>!(m.anexos&&m.anexos.length)&&!(m.nf&&(m.nf.numero||m.nf.chave))&&m.src!=='das')}}
@@ -3544,14 +3547,14 @@ function vFinGeral(app){
   <div class="spread"><div><div class="eyebrow">Dinheiro da empresa</div><h1 class="h1">Financeiro</h1></div>
     <div class="row" style="gap:8px"><button class="btn primary" id="fn_nf">${svg('<path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/><path d="M10 13h5M10 17h3"/>')}Importar nota</button><button class="btn" id="fn_novo">${svg(UI.plus)}Lançamento</button></div></div>
   ${finTabs('geral')}
-  <div class="fin-contas">${cfg.contas.length?cfg.contas.map(c=>`<div class="fx-card fin-saldo"><span>${esc(c.nome)}</span><b class="${saldoConta(c,hoje,ms)<0?'neg':''}">${money(saldoConta(c,hoje,ms))}</b><span>saldo hoje · <button class="linkbtn" data-cf="${c.id}">conferir com o banco</button> · <button class="linkbtn" data-ce="${c.id}">editar</button></span></div>`).join('')+`<button class="btn ghost sm" id="fn_conta" style="align-self:center">${svg(UI.plus)}Outra conta</button>`
+  <div class="fin-contas">${cfg.contas.length?cfg.contas.map(c=>`<div class="fx-card fin-saldo fin-ext" data-ext="${c.id}" tabindex="0" role="button" aria-label="Extrato de ${esc(c.nome)}"><span>${esc(c.nome)} <span class="fin-ver">ver extrato ›</span></span><b class="${saldoConta(c,hoje,ms)<0?'neg':''}">${money(saldoConta(c,hoje,ms))}</b><span>saldo hoje · <button class="linkbtn" data-cf="${c.id}">conferir com o banco</button> · <button class="linkbtn" data-ce="${c.id}">editar</button></span></div>`).join('')+`<div class="row" style="gap:6px;align-self:center"><button class="btn sm" id="fn_tr">⇄ Transferir</button><button class="btn ghost sm" id="fn_conta">${svg(UI.plus)}Outra conta</button></div>`
     :`<div class="fx-card fin-saldo"><span>Saldo da conta</span><b>—</b><span>Informe quanto tem no banco hoje para o app acompanhar o saldo.</span><button class="btn primary sm" id="fn_conta" style="align-self:flex-start;margin-top:6px">Informar saldo</button></div>`}</div>
   ${previsaoHTML()}
   <div class="spread" style="align-items:center"><div class="row fin-mes" style="gap:6px;flex-wrap:nowrap"><button class="iconbtn" id="fn_ant" aria-label="Mês anterior">${svg(UI.back)}</button><b>${esc(mesNomeFin(ym))}</b><button class="iconbtn" id="fn_prox" aria-label="Próximo mês" ${ym>=ymHoje()?'disabled':''} style="transform:scaleX(-1)">${svg(UI.back)}</button></div>
     <button class="btn" id="fn_rel">${svg(UI.dl)}Relatório do mês</button></div>
   <div class="fx-cards">
     <div class="fx-card ok"><span>Entradas</span><b>${money(r.ent)}</b><span>${r.catE.map(([k,v])=>esc(catNomeFin(k))+' '+money(v)).slice(0,2).join(' · ')||'—'}</span></div>
-    <div class="fx-card bad"><span>Saídas</span><b>${money(r.sai)}</b><span>${r.doMes.filter(m=>m.tipo==='saida'&&m.cat!=='ajuste').length} lançamentos</span></div>
+    <div class="fx-card bad"><span>Saídas</span><b>${money(r.sai)}</b><span>${r.doMes.filter(m=>m.tipo==='saida'&&m.cat!=='ajuste'&&m.cat!=='transf').length} lançamentos</span></div>
     <div class="fx-card ${r.ent-r.sai<0?'bad':'ok'}"><span>Resultado do mês</span><b>${money(r.ent-r.sai)}</b><span>${r.ent?`Sobrou ${Math.round((r.ent-r.sai)/r.ent*100)}% do que entrou`:'Entradas menos saídas'}</span></div>
   </div>
   ${r.catS.length?`<section class="panel"><h2 class="h2">Para onde foi o dinheiro</h2><div class="fin-cats">${r.catS.map(([k,v])=>`<div class="fin-c"><span>${esc(catNomeFin(k))}</span><i><i style="width:${v/mx*100}%"></i></i><b>${money(v)}</b><span class="hint">${Math.round(v/r.sai*100)}%</span></div>`).join('')}</div></section>`:''}
@@ -3559,20 +3562,51 @@ function vFinGeral(app){
   ${lista.length?`<div class="list">${lista.map(item).join('')}</div>`:`<div class="empty" style="padding:18px">${r.doMes.length?'Nada neste filtro.':`Nenhum lançamento em ${esc(mesNomeFin(ym).toLowerCase())}. Pagamentos de orçamentos, gastos do carro, compras e guias pagas aparecem aqui sozinhos.`}</div>`}
   <p class="hint" style="margin:0">Entram sozinhos: pagamentos registrados nos orçamentos e OS, gastos do carro, compras marcadas como "Comprei" e guias de imposto pagas. A categoria das notas é sugerida pelo fornecedor, pelo tipo de empresa do CNPJ e pelas palavras da nota, e o app aprende com as suas escolhas.</p>`;
   const $=id=>app.querySelector('#'+id);
-  $('fn_nf').onclick=importarNota;$('fn_novo').onclick=()=>formLanc();$('fn_conta').onclick=()=>contaSheet();
+  $('fn_nf').onclick=importarNota;$('fn_novo').onclick=()=>formLanc();$('fn_conta').onclick=()=>contaSheet();if($('fn_tr'))$('fn_tr').onclick=()=>transfSheet();
+  app.querySelectorAll('[data-ext]').forEach(c=>{const ab=()=>extratoConta(cfg.contas.find(x=>x.id===c.dataset.ext));c.onclick=e=>{if(e.target.closest('button'))return;ab()};c.onkeydown=e=>{if(e.key==='Enter')ab()}});
   app.querySelectorAll('[data-cf]').forEach(b=>b.onclick=e=>{e.stopPropagation();conferirSaldo(cfg.contas.find(c=>c.id===b.dataset.cf))});
   app.querySelectorAll('[data-ce]').forEach(b=>b.onclick=e=>{e.stopPropagation();contaSheet(cfg.contas.find(c=>c.id===b.dataset.ce))});
   $('fn_ant').onclick=()=>{ui.finMes=ymMais(ym,-1);render()};$('fn_prox').onclick=()=>{ui.finMes=ymMais(ym,1);render()};
   $('fn_rel').onclick=()=>relatorioMes(ym);
   app.querySelectorAll('[data-ff]').forEach(b=>b.onclick=()=>{ui.finFil=b.dataset.ff;render()});
-  app.querySelectorAll('[data-mv]').forEach(b=>b.onclick=()=>{const m=ms.find(x=>x.id===b.dataset.mv);if(!m)return;
-    if(m.src==='fin')formLanc(S.lancamentos.find(l=>l.id===m.id));
+  app.querySelectorAll('[data-mv]').forEach(b=>b.onclick=()=>{const m=ms.find(x=>x.id===b.dataset.mv);if(m)abrirMov(m)});
+  ligarFin(app);
+}
+// Extrato de uma conta: movimentos dela no mês, com o saldo depois de cada um (a partir do saldo inicial da conta).
+function extratoConta(c,ym){if(!c)return;ym=ym||ymHoje();const ms=movimentos().filter(m=>m.contaId===c.id&&m.data>=c.dataIni),fimAnt=ymMais(ym,-1)+'-31';
+  const ini=saldoConta(c,fimAnt,ms),doMes=ms.filter(m=>m.data.startsWith(ym)).sort((a,b)=>a.data.localeCompare(b.data)||String(a.criadoEm||'').localeCompare(String(b.criadoEm||'')));
+  let sal=ini;const linhas=doMes.map(m=>{sal+=sinal(m)*m.valor;return {m,sal}}).reverse(),ent=doMes.filter(m=>m.tipo==='entrada').reduce((t,m)=>t+m.valor,0),sai=doMes.filter(m=>m.tipo==='saida').reduce((t,m)=>t+m.valor,0);
+  openSheet('Extrato · '+c.nome,`<div class="row fin-mes" style="gap:6px;flex-wrap:nowrap;justify-content:center"><button class="iconbtn" id="ex_ant" aria-label="Mês anterior">${svg(UI.back)}</button><b>${esc(mesNomeFin(ym))}</b><button class="iconbtn" id="ex_prox" aria-label="Próximo mês" ${ym>=ymHoje()?'disabled':''} style="transform:scaleX(-1)">${svg(UI.back)}</button></div>
+    <div class="pv-res"><div><span>Saldo no início</span><b>${money(ini)}</b></div><div><span>Entradas</span><b style="color:var(--ok)">+ ${money(ent)}</b></div><div><span>Saídas</span><b style="color:var(--bad)">− ${money(sai)}</b></div><div class="pv-fim"><span>Saldo no fim</span><b class="${ini+ent-sai<0?'neg':''}">${money(ini+ent-sai)}</b></div></div>
+    ${linhas.length?`<div class="list ex-list">${linhas.map(({m,sal})=>`<div class="li fin-m" data-exm="${esc(m.id)}" tabindex="0" role="button"><span class="fin-s ${m.tipo}">${m.tipo==='entrada'?'+':'−'}</span><div><div class="t">${esc(m.desc||catNomeFin(m.cat))}</div><div class="d">${dataBR(m.data)} · ${esc(catNomeFin(m.cat))}</div></div><div class="r"><span class="num" style="color:var(--${m.tipo==='entrada'?'ok':'bad'})">${m.tipo==='entrada'?'+':'−'} ${money(m.valor)}</span><span class="hint">saldo ${money(sal)}</span></div></div>`).join('')}</div>`
+      :`<div class="empty" style="padding:18px">Nenhum movimento nesta conta em ${esc(mesNomeFin(ym).toLowerCase())}.</div>`}
+    ${ym===c.dataIni.slice(0,7)?`<p class="hint" style="margin:0">Saldo inicial da conta: ${money(c.saldoIni)} em ${dataBR(c.dataIni)}.</p>`:''}`,
+  `<button class="btn left" id="ex_cf">Conferir com o banco</button><button class="btn" id="ex_tr">⇄ Transferir</button><button class="btn primary" id="ex_nv">${svg(UI.plus)}Lançamento</button>`,L=>{const $=id=>L.querySelector('#'+id);
+    $('ex_ant').onclick=()=>extratoConta(c,ymMais(ym,-1));$('ex_prox').onclick=()=>extratoConta(c,ymMais(ym,1));
+    $('ex_cf').onclick=()=>conferirSaldo(c);$('ex_tr').onclick=()=>transfSheet(null,c.id);$('ex_nv').onclick=()=>formLanc(null,{contaId:c.id});
+    L.querySelectorAll('[data-exm]').forEach(r=>r.onclick=()=>{const m=doMes.find(x=>x.id===r.dataset.exm);if(m)abrirMov(m)});
+  })}
+// Transferência entre contas (ex.: Nubank → Santander, banco → dinheiro): não é receita nem despesa, só muda o saldo das duas.
+function transfSheet(l,deId){const n=!l,cs=finCfg().contas;l=l||{id:uid(),tipo:'transf',data:hojeISO(),valor:'',contaId:deId||contaPadrao(),contaDestino:(cs.find(c=>c.id!==(deId||contaPadrao()))||{}).id||'',desc:'',criadoEm:new Date().toISOString()};
+  openSheet(n?'Transferir entre contas':'Editar transferência',`<p class="muted" style="margin-top:0">Passa dinheiro de uma conta para outra. Não conta como receita nem como despesa: só muda o saldo das duas.</p><div class="form">
+    ${campoConta('tr_de',l.contaId,'Sai da conta')}${campoConta('tr_para',l.contaDestino,'Entra na conta')}
+    <div class="field"><label for="tr_v">Valor (R$)</label><input id="tr_v" inputmode="decimal" value="${l.valor!==''?num(l.valor).toFixed(2).replace('.',','):''}"></div>
+    <div class="field"><label for="tr_d">Data</label><input id="tr_d" type="date" value="${esc(l.data)}"></div>
+    <div class="field full"><label for="tr_o">Observação (opcional)</label><input id="tr_o" value="${esc(l.desc||'')}" placeholder="Ex.: saque para o caixa"></div></div>`,
+  `${n?'':'<button class="btn danger left" id="tr_del">Excluir</button>'}<button class="btn" data-act="close">Cancelar</button><button class="btn primary" id="tr_ok">${n?'Transferir':'Salvar'}</button>`,L=>{const $=id=>L.querySelector('#'+id);
+    if(n&&$('tr_para').value===$('tr_de').value){const o=[...$('tr_para').options].find(x=>x.value&&x.value!=='__nova'&&x.value!==$('tr_de').value);if(o)$('tr_para').value=o.value}
+    $('tr_ok').onclick=async()=>{const de=lerConta($('tr_de')),para=$('tr_para').value,vl=num($('tr_v').value);
+      if(!para||para==='__nova'){toast('Escolha a conta que recebe (ou crie em "+ Adicionar conta…").');return}if(de===para){toast('Escolha contas diferentes.');return}if(!(vl>0)){toast('Informe o valor.');return}
+      if(await salvarOp('lancamentos',{...l,tipo:'transf',contaId:de,contaDestino:para,valor:vl,data:$('tr_d').value||hojeISO(),desc:$('tr_o').value.trim(),cat:'transf',atualizadoEm:new Date().toISOString()},'Transferência lançada'))closeSheet()};
+    if(!n)$('tr_del').onclick=()=>confirmSheet('Excluir transferência?','Os saldos das duas contas voltam como eram.','Excluir',()=>store.remove('lancamentos',l.id).then(()=>toast('Excluída'),()=>toast('Não foi possível excluir.')));
+  })}
+function abrirMov(m){
+    if(m.src==='transf')transfSheet(S.lancamentos.find(l=>l.id===m.ref));
+    else if(m.src==='fin')formLanc(S.lancamentos.find(l=>l.id===m.id));
     else if(m.src==='orc'){const o=S.orcamentos.find(x=>x.id===m.ref);go(o&&o.tipo==='os'&&o.agenda?'os':'proposta',{id:m.ref})}
     else if(m.src==='carro'){const g=S.gastos.find(x=>x.id===m.ref),v=g&&S.veiculos.find(x=>x.id===g.veiculoId);if(g&&v)formGasto(v,g)}
     else if(m.src==='compra')formCompra(S.compras.find(x=>x.id===m.ref));
-    else if(m.src==='das')go('impostos')});
-  ligarFin(app);
-}
+    else if(m.src==='das')go('impostos')}
 /* ---------- Contas fixas, a receber e previsão ---------- */
 // Coleção "contasfixas": {nome, valor, freq: mensal|anual|unica, dia, mes (anual), data (única), inicio 'AAAA-MM', parcelas, cat, contaId, ativo}.
 // Pagar uma conta cria um lançamento com contaFixaId + competencia ('AAAA-MM' ou 'AAAA'), que marca aquele mês como pago.
