@@ -452,6 +452,7 @@ body.apresentacao .internal{display:none!important}
 .acc-done{display:flex;flex-direction:column;gap:6px;background:#E3F5EA;color:#14532D;border-radius:10px;padding:14px;font-size:14px}
 .acc-done a{color:#14532D;font-weight:700}
 .recibo .pp-body{gap:16px}
+.ass-imp{display:grid;grid-template-columns:2fr 1.4fr 1fr;gap:24px;margin-top:46px}.ass-imp>div{display:flex;flex-direction:column;gap:6px}.ass-imp i{display:block;border-top:1px solid var(--paper-ink)}.ass-imp span{font-size:12px;color:var(--paper-muted)}
 .ig-wrap{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;align-items:start}
 .ig-prev{position:sticky;top:76px;display:flex;flex-direction:column;gap:6px;align-items:center}.ig-prev canvas{width:100%;max-width:440px;height:auto;border-radius:10px;box-shadow:var(--shadow);touch-action:none;cursor:grab;background:#eee}
 .ig-ctl{display:flex;flex-direction:column;gap:12px}.ig-ctl .field>label:first-child{font-weight:600}.ig-ctl input:not([type]),.ig-ctl input[type=search],.ig-ctl select,.ig-ctl textarea,.ig-ctl #ig_t,.ig-ctl #ig_s,.ig-ctl #ig_so{width:100%;padding:10px 11px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit}
@@ -2184,6 +2185,25 @@ function extenso(v){v=Math.round(num(v)*100)/100;const re=Math.floor(v),ce=Math.
     if(parts.length>1){const last=parts.pop();return parts.join(' ')+((r&&(r<100||r%100===0))?' e ':' ')+last}return parts[0]};
   const reais=re?inteiro(re)+(re%1e6===0?' de':'')+(re===1?' real':' reais'):'',cents=ce?a999(ce)+(ce===1?' centavo':' centavos'):'';
   return reais&&cents?reais+' e '+cents:(reais||cents||'zero real')}
+// Proposta em PDF para imprimir ou mandar (ex.: escola que precisa do papel), com ou sem os dados de pagamento.
+async function propostaPDFHTML(o,comPag,comAss){const papel=h=>h.replace('<div class="paper','<div style="box-shadow:none;margin:0 0 18px;max-width:none" class="paper');
+  let pay='';if(comPag)pay=(await pagamentoHTML(o)).replace(/<button[\s\S]*?<\/button>/g,'');
+  const ass=comAss?`<div class="paper"><div class="pp-body"><div class="pp-cat">De acordo</div><div class="ass-imp"><div><i></i><span>Assinatura do cliente</span></div><div><i></i><span>Nome legível</span></div><div><i></i><span>Data</span></div></div></div></div>`:'';
+  return `<div>${papel(propostaHTML(o))}${pay?papel(`<div class="paper pp-extra"><div class="pp-body">${pay}</div></div>`):''}${ass?papel(ass):''}</div>`}
+function pdfPropostaSheet(o){let pag=true,ass=false;try{pag=localStorage.getItem('dt:pdfpag')!=='0';ass=localStorage.getItem('dt:pdfass')==='1'}catch(e){}
+  const nome=`Proposta-${nOrc(o.numero)}-${arqNome(cliNome(o)).normalize('NFD').replace(/[̀-ͯ]/g,'')}.pdf`;
+  openSheet('Proposta em PDF',`<label class="chk" style="display:flex"><input type="checkbox" id="pf_pag" ${pag?'checked':''}> <span>Incluir dados de pagamento <span class="hint">(Pix com QR Code e link do cartão)</span></span></label>
+    <label class="chk" style="display:flex"><input type="checkbox" id="pf_ass" ${ass?'checked':''}> <span>Espaço para assinatura do cliente <span class="hint">(para imprimir e assinar)</span></span></label>
+    <div class="paper-wrap" id="pf_prev" style="max-height:420px;overflow:auto"><span class="hint">Montando…</span></div>`,
+  `<button class="btn" id="pf_dl">${svg(UI.dl)}Baixar PDF</button><button class="btn primary" id="pf_sh">${svg(ICON_SHARE)}Compartilhar</button>`,L=>{L.querySelector('.sheet').style.maxWidth='860px';const $=id=>L.querySelector('#'+id);
+    const prev=async()=>{const h=await propostaPDFHTML(o,$('pf_pag').checked,$('pf_ass').checked);if($('pf_prev'))$('pf_prev').innerHTML=h};prev();
+    ['pf_pag','pf_ass'].forEach(i=>$(i).onchange=()=>{try{localStorage.setItem('dt:pdfpag',$('pf_pag').checked?'1':'0');localStorage.setItem('dt:pdfass',$('pf_ass').checked?'1':'0')}catch(e){}prev()});
+    const gera=async b=>{b.disabled=true;const t=b.innerHTML;b.textContent='Gerando…';try{return new File([await htmlPDF(await propostaPDFHTML(o,$('pf_pag').checked,$('pf_ass').checked))],nome,{type:'application/pdf'})}catch(e){toast('Não foi possível gerar o PDF.');return null}finally{b.disabled=false;b.innerHTML=t}};
+    $('pf_dl').onclick=async()=>{const f=await gera($('pf_dl'));if(f){await baixar(f.name,f,f.type);toast('PDF baixado. Dá para imprimir direto dele.')}};
+    $('pf_sh').onclick=async()=>{const f=await gera($('pf_sh'));if(!f)return;const txt=`Proposta Nº ${nOrc(o.numero)} — ${S.empresa.nome||'DaylinTech'}`;
+      if(navigator.canShare&&navigator.canShare({files:[f]})){try{await navigator.share({files:[f],title:txt,text:txt});return}catch(e){if(e&&e.name==='AbortError')return}}
+      await baixar(f.name,f,f.type);toast('PDF baixado: anexe na conversa ou no e-mail do cliente.')};
+  })}
 async function pagamentoHTML(o){
   const t=calc(o),e=S.empresa,dp=num(e.descontoPix),vp=valorPix(t.total),pl=pixPayload(vp,'DT'+nOrc(o.numero)),qr=pl?await qrSVG(pl):'',lk=safeUrl(o.linkPagamento)||safeUrl(e.linkPagamento),ct=cartaoTxt();
   return `<div class="pay"><div class="pp-cat">Formas de pagamento</div><div class="pay-g">
@@ -4210,6 +4230,7 @@ function vProposta(app){
   <div class="paper-wrap">${propostaHTML(o)}<div class="paper pp-extra"><div class="pp-body" id="pp_pay"><span class="hint">Carregando formas de pagamento…</span></div></div></div>
   <div class="actions">
     ${sb?`<button class="btn ${vendido(o)?'':'primary'}" id="pp_link">${svg(UI.copy)}Link da proposta</button>`:''}
+    <button class="btn" id="pp_pdf">${svg(UI.dl)}PDF / imprimir</button>
     <button class="btn ${vendido(o)||sb?'':'primary'}" id="pp_dl">${svg(UI.dl)}Baixar proposta com aceite</button>
     <button class="btn ${vendido(o)&&o.status!=='concluido'?'primary':''} internal" id="pp_buy">${svg(UI.cart)}Lista de compras</button>
     <button class="btn" id="pp_copy">${svg(UI.copy)}Copiar para WhatsApp</button>
@@ -4226,7 +4247,7 @@ function vProposta(app){
   if(sb)$('pp_link').onclick=async()=>{const b=$('pp_link');b.disabled=true;try{await linkProposta(o)}catch(e){toast('Não foi possível criar o link. Confira a internet e tente de novo.')}finally{b.disabled=false}};
   $('fx_pg').onclick=()=>registrarPagamento(o);
   $('fx_rc').onclick=()=>verRecibo(o.id);$('fx_nf').onclick=()=>nfseSheet(o);
-  $('pp_copy').onclick=()=>copyText(propostaTexto(o));
+  $('pp_copy').onclick=()=>copyText(propostaTexto(o));$('pp_pdf').onclick=()=>pdfPropostaSheet(o);
   $('pp_buy').onclick=()=>listaCompras(o.id);
   $('pp_edit').onclick=()=>editarOrc(o);
   $('pp_dup').onclick=()=>{const c=JSON.parse(JSON.stringify(o));delete c.aceite;delete c.pgto;delete c.comprados;delete c.linkToken;delete c.linkPagamento;delete c.agenda;draft={...c,id:uid(),numero:null,status:'rascunho',criadoEm:new Date().toISOString(),_dirty:true,_new:true};go('editor',{force:true})};
