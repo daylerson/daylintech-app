@@ -689,6 +689,9 @@ const num=v=>{const n=parseFloat(String(v??'').replace(/\./g,(m,i,s)=>s.includes
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
 const fmtDate=iso=>{if(!iso)return '';const d=new Date(iso);return d.toLocaleDateString('pt-BR')};
+// Data de emissão da proposta: a escolhida no editor (o.emitidaEm, AAAA-MM-DD) ou a da criação.
+const emissao=o=>o.emitidaEm?o.emitidaEm+'T12:00:00':o.criadoEm;
+const validaAte=o=>addDays(emissao(o),o.validadeDias);
 const addDays=(iso,n)=>{const d=new Date(iso);d.setDate(d.getDate()+(Number(n)||0));return d.toISOString()};
 const nOrc=n=>String(n||0).padStart(4,'0');
 const fmtPct=v=>String(num(v)).replace('.',',')+'%';
@@ -1040,7 +1043,7 @@ function vInicio(app){
     list.length===0?`<div class="empty">Nenhum orçamento encontrado com esse filtro.</div>`:
   `<div class="list">${list.map(o=>{const t=calc(o);return `<div class="li" data-open-orc="${o.id}" tabindex="0" role="button">
      <div><div class="t">${esc(cliNome(o))}${o.titulo?` <span class="muted" style="font-weight:500">· ${esc(o.titulo)}</span>`:''}</div>
-     <div class="d"><span class="mono">Nº ${nOrc(o.numero)}</span> · ${fmtDate(o.criadoEm)} · ${(o.itens||[]).length} ite${(o.itens||[]).length===1?'m':'ns'}</div></div>
+     <div class="d"><span class="mono">Nº ${nOrc(o.numero)}</span> · ${fmtDate(emissao(o))} · ${(o.itens||[]).length} ite${(o.itens||[]).length===1?'m':'ns'}</div></div>
      <div class="r"><span class="num" style="font-weight:700">${money(t.total)}</span><span class="row" style="gap:4px;justify-content:flex-end">${o.pgto?'<span class="pill st-pago">Pago</span>':''}<span class="pill st-${o.status}">${STATUS[o.status]}</span></span></div></div>`}).join('')}</div>`}
   `;
 }
@@ -1930,7 +1933,9 @@ function vEditor(app){
       <section class="panel">
         <h2 class="h2">Condições</h2>
         <div class="form">
+          <div class="field"><label for="o_emi">Data de emissão</label><input id="o_emi" type="date" value="${esc(isoDia(new Date(emissao(draft))))}"></div>
           <div class="field"><label for="o_val">Validade (dias)</label><input id="o_val" inputmode="numeric" value="${esc(draft.validadeDias)}"></div>
+          <div class="field"><label for="o_vate">Válida até</label><input id="o_vate" type="date" value="${esc(isoDia(new Date(validaAte(draft))))}"></div>
           <div class="field"><label for="o_prazo">Prazo de instalação</label><input id="o_prazo" value="${esc(draft.prazo)}"></div>
           <div class="field full"><label for="o_pag">Pagamento</label><textarea id="o_pag">${esc(draft.pagamento)}</textarea></div>
           <div class="field full"><label for="o_link">Link de pagamento do cartão</label><input id="o_link" inputmode="url" value="${esc(draft.linkPagamento)}" placeholder="https://…"><span class="hint">Gere na maquininha ou no app de pagamento com o valor deste orçamento e cole aqui. Na proposta aparece o botão “Pagar com cartão”.</span></div>
@@ -1943,7 +1948,7 @@ function vEditor(app){
   </div>`;
   const $=id=>app.querySelector('#'+id);
   const bind=(id,key,fn=v=>v)=>{$(id).addEventListener('input',e=>{draft[key]=fn(e.target.value);draft._dirty=true;if(key==='descontoPct')renderEditorParts(true)})};
-  bind('o_tit','titulo');bind('o_val','validadeDias',v=>Math.round(num(v)));bind('o_prazo','prazo');bind('o_pag','pagamento');bind('o_link','linkPagamento',v=>String(v).trim());bind('o_gar','garantia');bind('o_obs','obs');bind('o_dserv','descServico');$('o_fech').onchange=e=>{draft.valorFechado=e.target.checked;draft._dirty=true;$('o_fech_box').hidden=!e.target.checked};
+  bind('o_tit','titulo');bind('o_val','validadeDias',v=>Math.round(num(v)));const vate=()=>{if(num(draft.validadeDias)>=0)$('o_vate').value=isoDia(new Date(validaAte(draft)))};$('o_val').addEventListener('input',vate);$('o_emi').addEventListener('change',e=>{if(!e.target.value)return;draft.emitidaEm=e.target.value;draft._dirty=true;vate()});$('o_vate').addEventListener('change',e=>{if(!e.target.value)return;const d=Math.round((new Date(e.target.value+'T12:00:00')-new Date(isoDia(new Date(emissao(draft)))+'T12:00:00'))/864e5);if(d<0){toast('A validade não pode ser antes da emissão.');vate();return}draft.validadeDias=d;$('o_val').value=d;draft._dirty=true});bind('o_prazo','prazo');bind('o_pag','pagamento');bind('o_link','linkPagamento',v=>String(v).trim());bind('o_gar','garantia');bind('o_obs','obs');bind('o_dserv','descServico');$('o_fech').onchange=e=>{draft.valorFechado=e.target.checked;draft._dirty=true;$('o_fech_box').hidden=!e.target.checked};
   $('o_cli').onchange=e=>{draft.clienteId=e.target.value;draft._dirty=true};
   $('o_cli_new').onclick=()=>formCli(null,c=>{draft.clienteId=c.id;draft._dirty=true;vEditor(app)});
   $('o_add').onclick=()=>openPicker('mat');$('o_add_mo').onclick=()=>openPicker('mo');$('o_av').onclick=()=>formItem('mat');$('o_av_mo').onclick=()=>formItem('mo');
@@ -2064,7 +2069,7 @@ function propostaHTML(o){
     <div class="pp-meta">
       <div><div class="pp-k">Para</div><div class="pp-cli">${esc(c.nome)}</div><div class="pp-small">${esc([c.endereco,[c.bairro,c.cidade].filter(Boolean).join(', ')].filter(Boolean).join(' — '))}</div><div class="pp-small">${esc([c.telefone,c.email].filter(Boolean).join(' · '))}</div>
         ${o.titulo?`<div style="margin-top:10px"><div class="pp-k">Projeto</div><div style="font-weight:600">${esc(o.titulo)}</div></div>`:''}</div>
-      <div class="pp-dates"><div><div class="pp-k">Emitida em</div><div>${fmtDate(o.criadoEm)}</div></div><div><div class="pp-k">Válida até</div><div>${fmtDate(addDays(o.criadoEm,o.validadeDias))}</div></div></div>
+      <div class="pp-dates"><div><div class="pp-k">Emitida em</div><div>${fmtDate(emissao(o))}</div></div><div><div class="pp-k">Válida até</div><div>${fmtDate(validaAte(o))}</div></div></div>
     </div>
     ${o.valorFechado?fechadoHTML(o):grupos.map(g=>`<div><div class="pp-cat">${catIcon(g.cat.id)}${esc(g.cat.nome)}</div>
       <table class="pp-table"><tbody>${g.itens.map(i=>{const pr=S.produtos.find(x=>x.id===i.produtoId);const foto=pr&&pr.foto;const ds=safeUrl((pr&&pr.datasheet)||i.datasheet);return `<tr><td class="ph">${foto?`<img class="pp-ph" src="${foto}" alt="">`:`<span class="pp-ph ic">${catIcon(i.categoria)}</span>`}</td><td><div style="font-weight:600">${esc(i.nome)}</div>${i.descricao?`<div class="desc">${esc(i.descricao)}</div>`:''}<div class="pp-unit">${String(num(i.qtd)).replace('.',',')} ${esc(i.unidade||'un')} × ${money(i.preco)}</div>${ds?`<a class="pp-ds" href="${esc(ds)}" target="_blank" rel="noopener">Ver datasheet ↗</a>`:''}</td><td class="v">${money(num(i.preco)*num(i.qtd))}</td></tr>`}).join('')}</tbody></table></div>`).join('')}
@@ -2137,7 +2142,7 @@ function propostaTexto(o){
   if(o.pagamento)L.push(`Pagamento: ${o.pagamento}`);
   if(o.prazo)L.push(`Prazo: ${o.prazo}`);
   if(o.garantia)L.push(`Garantia: ${o.garantia}`);
-  L.push(`Válida até ${fmtDate(addDays(o.criadoEm,o.validadeDias))}.`);
+  L.push(`Válida até ${fmtDate(validaAte(o))}.`);
   if(e.telefone)L.push('',`${e.nome} · ${e.telefone}`);
   return L.join('\n');
 }
@@ -3787,7 +3792,7 @@ function eventosAgenda(){const hoje=hojeISO(),de=isoDia(new Date(Date.now()-2*86
     const ini=new Date(`${g.data}T${hora}:00`),fim=new Date(ini.getTime()+duracaoMin(g.duracao||(calc(o).tempo?fmtH(calc(o).tempo):''))*6e4),feito=o.status==='concluido';
     add({id:'os-'+o.id,titulo:`${feito?'✓ ':''}${o.tipo==='os'?osTipoNome(o):'Instalação'} · ${cliNome(o)}`,inicio:ini.toISOString(),fim:fim.toISOString(),local:[g.endereco,c.cep].filter(Boolean).join(', '),cor:'9',lembretes:feito?[]:[60,24*60],
       desc:[`${o.tipo==='os'?'OS':'Orçamento'} Nº ${nOrc(o.numero)}${o.titulo&&o.tipo!=='os'?' · '+o.titulo:''}`,`Cliente: ${cliNome(o)}${c.telefone?' · '+c.telefone:''}`,o.motivo?'Motivo: '+o.motivo:'',g.tecnico?'Técnico: '+g.tecnico:'',g.obs?'Obs.: '+g.obs:'','',`Abrir a OS no app: ${u}#os=${o.id}`].filter((x,i)=>x!==''||i>4).join('\n')})});
-  S.orcamentos.filter(o=>o.tipo!=='os'&&o.status==='enviado'&&o.criadoEm).forEach(o=>{const v=isoDia(new Date(new Date(o.criadoEm).getTime()+num(o.validadeDias||S.empresa.validade||15)*864e5));if(v<hoje||v>ate)return;
+  S.orcamentos.filter(o=>o.tipo!=='os'&&o.status==='enviado'&&o.criadoEm).forEach(o=>{const v=isoDia(new Date(new Date(emissao(o)).getTime()+num(o.validadeDias||S.empresa.validade||15)*864e5));if(v<hoje||v>ate)return;
     add({id:'val-'+o.id,dia:v,titulo:`Proposta vence: ${cliNome(o)} (Nº ${nOrc(o.numero)})`,cor:'2',lembretes:[15*60],desc:`Cobrar resposta do cliente antes de a proposta vencer.\n\nAbrir no app: ${u}#orc=${o.id}`})});
   contasAbertas(ate).forEach(oc=>{if(oc.vence<de)return;add({id:`cf-${oc.cf.id}-${oc.comp}`,dia:oc.vence,titulo:`Pagar: ${oc.cf.nome} · ${money(oc.cf.valor)}`,cor:'11',lembretes:[15*60],desc:`Conta fixa${oc.parcela?` · parcela ${oc.parcela}/${oc.cf.parcelas}`:''}. Depois de pagar, toque em "Paguei" no app.\n\nAbrir o financeiro: ${u}#fin`})});
   const f=fiscal();if(f.regime!=='outro'&&f.inicio){guias(f).filter(g=>g.st==='aberto'&&g.vence>=de&&g.vence<=ate).forEach(g=>add({id:'das-'+g.ym,dia:g.vence,titulo:`Pagar DAS de ${ymTxt(g.ym)} · ${money(g.valor)}`,cor:'11',lembretes:[15*60,4*24*60],desc:`Guia de imposto.\nEmitir: ${f.regime==='mei'?FX_LINK.pgmei:FX_LINK.simples}\n\nAbrir impostos no app: ${u}#impostos`}));
@@ -4262,7 +4267,7 @@ function vProposta(app){
   $('pp_copy').onclick=()=>copyText(propostaTexto(o));$('pp_pdf').onclick=()=>pdfPropostaSheet(o);
   $('pp_buy').onclick=()=>listaCompras(o.id);
   $('pp_edit').onclick=()=>editarOrc(o);
-  $('pp_dup').onclick=()=>{const c=JSON.parse(JSON.stringify(o));delete c.aceite;delete c.pgto;delete c.comprados;delete c.linkToken;delete c.linkPagamento;delete c.agenda;draft={...c,id:uid(),numero:null,status:'rascunho',criadoEm:new Date().toISOString(),_dirty:true,_new:true};go('editor',{force:true})};
+  $('pp_dup').onclick=()=>{const c=JSON.parse(JSON.stringify(o));delete c.aceite;delete c.pgto;delete c.comprados;delete c.linkToken;delete c.linkPagamento;delete c.agenda;delete c.emitidaEm;draft={...c,id:uid(),numero:null,status:'rascunho',criadoEm:new Date().toISOString(),_dirty:true,_new:true};go('editor',{force:true})};
   $('pp_del').onclick=()=>confirmSheet('Excluir orçamento?',`O orçamento Nº ${nOrc(o.numero)} de ${esc(cliNome(o))} será apagado.`,'Excluir',async()=>{if(sb){try{await sb.from('propostas').delete().eq('orcamento_id',o.id)}catch(e){}try{const {data}=await sb.storage.from(FOTOS_BUCKET).list(o.id);if(data&&data.length)await sb.storage.from(FOTOS_BUCKET).remove(data.map(f=>o.id+'/'+f.name))}catch(e){}}await store.remove('orcamentos',o.id);toast('Orçamento excluído');go('inicio',{force:true})});
   $('pp_dl').onclick=async()=>{
     const b=$('pp_dl');b.disabled=true;
