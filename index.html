@@ -1916,7 +1916,7 @@ function vEditor(app){
           <div class="field"><label for="o_cli">Cliente</label><div class="row" style="flex-wrap:nowrap"><select id="o_cli" style="flex:1;min-width:0"><option value="">Selecione…</option>${cs.map(c=>`<option value="${c.id}" ${draft.clienteId===c.id?'selected':''}>${esc(c.nome)}</option>`).join('')}</select><button class="iconbtn" id="o_cli_new" title="Cadastrar cliente" aria-label="Cadastrar cliente">${svg(UI.plus)}</button></div></div>
           <div class="field"><label for="o_tit">Título do projeto</label><input id="o_tit" value="${esc(draft.titulo)}" placeholder="Ex.: CFTV residencial 4 câmeras"></div>
           <div class="field full"><label class="chk" style="display:flex"><input type="checkbox" id="o_fech" ${draft.valorFechado?'checked':''}> <span>Valor fechado <span class="hint">(o cliente vê só o serviço, a lista de materiais inclusos e o total, sem o preço de cada item)</span></span></label></div>
-          <div class="field full" id="o_fech_box" ${draft.valorFechado?'':'hidden'}><label for="o_desc">Descrição do serviço</label><input id="o_desc" value="${esc(draft.descServico||'')}" placeholder="Ex.: Serviço de instalação de fechadura eletrônica"><span class="hint">Vai no topo da proposta e na nota fiscal: “… com materiais inclusos”. Em branco, usa o título.</span></div>
+          <div class="field full" id="o_fech_box" ${draft.valorFechado?'':'hidden'}><label for="o_dserv">Descrição do serviço</label><input id="o_dserv" value="${esc(draft.descServico||'')}" placeholder="Ex.: Serviço de instalação de fechadura eletrônica"><span class="hint">Vai no topo da proposta e na nota fiscal: “… com materiais inclusos”. Em branco, usa o título.</span></div>
         </div>
       </section>
       <section class="panel">
@@ -1943,7 +1943,7 @@ function vEditor(app){
   </div>`;
   const $=id=>app.querySelector('#'+id);
   const bind=(id,key,fn=v=>v)=>{$(id).addEventListener('input',e=>{draft[key]=fn(e.target.value);draft._dirty=true;if(key==='descontoPct')renderEditorParts(true)})};
-  bind('o_tit','titulo');bind('o_val','validadeDias',v=>Math.round(num(v)));bind('o_prazo','prazo');bind('o_pag','pagamento');bind('o_link','linkPagamento',v=>String(v).trim());bind('o_gar','garantia');bind('o_obs','obs');bind('o_desc','descServico');$('o_fech').onchange=e=>{draft.valorFechado=e.target.checked;draft._dirty=true;$('o_fech_box').hidden=!e.target.checked};
+  bind('o_tit','titulo');bind('o_val','validadeDias',v=>Math.round(num(v)));bind('o_prazo','prazo');bind('o_pag','pagamento');bind('o_link','linkPagamento',v=>String(v).trim());bind('o_gar','garantia');bind('o_obs','obs');bind('o_dserv','descServico');$('o_fech').onchange=e=>{draft.valorFechado=e.target.checked;draft._dirty=true;$('o_fech_box').hidden=!e.target.checked};
   $('o_cli').onchange=e=>{draft.clienteId=e.target.value;draft._dirty=true};
   $('o_cli_new').onclick=()=>formCli(null,c=>{draft.clienteId=c.id;draft._dirty=true;vEditor(app)});
   $('o_add').onclick=()=>openPicker('mat');$('o_add_mo').onclick=()=>openPicker('mo');$('o_av').onclick=()=>formItem('mat');$('o_av_mo').onclick=()=>formItem('mo');
