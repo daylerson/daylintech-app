@@ -1915,6 +1915,8 @@ function vEditor(app){
         <div class="form">
           <div class="field"><label for="o_cli">Cliente</label><div class="row" style="flex-wrap:nowrap"><select id="o_cli" style="flex:1;min-width:0"><option value="">Selecione…</option>${cs.map(c=>`<option value="${c.id}" ${draft.clienteId===c.id?'selected':''}>${esc(c.nome)}</option>`).join('')}</select><button class="iconbtn" id="o_cli_new" title="Cadastrar cliente" aria-label="Cadastrar cliente">${svg(UI.plus)}</button></div></div>
           <div class="field"><label for="o_tit">Título do projeto</label><input id="o_tit" value="${esc(draft.titulo)}" placeholder="Ex.: CFTV residencial 4 câmeras"></div>
+          <div class="field full"><label class="chk" style="display:flex"><input type="checkbox" id="o_fech" ${draft.valorFechado?'checked':''}> <span>Valor fechado <span class="hint">(o cliente vê só o serviço, a lista de materiais inclusos e o total, sem o preço de cada item)</span></span></label></div>
+          <div class="field full" id="o_fech_box" ${draft.valorFechado?'':'hidden'}><label for="o_desc">Descrição do serviço</label><input id="o_desc" value="${esc(draft.descServico||'')}" placeholder="Ex.: Serviço de instalação de fechadura eletrônica"><span class="hint">Vai no topo da proposta e na nota fiscal: “… com materiais inclusos”. Em branco, usa o título.</span></div>
         </div>
       </section>
       <section class="panel">
@@ -1941,7 +1943,7 @@ function vEditor(app){
   </div>`;
   const $=id=>app.querySelector('#'+id);
   const bind=(id,key,fn=v=>v)=>{$(id).addEventListener('input',e=>{draft[key]=fn(e.target.value);draft._dirty=true;if(key==='descontoPct')renderEditorParts(true)})};
-  bind('o_tit','titulo');bind('o_val','validadeDias',v=>Math.round(num(v)));bind('o_prazo','prazo');bind('o_pag','pagamento');bind('o_link','linkPagamento',v=>String(v).trim());bind('o_gar','garantia');bind('o_obs','obs');
+  bind('o_tit','titulo');bind('o_val','validadeDias',v=>Math.round(num(v)));bind('o_prazo','prazo');bind('o_pag','pagamento');bind('o_link','linkPagamento',v=>String(v).trim());bind('o_gar','garantia');bind('o_obs','obs');bind('o_desc','descServico');$('o_fech').onchange=e=>{draft.valorFechado=e.target.checked;draft._dirty=true;$('o_fech_box').hidden=!e.target.checked};
   $('o_cli').onchange=e=>{draft.clienteId=e.target.value;draft._dirty=true};
   $('o_cli_new').onclick=()=>formCli(null,c=>{draft.clienteId=c.id;draft._dirty=true;vEditor(app)});
   $('o_add').onclick=()=>openPicker('mat');$('o_add_mo').onclick=()=>openPicker('mo');$('o_av').onclick=()=>formItem('mat');$('o_av_mo').onclick=()=>formItem('mo');
@@ -2041,6 +2043,14 @@ function openPicker(mode){
 }
 
 /* ---------- Proposta ---------- */
+// Valor fechado: o serviço com os materiais inclusos, sem preço por item (ex.: escola que precisa de nota única).
+const descServ=o=>(o.descServico||o.titulo||'Serviço de instalação').trim();
+const qtdTxt=i=>{const n=num(i.qtd);return `${String(n).replace('.',',')} ${i.unidade||'un'}`};
+function fechadoHTML(o){const its=o.itens||[],mats=its.filter(i=>!isMO(i)),mos=its.filter(isMO).filter(i=>!/^m[aã]o de obra\b/i.test(i.nome.trim())&&normNome(i.nome)!==normNome(descServ(o)));
+  const linha=i=>{const pr=S.produtos.find(x=>x.id===i.produtoId);const foto=pr&&pr.foto;return `<tr><td class="ph">${foto?`<img class="pp-ph" src="${foto}" alt="">`:`<span class="pp-ph ic">${catIcon(i.categoria)}</span>`}</td><td><div style="font-weight:600">${esc(i.nome)}</div>${i.descricao?`<div class="desc">${esc(i.descricao)}</div>`:''}</td><td class="v" style="font-weight:500;white-space:nowrap">${isMO(i)?'':esc(qtdTxt(i))}</td></tr>`};
+  return `<div><div class="pp-cat">${catIcon('servicos')}Serviço</div><div style="font-weight:700;font-size:15px;margin:2px 0 6px">${esc(descServ(o))}${mats.length?', com os seguintes materiais inclusos:':''}</div>
+    ${mats.length?`<table class="pp-table"><tbody>${mats.map(linha).join('')}</tbody></table>`:''}</div>
+    ${mos.length?`<div><div class="pp-cat">${catIcon('servicos')}Serviços inclusos</div><table class="pp-table"><tbody>${mos.map(linha).join('')}</tbody></table></div>`:''}`}
 function propostaHTML(o){
   const e=S.empresa,c=S.clientes.find(x=>x.id===o.clienteId)||{nome:o.clienteNome||''},t=calc(o);
   const grupos=CATS.map(cat=>({cat,itens:o.itens.filter(i=>i.categoria===cat.id)})).filter(g=>g.itens.length);
@@ -2056,12 +2066,12 @@ function propostaHTML(o){
         ${o.titulo?`<div style="margin-top:10px"><div class="pp-k">Projeto</div><div style="font-weight:600">${esc(o.titulo)}</div></div>`:''}</div>
       <div class="pp-dates"><div><div class="pp-k">Emitida em</div><div>${fmtDate(o.criadoEm)}</div></div><div><div class="pp-k">Válida até</div><div>${fmtDate(addDays(o.criadoEm,o.validadeDias))}</div></div></div>
     </div>
-    ${grupos.map(g=>`<div><div class="pp-cat">${catIcon(g.cat.id)}${esc(g.cat.nome)}</div>
+    ${o.valorFechado?fechadoHTML(o):grupos.map(g=>`<div><div class="pp-cat">${catIcon(g.cat.id)}${esc(g.cat.nome)}</div>
       <table class="pp-table"><tbody>${g.itens.map(i=>{const pr=S.produtos.find(x=>x.id===i.produtoId);const foto=pr&&pr.foto;const ds=safeUrl((pr&&pr.datasheet)||i.datasheet);return `<tr><td class="ph">${foto?`<img class="pp-ph" src="${foto}" alt="">`:`<span class="pp-ph ic">${catIcon(i.categoria)}</span>`}</td><td><div style="font-weight:600">${esc(i.nome)}</div>${i.descricao?`<div class="desc">${esc(i.descricao)}</div>`:''}<div class="pp-unit">${String(num(i.qtd)).replace('.',',')} ${esc(i.unidade||'un')} × ${money(i.preco)}</div>${ds?`<a class="pp-ds" href="${esc(ds)}" target="_blank" rel="noopener">Ver datasheet ↗</a>`:''}</td><td class="v">${money(num(i.preco)*num(i.qtd))}</td></tr>`}).join('')}</tbody></table></div>`).join('')}
     <div class="pp-tot">
-      ${t.mat&&t.mo?`<div class="ln"><span>Materiais</span><span>${money(t.mat)}</span></div><div class="ln"><span>Mão de obra</span><span>${money(t.mo)}</span></div>`:''}
-      <div class="ln"><span>Subtotal</span><span>${money(t.sub)}</span></div>
-      ${t.desc?`<div class="ln"><span>Desconto (${String(num(o.descontoPct)).replace('.',',')}%)</span><span>− ${money(t.desc)}</span></div>`:''}
+      ${t.mat&&t.mo&&!o.valorFechado?`<div class="ln"><span>Materiais</span><span>${money(t.mat)}</span></div><div class="ln"><span>Mão de obra</span><span>${money(t.mo)}</span></div>`:''}
+      ${o.valorFechado?'':`<div class="ln"><span>Subtotal</span><span>${money(t.sub)}</span></div>`}
+      ${t.desc&&!o.valorFechado?`<div class="ln"><span>Desconto (${String(num(o.descontoPct)).replace('.',',')}%)</span><span>− ${money(t.desc)}</span></div>`:''}
       <div class="ln g"><span>Total</span><span>${money(t.total)}</span></div>
     </div>
     <div class="pp-cond">
@@ -2117,11 +2127,12 @@ function propostaTexto(o){
   const L=[`*${e.nome} — Proposta Nº ${nOrc(o.numero)}*`,`Cliente: ${cliNome(o)}`];
   if(o.titulo)L.push(`Projeto: ${o.titulo}`);
   L.push('');
-  o.itens.forEach(i=>{L.push(`• ${String(num(i.qtd)).replace('.',',')} ${i.unidade||'un'} — ${i.nome}: ${money(num(i.preco)*num(i.qtd))}`);const pr=S.produtos.find(x=>x.id===i.produtoId);const ds=safeUrl((pr&&pr.datasheet)||i.datasheet);if(ds)L.push(`   Datasheet: ${ds}`)});
+  if(o.valorFechado){const mats=o.itens.filter(i=>!isMO(i)),mos=o.itens.filter(isMO).filter(i=>!/^m[aã]o de obra\b/i.test(i.nome.trim())&&normNome(i.nome)!==normNome(descServ(o)));L.push(`*${descServ(o)}*${mats.length?', com os seguintes materiais inclusos:':''}`);mats.forEach(i=>L.push(`• ${qtdTxt(i)} — ${i.nome}`));if(mos.length){L.push('','Serviços inclusos:');mos.forEach(i=>L.push(`• ${i.nome}`))}}
+  else o.itens.forEach(i=>{L.push(`• ${String(num(i.qtd)).replace('.',',')} ${i.unidade||'un'} — ${i.nome}: ${money(num(i.preco)*num(i.qtd))}`);const pr=S.produtos.find(x=>x.id===i.produtoId);const ds=safeUrl((pr&&pr.datasheet)||i.datasheet);if(ds)L.push(`   Datasheet: ${ds}`)});
   L.push('');
-  if(t.mat&&t.mo)L.push(`Materiais: ${money(t.mat)}`,`Mão de obra: ${money(t.mo)}`);
+  if(t.mat&&t.mo&&!o.valorFechado)L.push(`Materiais: ${money(t.mat)}`,`Mão de obra: ${money(t.mo)}`);
   const totLinha=()=>{if(num(S.empresa.descontoPix)&&pixChave())L.push(`No Pix: ${money(valorPix(t.total))} (${fmtPct(S.empresa.descontoPix)} de desconto)`)};
-  if(t.desc)L.push(`Subtotal: ${money(t.sub)}`,`Desconto: −${money(t.desc)}`);
+  if(t.desc&&!o.valorFechado)L.push(`Subtotal: ${money(t.sub)}`,`Desconto: −${money(t.desc)}`);
   L.push(`*Total: ${money(t.total)}*`);totLinha();L.push('');
   if(o.pagamento)L.push(`Pagamento: ${o.pagamento}`);
   if(o.prazo)L.push(`Prazo: ${o.prazo}`);
@@ -3966,7 +3977,8 @@ function vGaleria(app){const atual=galPasta(ui.galPasta)?ui.galPasta:'';if(atual
 // O MEI emite a NFS-e no Emissor Nacional (login gov.br ou CNPJ e senha). O site não aceita dados vindos de fora,
 // então o app abre o emissor e mostra tudo o que a nota pede com botão de copiar. Depois guarda número e data em o.nfse.
 const NFSE_URL='https://www.nfse.gov.br/EmissorNacional';
-function descNota(o){const its=o.itens||[],mos=its.filter(isMO),mats=its.filter(i=>!isMO(i)),q=i=>{const n=num(i.qtd);return n>1?`${String(n).replace('.',',')} ${i.unidade&&i.unidade!=='un'?i.unidade+' ':''}`:''};
+function descNota(o){if(o.valorFechado&&o.tipo!=='os'){const d=descServ(o).replace(/[.\s]+$/,'');return (o.itens||[]).some(i=>!isMO(i))?`${d} com materiais inclusos.`:`${d}.`}
+  const its=o.itens||[],mos=its.filter(isMO),mats=its.filter(i=>!isMO(i)),q=i=>{const n=num(i.qtd);return n>1?`${String(n).replace('.',',')} ${i.unidade&&i.unidade!=='un'?i.unidade+' ':''}`:''};
   const base=o.tipo==='os'?`${osTipoNome(o)}${o.motivo?': '+o.motivo:''}`:(o.titulo||'Serviço de instalação');
   return [`${base}.`,mos.length?`Serviços: ${mos.map(i=>q(i)+i.nome).join('; ')}.`:'',mats.length?`Materiais: ${mats.map(i=>q(i)+i.nome).join('; ')}.`:'',`Referente ${o.tipo==='os'?'à OS':'ao orçamento'} Nº ${nOrc(o.numero)}.`].filter(Boolean).join(' ')}
 function nfseSheet(o){const cur=S.orcamentos.find(x=>x.id===o.id)||o,c=S.clientes.find(x=>x.id===cur.clienteId)||{},p=cur.pgto||{},a=cur.aceite||{},t=calc(cur),nf=cur.nfse||{},e=S.empresa;
@@ -3979,7 +3991,7 @@ function nfseSheet(o){const cur=S.orcamentos.find(x=>x.id===o.id)||o,c=S.cliente
     <div class="sec-k">Tomador (cliente)</div>
     <div class="nf-ls">${linha(doc.length===14?'CNPJ':'CPF',docF)||'<p class="hint" style="margin:0;color:var(--bad)">Cliente sem CPF/CNPJ. Pergunte e preencha no cadastro dele.</p>'}${linha('Nome',p.nome||c.nome||a.nome)}${linha('E-mail',c.email)}${linha('Telefone',c.telefone)}${linha('CEP',c.cep)}${linha('Endereço',end)}</div>
     <div class="sec-k">Serviço</div>
-    <div class="nf-ls">${linha('Descrição',desc)}${linha('Valor do serviço',valor.toFixed(2).replace('.',','),`<span class="hint">${money(valor)}${t.mat>0&&t.mo>0?` · só mão de obra: ${money(t.mo)}`:''}</span>`)}${linha('Data da prestação',dataBR((cur.agenda&&(cur.agenda.fim||cur.agenda.data))||p.data||hojeISO()))}</div>
+    <div class="nf-ls">${linha('Descrição',desc)}${linha('Valor do serviço',valor.toFixed(2).replace('.',','),`<span class="hint">${money(valor)}${t.mat>0&&t.mo>0&&!cur.valorFechado?` · só mão de obra: ${money(t.mo)}`:''}</span>`)}${linha('Data da prestação',dataBR((cur.agenda&&(cur.agenda.fim||cur.agenda.data))||p.data||hojeISO()))}</div>
     <p class="hint" style="margin:0">No MEI não tem imposto destacado na nota: o DAS do mês já paga. Escolha o código do serviço no próprio emissor (ele lembra o último usado). Na dúvida entre pôr o valor total ou só a mão de obra, confirme com o contador.</p>
     <div class="sec-k">Depois de emitir</div>
     <div class="form"><div class="field"><label for="nf_n">Número da nota</label><input id="nf_n" inputmode="numeric" value="${esc(nf.numero||'')}"></div>
