@@ -452,6 +452,7 @@ body.apresentacao .internal{display:none!important}
 .acc-done{display:flex;flex-direction:column;gap:6px;background:#E3F5EA;color:#14532D;border-radius:10px;padding:14px;font-size:14px}
 .acc-done a{color:#14532D;font-weight:700}
 .recibo .pp-body{gap:16px}
+.cep-q{background:var(--surface-2,#f4f6fa);border:1px solid var(--line);border-radius:var(--r);padding:10px}.cep-res{display:flex;flex-direction:column;gap:6px;margin-top:8px;max-height:320px;overflow:auto}.cep-i{display:flex;flex-direction:column;align-items:flex-start;gap:1px;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font:inherit;color:inherit;cursor:pointer}.cep-i:hover{border-color:var(--brand,#1b4fa0)}
 .ass-imp{display:grid;grid-template-columns:2fr 1.4fr 1fr;gap:24px;margin-top:46px}.ass-imp>div{display:flex;flex-direction:column;gap:6px}.ass-imp i{display:block;border-top:1px solid var(--paper-ink)}.ass-imp span{font-size:12px;color:var(--paper-muted)}
 .ig-wrap{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;align-items:start}
 .ig-prev{position:sticky;top:76px;display:flex;flex-direction:column;gap:6px;align-items:center}.ig-prev canvas{width:100%;max-width:440px;height:auto;border-radius:10px;box-shadow:var(--shadow);touch-action:none;cursor:grab;background:#eee}
@@ -1678,6 +1679,11 @@ const endRota=c=>[c.endereco,c.bairro,c.cidade,c.cep].filter(Boolean).join(', ')
 const fmtCEP=v=>{const d=soDig(v).slice(0,8);return d.length>5?d.slice(0,5)+'-'+d.slice(5):d};
 async function buscaCEP(cep){const d=soDig(cep);if(d.length!==8)throw new Error('formato');
   const r=await fetch(`https://viacep.com.br/ws/${d}/json/`);if(!r.ok)throw new Error('rede');const j=await r.json();if(j.erro)throw new Error('naoachou');return j}
+// Procura CEP pelo nome da rua: "Cidade - UF" (sem UF, RJ). ViaCEP pede 3+ letras e devolve até 50.
+async function buscaRua(rua,cidUf){let [cid,uf]=String(cidUf||'').split(/\s*[-\/,]\s*(?=[A-Za-z]{2}\s*$)/);cid=(cid||'').trim();uf=(uf||'RJ').trim().toUpperCase();
+  if(cid.length<3||!/^[A-Z]{2}$/.test(uf))throw new Error('cidade');
+  const q=rua.replace(/^(rua|r\.|avenida|av\.?|travessa|tv\.?|estrada|estr\.?|praça|alameda)\s+/i,'');
+  const r=await fetch(`https://viacep.com.br/ws/${uf}/${encodeURIComponent(cid)}/${encodeURIComponent(q)}/json/`);if(!r.ok)throw new Error('rede');const j=await r.json();return Array.isArray(j)?j:[]}
 const cpfValido=c=>{c=soDig(c);if(c.length!==11||/^(\d)\1+$/.test(c))return false;const dv=n=>{let s=0;for(let i=0;i<n;i++)s+=+c[i]*(n+1-i);const r=s*10%11;return r===10?0:r};return dv(9)===+c[9]&&dv(10)===+c[10]};
 // "CONDOMINIO DO EDIFICIO SOL LTDA" → "Condominio do Edificio Sol LTDA"
 const nomeEmpresa=t=>String(t||'').toLowerCase().replace(/(^|[\s\-\/(])([a-zà-ú])/g,(m,a,b)=>a+b.toUpperCase()).replace(/\b(Da|De|Do|Das|Dos|E)\b/g,m=>m.toLowerCase()).replace(/\b(Ltda|Me|Epp|Eireli|S\.?a\.?|Mei)\b/gi,m=>m.toUpperCase()).replace(/^./,m=>m.toUpperCase());
@@ -1691,7 +1697,8 @@ function formCli(c,onSaved){
     <div class="field"><label for="c_doc">CPF ou CNPJ</label><div class="row" style="gap:6px;flex-wrap:nowrap"><input id="c_doc" value="${esc(c.documento)}" inputmode="numeric" style="flex:1;min-width:0"><button class="btn" type="button" id="c_docb">Buscar</button></div><span class="hint" id="c_doch">Com CNPJ, os dados da empresa são preenchidos sozinhos.</span></div>
     <div class="field"><label for="c_tel">Telefone / WhatsApp</label><input id="c_tel" value="${esc(c.telefone)}" inputmode="tel" placeholder="(11) 90000-0000"></div>
     <div class="field"><label for="c_email">E-mail</label><input id="c_email" value="${esc(c.email)}" inputmode="email"></div>
-    <div class="field"><label for="c_cep">CEP</label><div class="row" style="gap:6px;flex-wrap:nowrap"><input id="c_cep" value="${esc(fmtCEP(c.cep||''))}" inputmode="numeric" autocomplete="postal-code" placeholder="00000-000" style="flex:1;min-width:0"><button class="btn" type="button" id="c_cepb">Buscar</button></div><span class="hint" id="c_ceph">Digite o CEP e o endereço é preenchido sozinho.</span></div>
+    <div class="field"><label for="c_cep">CEP</label><div class="row" style="gap:6px;flex-wrap:nowrap"><input id="c_cep" value="${esc(fmtCEP(c.cep||''))}" inputmode="numeric" autocomplete="postal-code" placeholder="00000-000" style="flex:1;min-width:0"><button class="btn" type="button" id="c_cepb">Buscar</button></div><span class="hint" id="c_ceph">Digite o CEP e o endereço é preenchido sozinho.</span><button type="button" class="linkbtn" id="c_cepq_b" style="align-self:flex-start">Não sei o CEP: procurar pelo nome da rua</button></div>
+    <div class="field full cep-q" id="c_cepq" hidden><div class="row" style="gap:6px"><input id="c_qr" placeholder="Nome da rua (ex.: Delfim Moreira)" style="flex:2;min-width:160px" autocomplete="off"><input id="c_qc" placeholder="Cidade - UF" style="flex:1;min-width:120px" autocomplete="off"><button class="btn primary" type="button" id="c_qb">Procurar</button></div><div id="c_qres" class="cep-res"></div></div>
     <div class="field full"><label for="c_end">Endereço da instalação</label><input id="c_end" value="${esc(c.endereco)}" placeholder="Rua, número, complemento"></div>
     <div class="field"><label for="c_bairro">Bairro</label><input id="c_bairro" value="${esc(c.bairro)}"></div>
     <div class="field"><label for="c_cid">Cidade</label><input id="c_cid" value="${esc(c.cidade)}"></div>
@@ -1714,7 +1721,7 @@ function formCli(c,onSaved){
      const preencher=async()=>{const d=soDig($('c_cep').value),h=$('c_ceph');if(d.length!==8){h.textContent='O CEP tem 8 números.';return}
        if(buscando===d)return;buscando=d;h.textContent='Buscando…';
        try{const j=await buscaCEP(d);ultimoCEP=d;
-         const rua=[j.logradouro,j.complemento].filter(Boolean).join(' - ');const end=$('c_end');
+         const rua=[j.logradouro,/\d|lado|até|ao fim/i.test(j.complemento||'')?'':j.complemento].filter(Boolean).join(' - ');const end=$('c_end');
          if(rua&&(!end.value.trim()||!normNome(end.value).startsWith(normNome(j.logradouro))))end.value=rua+', ';
          if(j.bairro)$('c_bairro').value=j.bairro;if(j.localidade)$('c_cid').value=j.localidade+(j.uf?' - '+j.uf:'');
          rotas();h.textContent=rua?'Endereço encontrado. Complete o número.':'CEP de cidade inteira: digite a rua e o número.';
@@ -1741,6 +1748,15 @@ function formCli(c,onSaved){
      $('c_doc').addEventListener('input',()=>{const d=soDig($('c_doc').value);if((d.length===14||d.length===11)&&d!==ultimoDoc)buscarDoc()});
      $('c_cep').addEventListener('input',()=>{const el=$('c_cep'),f=fmtCEP(el.value);if(el.value!==f)el.value=f;const d=soDig(f);if(d.length===8&&d!==ultimoCEP)preencher()});
      $('c_cepb').onclick=preencher;
+     // Não sabe o CEP: procura pela rua na cidade (ViaCEP, buscaRua) e preenche ao tocar no resultado.
+     $('c_cepq_b').onclick=()=>{const b=$('c_cepq');b.hidden=!b.hidden;if(!b.hidden){if(!$('c_qc').value)$('c_qc').value=$('c_cid').value.trim()||'Teresópolis - RJ';if(!$('c_qr').value){const r=$('c_end').value.split(',')[0].trim();if(r.length>=3)$('c_qr').value=r}$('c_qr').focus()}};
+     const procurarRua=async()=>{const res=$('c_qres'),rua=$('c_qr').value.trim();if(rua.length<3){res.innerHTML='<span class="hint">Digite pelo menos 3 letras do nome da rua.</span>';return}
+       res.innerHTML='<span class="hint">Procurando…</span>';
+       try{const l=await buscaRua(rua,$('c_qc').value);if(!l.length){res.innerHTML='<span class="hint">Nenhuma rua encontrada. Tente só uma parte do nome, sem "Rua" ou "Avenida", e confira a cidade.</span>';return}
+         res.innerHTML=`<span class="hint">${l.length>=50?'Muitos resultados: escreva mais do nome. ':''}Toque na rua certa:</span>`+l.map((j,i)=>`<button type="button" class="cep-i" data-qi="${i}"><b>${esc(fmtCEP(j.cep))}</b><span>${esc(j.logradouro)}${j.complemento?` <span class="hint">(${esc(j.complemento)})</span>`:''}</span><span class="hint">${esc([j.bairro,j.localidade+' - '+j.uf].filter(Boolean).join(' · '))}</span></button>`).join('');
+         res.querySelectorAll('[data-qi]').forEach(b=>b.onclick=()=>{const j=l[+b.dataset.qi];$('c_cep').value=fmtCEP(j.cep);$('c_cepq').hidden=true;res.innerHTML='';preencher()})}
+       catch(e){res.innerHTML=`<span class="hint">${e.message==='cidade'?'Escreva a cidade assim: Teresópolis - RJ.':'Não consegui procurar agora. Confira a internet.'}</span>`}};
+     $('c_qb').onclick=procurarRua;[$('c_qr'),$('c_qc')].forEach(x=>x.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();procurarRua()}}));
      $('c_save').onclick=async()=>{const o=read();if(!o.nome){toast('Informe o nome do cliente.');$('c_nome').focus();return}
        try{await store.save('clientes',o);S.clientes=S.clientes.filter(x=>x.id!==o.id).concat([o]);closeSheet();toast(isNew?'Cliente cadastrado':'Cliente atualizado');onSaved&&onSaved(o)}catch(e){toast('Não foi possível salvar. Tente de novo.')}};
      if(!isNew){
