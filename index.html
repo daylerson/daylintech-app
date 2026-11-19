@@ -452,6 +452,12 @@ body.apresentacao .internal{display:none!important}
 .acc-done{display:flex;flex-direction:column;gap:6px;background:#E3F5EA;color:#14532D;border-radius:10px;padding:14px;font-size:14px}
 .acc-done a{color:#14532D;font-weight:700}
 .recibo .pp-body{gap:16px}
+.pj-cv{border-radius:12px;overflow:hidden;background:#0f172a;line-height:0}.pj-cv canvas{width:auto;height:auto;max-width:100%;max-height:75vh;display:block;margin:0 auto}
+.pj-pt{display:flex;flex-direction:column;gap:10px}.pj-seg{display:flex;background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:3px;align-self:flex-start;gap:2px}.pj-seg button{border:0;background:none;font:inherit;font-weight:600;font-size:13.5px;padding:7px 12px;border-radius:999px;color:var(--muted);cursor:pointer}.pj-seg button[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
+.pj-n{display:inline-grid;place-items:center;min-width:22px;height:22px;border-radius:50%;color:#fff;font-weight:800;font-size:12px;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.12);flex:none}.pj-chip{gap:6px}.pj-chip.on{outline:2px solid var(--brand);outline-offset:1px}
+.pj-ed{border:1px solid var(--line);border-radius:var(--r);padding:12px;display:flex;flex-direction:column;gap:10px;background:var(--surface-2)}.pj-tab{display:flex;flex-direction:column;gap:6px}.pj-tab>div{display:flex;flex-direction:column}.pj-tab i,.pj-t i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:0}
+.pj-bl{padding:6px 0 14px}.pj-h{font-weight:700;font-size:15px;margin:2px 0 8px;color:var(--paper-ink,#0f172a)}.pj-img{display:block;max-width:100%;height:auto;margin:0 auto 10px;border-radius:8px}.pj-leg{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:8px 16px}.pj-leg .pj-t,.pj-leg .pj-p{grid-column:1/-1}
+.pj-cam{display:flex;gap:9px;align-items:flex-start;font-size:12.5px}.pj-cam .pj-n{min-width:24px;height:24px;font-size:12.5px}.pj-cam>div{display:flex;flex-direction:column;gap:1px}.pj-p{font-size:12.5px;margin:0}.pj-t{width:100%;border-collapse:collapse;font-size:12px}.pj-t th,.pj-t td{text-align:left;padding:5px 6px;border-bottom:1px solid #e5e9f0}.pj-t th{font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:#64748b}
 .cep-q{background:var(--surface-2,#f4f6fa);border:1px solid var(--line);border-radius:var(--r);padding:10px}.cep-res{display:flex;flex-direction:column;gap:6px;margin-top:8px;max-height:320px;overflow:auto}.cep-i{display:flex;flex-direction:column;align-items:flex-start;gap:1px;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font:inherit;color:inherit;cursor:pointer}.cep-i.seu{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 8%,var(--surface))}.cep-i:hover{border-color:var(--brand,#1b4fa0)}
 .ass-imp{display:grid;grid-template-columns:2fr 1.4fr 1fr;gap:24px;margin-top:46px}.ass-imp>div{display:flex;flex-direction:column;gap:6px}.ass-imp i{display:block;border-top:1px solid var(--paper-ink)}.ass-imp span{font-size:12px;color:var(--paper-muted)}
 .ig-wrap{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;align-items:start}
@@ -909,7 +915,7 @@ const tabNome=k=>(TABS.find(t=>t[0]===k)||[k,k])[1];
 function abrirMais(){const cur=view.name;
   openSheet('Mais',`<div class="mais">${NAV_MAIS.map(([k,d,int])=>`<button class="mais-i ${int?'internal':''}" data-nav="${k}" ${cur===k?'aria-current="page"':''}>${svg(NAVI[k])}<span><b>${tabNome(k)}</b><span class="hint">${d}</span></span></button>`).join('')}</div>`)}
 function renderNav(){
-  const cur=['editor','proposta'].includes(view.name)?'inicio':view.name==='os'?'agenda':view.name;
+  const cur=['editor','proposta','projeto'].includes(view.name)?'inicio':view.name==='os'?'agenda':view.name;
   const mais=NAV_MAIS.find(x=>x[0]===cur),bt=(k,ic)=>`<button data-nav="${k}" ${k==='financeiro'?'class="internal"':''} ${cur===k?'aria-current="page"':''}>${ic?svg(NAVI[k]):''}${tabNome(k)}</button>`;
   const mb=ic=>`<button data-act="mais" class="nav-mais" ${mais?'aria-current="page"':''} aria-haspopup="dialog">${ic?svg(mais?NAVI[cur]:NAVI.mais):''}${mais?tabNome(cur):'Mais'}${ic?'':' ▾'}</button>`;
   document.getElementById('toptabs').innerHTML=NAV_MAIN.map(k=>bt(k)).join('')+mb();
@@ -931,9 +937,10 @@ function render(fromSnap){
   const app=document.getElementById('app');
   if(!allReady()){app.innerHTML='<div class="loading">Carregando seus dados…</div>';return}
   if(fromSnap&&view.name==='editor'){if(!autoQuieto)renderEditorParts();return}
+  if(view.name==='projeto'&&PJ.ocupado)return;
   const active=document.activeElement&&document.activeElement.id;
   const pos=document.activeElement&&document.activeElement.selectionStart;
-  ({home:vHome,inicio:vInicio,catalogo:vCatalogo,maodeobra:vMaoDeObra,clientes:vClientes,ajustes:vAjustes,editor:vEditor,proposta:vProposta,agenda:vAgenda,os:vOS,garantias:vGarantias,impostos:vImpostos,operacional:vOperacional,financeiro:vFinanceiro,galeria:vGaleria,posts:vPosts}[view.name]||vHome)(app);
+  ({home:vHome,inicio:vInicio,catalogo:vCatalogo,maodeobra:vMaoDeObra,clientes:vClientes,ajustes:vAjustes,editor:vEditor,proposta:vProposta,agenda:vAgenda,os:vOS,garantias:vGarantias,impostos:vImpostos,operacional:vOperacional,financeiro:vFinanceiro,galeria:vGaleria,posts:vPosts,projeto:vProjeto}[view.name]||vHome)(app);
   agendarSync();
   if(active){const el=document.getElementById(active);if(el&&el.tagName==='INPUT'&&el.type==='search'){el.focus();try{el.setSelectionRange(pos,pos)}catch(e){}}}
 }
@@ -2241,19 +2248,21 @@ function extenso(v){v=Math.round(num(v)*100)/100;const re=Math.floor(v),ce=Math.
   const reais=re?inteiro(re)+(re%1e6===0?' de':'')+(re===1?' real':' reais'):'',cents=ce?a999(ce)+(ce===1?' centavo':' centavos'):'';
   return reais&&cents?reais+' e '+cents:(reais||cents||'zero real')}
 // Proposta em PDF para imprimir ou mandar (ex.: escola que precisa do papel), com ou sem os dados de pagamento.
-async function propostaPDFHTML(o,comPag,comAss){const papel=h=>h.replace('<div class="paper','<div style="box-shadow:none;margin:0 0 18px;max-width:none" class="paper');
+async function propostaPDFHTML(o,comPag,comAss,comProj){const papel=h=>h.replace('<div class="paper','<div style="box-shadow:none;margin:0 0 18px;max-width:none" class="paper');
   let pay='';if(comPag)pay=(await pagamentoHTML(o)).replace(/<button[\s\S]*?<\/button>/g,'');
   const ass=comAss?`<div class="paper"><div class="pp-body"><div class="pp-cat">De acordo</div><div class="ass-imp"><div><i></i><span>Assinatura do cliente</span></div><div><i></i><span>Nome legível</span></div><div><i></i><span>Data</span></div></div></div></div>`:'';
-  return `<div>${papel(propostaHTML(o))}${pay?papel(`<div class="paper pp-extra"><div class="pp-body">${pay}</div></div>`):''}${ass?papel(ass):''}</div>`}
+  const proj=comProj?await projetoHTML(o):'';
+  return `<div>${papel(propostaHTML(o))}${proj?papel(proj):''}${pay?papel(`<div class="paper pp-extra"><div class="pp-body">${pay}</div></div>`):''}${ass?papel(ass):''}</div>`}
 function pdfPropostaSheet(o){let pag=true,ass=false;try{pag=localStorage.getItem('dt:pdfpag')!=='0';ass=localStorage.getItem('dt:pdfass')==='1'}catch(e){}
   const nome=`Proposta-${nOrc(o.numero)}-${arqNome(cliNome(o)).normalize('NFD').replace(/[̀-ͯ]/g,'')}.pdf`;
   openSheet('Proposta em PDF',`<label class="chk" style="display:flex"><input type="checkbox" id="pf_pag" ${pag?'checked':''}> <span>Incluir dados de pagamento <span class="hint">(Pix com QR Code e link do cartão)</span></span></label>
     <label class="chk" style="display:flex"><input type="checkbox" id="pf_ass" ${ass?'checked':''}> <span>Espaço para assinatura do cliente <span class="hint">(para imprimir e assinar)</span></span></label>
+    ${projPontos(o).length?`<label class="chk" style="display:flex"><input type="checkbox" id="pf_proj" checked> <span>Incluir o projeto de câmeras <span class="hint">(fotos com as câmeras marcadas)</span></span></label>`:''}
     <div class="paper-wrap" id="pf_prev" style="max-height:420px;overflow:auto"><span class="hint">Montando…</span></div>`,
   `<button class="btn" id="pf_dl">${svg(UI.dl)}Baixar PDF</button><button class="btn primary" id="pf_sh">${svg(ICON_SHARE)}Compartilhar</button>`,L=>{L.querySelector('.sheet').style.maxWidth='860px';const $=id=>L.querySelector('#'+id);
-    const prev=async()=>{const h=await propostaPDFHTML(o,$('pf_pag').checked,$('pf_ass').checked);if($('pf_prev'))$('pf_prev').innerHTML=h};prev();
-    ['pf_pag','pf_ass'].forEach(i=>$(i).onchange=()=>{try{localStorage.setItem('dt:pdfpag',$('pf_pag').checked?'1':'0');localStorage.setItem('dt:pdfass',$('pf_ass').checked?'1':'0')}catch(e){}prev()});
-    const gera=async b=>{b.disabled=true;const t=b.innerHTML;b.textContent='Gerando…';try{return new File([await htmlPDF(await propostaPDFHTML(o,$('pf_pag').checked,$('pf_ass').checked))],nome,{type:'application/pdf'})}catch(e){toast('Não foi possível gerar o PDF.');return null}finally{b.disabled=false;b.innerHTML=t}};
+    const comProj=()=>!!($('pf_proj')&&$('pf_proj').checked);const prev=async()=>{const h=await propostaPDFHTML(o,$('pf_pag').checked,$('pf_ass').checked,comProj());if($('pf_prev'))$('pf_prev').innerHTML=h};prev();
+    ['pf_pag','pf_ass','pf_proj'].filter(i=>$(i)).forEach(i=>$(i).onchange=()=>{try{localStorage.setItem('dt:pdfpag',$('pf_pag').checked?'1':'0');localStorage.setItem('dt:pdfass',$('pf_ass').checked?'1':'0')}catch(e){}prev()});
+    const gera=async b=>{b.disabled=true;const t=b.innerHTML;b.textContent='Gerando…';try{return new File([await htmlPDF(await propostaPDFHTML(o,$('pf_pag').checked,$('pf_ass').checked,comProj()))],nome,{type:'application/pdf'})}catch(e){toast('Não foi possível gerar o PDF.');return null}finally{b.disabled=false;b.innerHTML=t}};
     $('pf_dl').onclick=async()=>{const f=await gera($('pf_dl'));if(f){await baixar(f.name,f,f.type);toast('PDF baixado. Dá para imprimir direto dele.')}};
     $('pf_sh').onclick=async()=>{const f=await gera($('pf_sh'));if(!f)return;const txt=`Proposta Nº ${nOrc(o.numero)} — ${S.empresa.nome||'DaylinTech'}`;
       if(navigator.canShare&&navigator.canShare({files:[f]})){try{await navigator.share({files:[f],title:txt,text:txt});return}catch(e){if(e&&e.name==='AbortError')return}}
@@ -2323,7 +2332,7 @@ function docHTML(title,body,script){
 const novoToken=()=>{const b=crypto.getRandomValues(new Uint8Array(32));return btoa(String.fromCharCode(...b)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')};
 async function linkProposta(o){
   const cur=S.orcamentos.find(x=>x.id===o.id)||o,token=cur.linkToken||novoToken();
-  const corpo=`${propostaHTML(cur)}<div class="paper pp-extra"><div class="pp-body">${await pagamentoHTML(cur)}${aceiteHTML(cur,true)}</div></div>`;
+  const corpo=`${propostaHTML(cur)}${await projetoHTML(cur)}<div class="paper pp-extra"><div class="pp-body">${await pagamentoHTML(cur)}${aceiteHTML(cur,true)}</div></div>`;
   const css=[...document.querySelectorAll('style')].map(s=>s.textContent).join('\n');
   const {error}=await sb.from('propostas').upsert({token,orcamento_id:cur.id,css,corpo,dados:dadosCliente(cur)});if(error)throw error;
   if(!cur.linkToken||cur.status==='rascunho')await store.save('orcamentos',{...cur,linkToken:token,status:cur.status==='rascunho'?'enviado':cur.status,atualizadoEm:new Date().toISOString()});
@@ -4254,6 +4263,125 @@ function vPosts(app){
   app.querySelectorAll('[data-psh]').forEach(b=>b.onclick=()=>verPost(S.posts.find(p=>p.id===b.dataset.psh)));
   app.querySelectorAll('[data-pfix]').forEach(b=>b.onclick=()=>{const p=S.posts.find(x=>x.id===b.dataset.pfix);salvarOp('posts',{...p,fixado:!p.fixado})});
 }
+/* ---------- Projeto de câmeras (view 'projeto', o.projeto) ----------
+   o.projeto = {pontos:[{id, foto:{p}|{d}, nome, modo:'marcar'|'visao', cel:'normal'|'ultra', res, cams:[{id,x,y,ang,alc,lente,res,nome}]}]}
+   'marcar': câmeras desenhadas na foto com o cone de visão (ilustrativo). 'visao': foto tirada do ponto da câmera; retângulos
+   mostram o que cada lente enxerga em relação à câmera do celular. Distâncias DORI (IEC 62676-4): identificar 250 px/m,
+   reconhecer 125, observar 62, detectar 25. Tudo é estimativa para planejar e mostrar ao cliente. */
+const LENTES={'2.8':{h:100,nome:'2.8mm'},'3.6':{h:84,nome:'3.6mm'},'6':{h:54,nome:'6mm'}};
+const LENTES_L=()=>['2.8','3.6','6'].map(k=>[k,LENTES[k]]); // '6' viria primeiro no Object.entries (chave numérica)
+const RESOL={'2':{px:1920,nome:'2 MP (1080p)'},'4':{px:2560,nome:'4 MP'},'5':{px:2880,nome:'5 MP'},'8':{px:3840,nome:'8 MP (4K)'}};
+const CEL_FOV={normal:{h:68,nome:'Câmera normal do celular (1x)'},ultra:{h:108,nome:'Câmera grande-angular (0,5x)'}};
+const PJ_COR=['#1d6ff2','#f07c12','#16a34a','#c026d3','#e11d48','#0891b2','#ca8a04','#7c3aed'];
+const LENTE_COR={'2.8':'#16a34a','3.6':'#1d6ff2','6':'#f07c12'};
+var PJ={sel:null,ocupado:false,img:new Map()};
+const pjM=v=>v>=10?Math.round(v):Math.round(v*2)/2;
+function dori(lente,res){const L=LENTES[lente]||LENTES['2.8'],px=(RESOL[res]||RESOL['2']).px,w=2*Math.tan(L.h*Math.PI/360);
+  return {ident:pjM(px/(250*w)),recon:pjM(px/(125*w)),obs:pjM(px/(62*w)),det:pjM(px/(25*w))}}
+const doriTxt=(lente,res)=>{const d=dori(lente,res);return `Identifica rosto até ~${String(d.ident).replace('.',',')} m · reconhece pessoa até ~${String(d.recon).replace('.',',')} m · vê movimento até ~${d.det} m`};
+const projPontos=o=>((o&&o.projeto&&o.projeto.pontos)||[]).filter(p=>p.foto);
+const projNumCams=o=>projPontos(o).reduce((n,p)=>n+(p.modo==='visao'?0:(p.cams||[]).length),0);
+async function pjImagem(f){const k=f.p||f.d.slice(-60);if(PJ.img.has(k))return PJ.img.get(k);
+  const src=await fotoSrc(f);const img=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=src});PJ.img.set(k,img);return img}
+// Desenha a foto e as marcações. W = largura em px; base = número da 1ª câmera deste ponto (numeração seguida no projeto).
+function pjDesenhar(cv,img,pt,W,{base=1,sel=null,alcas=false}={}){const H=Math.round(W*img.naturalHeight/img.naturalWidth);cv.width=W;cv.height=H;
+  const c=cv.getContext('2d');c.drawImage(img,0,0,W,H);const D=Math.hypot(W,H),u=W/1000;
+  if(pt.modo==='visao'){const hp=(CEL_FOV[pt.cel]||CEL_FOV.normal).h,tp=Math.tan(hp*Math.PI/360)*(H>W?0.75:1); // celular em pé: a largura da foto é o lado curto
+    LENTES_L().sort((a,b)=>b[1].h-a[1].h).forEach(([k,L])=>{const f=Math.tan(L.h*Math.PI/360)/tp;if(f>=0.995)return;
+      const rw=W*f,rh=Math.min(H,rw*9/16),x=(W-rw)/2,y=(H-rh)/2,cor=LENTE_COR[k];
+      c.lineWidth=Math.max(3,5*u);c.strokeStyle='#fff';c.strokeRect(x,y,rw,rh);c.lineWidth=Math.max(2,3*u);c.strokeStyle=cor;c.setLineDash([14*u,8*u]);c.strokeRect(x,y,rw,rh);c.setLineDash([]);
+      const t=L.nome,fs=Math.max(13,26*u);c.font=`700 ${fs}px Barlow, Arial, sans-serif`;const tw=c.measureText(t).width;c.fillStyle=cor;c.fillRect(x,y,tw+fs*0.8,fs*1.5);c.fillStyle='#fff';c.textBaseline='middle';c.fillText(t,x+fs*0.4,y+fs*0.75)});
+    const w2=LENTES_L().filter(([k,L])=>Math.tan(L.h*Math.PI/360)/tp>=0.995).map(([k,L])=>L.nome);
+    if(w2.length){const t=`${w2.join(' e ')}: pega mais do que a foto`,fs=Math.max(12,22*u);c.font=`600 ${fs}px Barlow, Arial, sans-serif`;const tw=c.measureText(t).width;c.fillStyle='rgba(15,23,42,.72)';c.fillRect(W-tw-fs*1.4,H-fs*2,tw+fs*0.8,fs*1.5);c.fillStyle='#fff';c.textBaseline='middle';c.fillText(t,W-tw-fs,H-fs*1.25)}
+    return}
+  (pt.cams||[]).forEach((cm,i)=>{const cor=PJ_COR[(base-1+i)%PJ_COR.length],x=cm.x*W,y=cm.y*H,r=cm.alc*D,a=cm.ang*Math.PI/180,h=(LENTES[cm.lente]||LENTES['2.8']).h*Math.PI/360;
+    const g=c.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,cor+'88');g.addColorStop(1,cor+'22');
+    c.beginPath();c.moveTo(x,y);c.arc(x,y,r,a-h,a+h);c.closePath();c.fillStyle=g;c.fill();c.lineWidth=Math.max(2,3*u);c.strokeStyle=cor;c.stroke()});
+  (pt.cams||[]).forEach((cm,i)=>{const cor=PJ_COR[(base-1+i)%PJ_COR.length],x=cm.x*W,y=cm.y*H,R=Math.max(13,24*u),on=sel===cm.id;
+    if(alcas&&on){const r=cm.alc*D,a=cm.ang*Math.PI/180,hx=x+Math.cos(a)*r,hy=y+Math.sin(a)*r;c.beginPath();c.arc(hx,hy,R*0.75,0,7);c.fillStyle='#fff';c.fill();c.lineWidth=Math.max(3,4*u);c.strokeStyle=cor;c.stroke();
+      c.beginPath();c.moveTo(hx-R*0.35,hy);c.lineTo(hx+R*0.35,hy);c.moveTo(hx,hy-R*0.35);c.lineTo(hx,hy+R*0.35);c.lineWidth=Math.max(2,3*u);c.stroke()}
+    c.beginPath();c.arc(x,y,R*(on?1.2:1),0,7);c.fillStyle=cor;c.fill();c.lineWidth=Math.max(3,5*u);c.strokeStyle='#fff';c.stroke();
+    c.fillStyle='#fff';c.font=`800 ${R*1.05}px Barlow, Arial, sans-serif`;c.textAlign='center';c.textBaseline='middle';c.fillText(String(base+i),x,y+R*0.05);c.textAlign='left'})}
+// HTML do projeto para o PDF e o link (uma folha .paper; cada área é um bloco, o PDF quebra página entre eles).
+async function projetoHTML(o){const ps=projPontos(o);if(!ps.length)return '';let n=1;const blocos=[];
+  for(const pt of ps){let src='',ratio=0.75;try{const img=await pjImagem(pt.foto),cv=document.createElement('canvas');pjDesenhar(cv,img,pt,1100,{base:n});src=cv.toDataURL('image/jpeg',0.8);ratio=cv.height/cv.width}catch(e){}
+    const w=Math.min(680,Math.round(470/ratio)),cams=pt.modo==='visao'?[]:(pt.cams||[]);
+    const leg=pt.modo==='visao'?`<p class="pj-p">Foto tirada do ponto onde a câmera vai ficar. Os retângulos mostram o que cada lente enxerga.</p><table class="pj-t"><tr><th>Lente</th><th>Abertura</th><th>Identifica rosto</th><th>Reconhece pessoa</th><th>Vê movimento</th></tr>${LENTES_L().map(([k,L])=>{const d=dori(k,pt.res||'2');return `<tr><td><i style="background:${LENTE_COR[k]}"></i>${L.nome}</td><td>${L.h}°</td><td>até ~${String(d.ident).replace('.',',')} m</td><td>até ~${String(d.recon).replace('.',',')} m</td><td>até ~${d.det} m</td></tr>`}).join('')}</table><p class="pj-p hint">Câmera de ${esc((RESOL[pt.res||'2']||RESOL['2']).nome)}.</p>`
+      :cams.map((cm,i)=>`<div class="pj-cam"><span class="pj-n" style="background:${PJ_COR[(n-1+i)%PJ_COR.length]}">${n+i}</span><div><b>Câmera ${n+i}${cm.nome?' – '+esc(cm.nome):''}</b><span>Lente ${esc((LENTES[cm.lente]||LENTES['2.8']).nome)} · ${esc((RESOL[cm.res||'2']||RESOL['2']).nome)}</span><span class="hint">${doriTxt(cm.lente,cm.res||'2')}</span></div></div>`).join('');
+    blocos.push(`<div class="pj-bl">${blocos.length?'':`<div class="pp-cat">${catIcon('cameras')}Projeto de instalação</div>`}<div class="pj-h">${esc(pt.nome||'Área '+(blocos.length+1))}</div>${src?`<img class="pj-img" src="${src}" alt="" style="width:${w}px">`:''}<div class="pj-leg">${leg}</div></div>`);n+=cams.length}
+  return `<div class="paper"><div class="pp-body">${blocos.join('')}<p class="pj-p hint" style="margin-top:4px">Posições, áreas e distâncias são uma estimativa para planejamento. A imagem real depende da altura, da luz e do modelo instalado.</p></div></div>`}
+
+function vProjeto(app){const o=S.orcamentos.find(x=>x.id===view.id);
+  if(!o){app.innerHTML=`<div class="empty"><b>Orçamento não encontrado</b><button class="btn" data-nav="inicio">Voltar</button></div>`;return}
+  const P=JSON.parse(JSON.stringify(o.projeto||{pontos:[]}));P.pontos=P.pontos||[];
+  const salvar=async(msg)=>{const cur=S.orcamentos.find(x=>x.id===o.id)||o;try{await store.save('orcamentos',{...cur,projeto:P,atualizadoEm:new Date().toISOString()});if(msg)toast(msg)}catch(e){toast('Não foi possível salvar o projeto.')}};
+  let base=1;const bases=P.pontos.map(p=>{const b=base;if(p.modo!=='visao')base+=(p.cams||[]).length;return b});
+  const opt=(obj,v)=>(obj===LENTES?LENTES_L():Object.entries(obj)).map(([k,x])=>`<option value="${k}" ${String(v)===k?'selected':''}>${esc(x.nome)}</option>`).join('');
+  app.innerHTML=`<div class="row" style="justify-content:space-between"><button class="btn ghost" id="pj_back">${svg(UI.back)}Proposta Nº ${nOrc(o.numero)}</button></div>
+    <h1 class="h1" style="margin:4px 0 2px">Projeto de câmeras</h1><p class="muted" style="margin:0 0 12px">${esc(cliNome(o))}. Tire uma foto de cada área e marque onde cada câmera fica. Entra no PDF e no link da proposta.</p>
+    ${P.pontos.map((pt,pi)=>{const sel=PJ.sel&&PJ.sel.pid===pt.id?(pt.cams||[]).find(c=>c.id===PJ.sel.cid):null,si=sel?(pt.cams||[]).indexOf(sel):-1;return `<section class="panel pj-pt" data-pt="${pt.id}">
+      <div class="row" style="gap:8px;flex-wrap:nowrap"><div class="field" style="flex:1;min-width:0"><input class="pj-nome" data-k="nome" value="${esc(pt.nome||'')}" placeholder="Nome da área (ex.: Portão principal)" aria-label="Nome da área"></div>
+        ${pi>0?`<button class="iconbtn" data-pj="up" aria-label="Subir">↑</button>`:''}<button class="iconbtn" data-pj="del-pt" aria-label="Apagar foto">${svg(UI.trash)}</button></div>
+      <div class="pj-seg"><button data-pj="modo" data-v="marcar" aria-selected="${pt.modo!=='visao'}">Marcar câmeras</button><button data-pj="modo" data-v="visao" aria-selected="${pt.modo==='visao'}">O que a câmera vê</button></div>
+      <div class="pj-cv"><canvas aria-label="Foto da área"></canvas></div>
+      ${pt.modo==='visao'?`<p class="hint" style="margin:0">Tire a foto parado onde a câmera vai ficar, apontando para onde ela vai filmar. Fica mais certo com o celular deitado.</p>
+        <div class="form"><div class="field"><label>Foto tirada com</label><select data-k="cel">${opt(CEL_FOV,pt.cel||'normal')}</select></div><div class="field"><label>Resolução da câmera</label><select data-k="res">${opt(RESOL,pt.res||'2')}</select></div></div>
+        <div class="pj-tab">${LENTES_L().map(([k,L])=>{const d=dori(k,pt.res||'2');return `<div><b><i style="background:${LENTE_COR[k]}"></i>${L.nome}</b><span class="hint">abertura ${L.h}° · rosto até ~${String(d.ident).replace('.',',')} m · pessoa até ~${String(d.recon).replace('.',',')} m · movimento até ~${d.det} m</span></div>`}).join('')}</div>`
+      :`<div class="row" style="gap:6px"><button class="btn sm primary" data-pj="add-cam">${svg(UI.plus)}Câmera</button>${(pt.cams||[]).map((c,i)=>`<button class="btn sm pj-chip ${sel===c?'on':''}" data-pj="sel" data-c="${c.id}"><span class="pj-n" style="background:${PJ_COR[(bases[pi]-1+i)%PJ_COR.length]}">${bases[pi]+i}</span>${esc(c.nome||'Câmera '+(bases[pi]+i))}</button>`).join('')}</div>
+        ${sel?`<div class="pj-ed"><p class="hint" style="margin:0">Arraste o número para mudar o lugar. Arraste a bolinha branca na ponta para girar e mudar o alcance.</p>
+          <div class="form"><div class="field full"><label>Nome da câmera ${bases[pi]+si}</label><input data-c-k="nome" value="${esc(sel.nome||'')}" placeholder="Ex.: Portão de entrada"></div>
+          <div class="field"><label>Lente</label><select data-c-k="lente">${opt(LENTES,sel.lente)}</select></div><div class="field"><label>Resolução</label><select data-c-k="res">${opt(RESOL,sel.res||'2')}</select></div>
+          <div class="field"><label>Direção</label><input type="range" min="-180" max="180" step="1" data-c-k="ang" value="${Math.round(sel.ang)}"></div><div class="field"><label>Alcance no desenho</label><input type="range" min="0.08" max="0.9" step="0.01" data-c-k="alc" value="${sel.alc}"></div></div>
+          <p class="hint" style="margin:0" data-dori>${doriTxt(sel.lente,sel.res||'2')}</p>
+          <div class="row" style="justify-content:space-between"><button class="btn sm danger" data-pj="del-cam">${svg(UI.trash)}Tirar câmera</button><button class="btn sm" data-pj="ok">Pronto</button></div></div>`
+        :(pt.cams||[]).length?'<p class="hint" style="margin:0">Toque numa câmera (na foto ou no botão) para mudar lugar, direção, lente e nome.</p>':'<p class="hint" style="margin:0">Toque em <b>+ Câmera</b> e arraste até o lugar onde ela vai ser instalada.</p>'}`}
+    </section>`}).join('')}
+    <section class="panel"><b>${P.pontos.length?'Adicionar outra área':'Comece pela primeira área'}</b>
+      <div class="row" style="gap:8px"><label class="btn primary">${svg(ICON_CAM)}Tirar foto<input type="file" accept="image/*" capture="environment" id="pj_cam" hidden></label>
+        <label class="btn">${svg(UI.plus)}Escolher foto<input type="file" accept="image/*" id="pj_arq" hidden></label></div>
+      <span class="hint" id="pj_st"></span></section>
+    ${P.pontos.length?`<div class="actions"><button class="btn primary" id="pj_pdf">${svg(UI.dl)}Ver no PDF da proposta</button></div>`:''}`;
+  const $=id=>app.querySelector('#'+id);
+  $('pj_back').onclick=()=>go('proposta',{id:o.id});
+  if($('pj_pdf'))$('pj_pdf').onclick=()=>pdfPropostaSheet(S.orcamentos.find(x=>x.id===o.id)||o);
+  const addFoto=async ev=>{const f=ev.target.files&&ev.target.files[0];ev.target.value='';if(!f)return;$('pj_st').textContent='Enviando a foto…';
+    try{const [foto]=await subirAnexos(o.id,[f],'proj');const pt={id:uid(),foto,nome:'',modo:'marcar',cel:'normal',res:'2',cams:[]};P.pontos.push(pt);PJ.sel=null;await salvar('Foto adicionada. Agora toque em + Câmera.');if(view.name==='projeto')render()}
+    catch(e){$('pj_st').textContent='Não foi possível enviar a foto. Confira a internet.'}};
+  $('pj_cam').onchange=addFoto;$('pj_arq').onchange=addFoto;
+  app.querySelectorAll('.pj-pt').forEach((sec,pi)=>{const pt=P.pontos[pi],cv=sec.querySelector('canvas'),b=bases[pi];let img=null;
+    const desenha=()=>{if(!img)return;const W=Math.min(1400,Math.round(cv.parentElement.clientWidth*Math.min(2,window.devicePixelRatio||1))||800);pjDesenhar(cv,img,pt,W,{base:b,sel:PJ.sel&&PJ.sel.pid===pt.id?PJ.sel.cid:null,alcas:true})};
+    pjImagem(pt.foto).then(i=>{img=i;desenha()}).catch(()=>{cv.replaceWith(Object.assign(document.createElement('p'),{className:'hint',textContent:'A foto não carregou.'}))});
+    const re=()=>{render()};
+    sec.querySelectorAll('[data-k]').forEach(el=>el.addEventListener('change',()=>{pt[el.dataset.k]=el.value;salvar();if(el.tagName==='SELECT')re()}));
+    const sel=()=>PJ.sel&&PJ.sel.pid===pt.id?(pt.cams||[]).find(c=>c.id===PJ.sel.cid):null;
+    sec.querySelectorAll('[data-c-k]').forEach(el=>{const k=el.dataset.cK;const ev=el.type==='range'?'input':'change';
+      el.addEventListener(ev,()=>{const c=sel();if(!c)return;c[k]=el.type==='range'?+el.value:el.value;if(el.type!=='range'){salvar();if(el.tagName==='SELECT')re()}else desenha();const d=sec.querySelector('[data-dori]');if(d)d.textContent=doriTxt(c.lente,c.res||'2')});
+      if(el.type==='range')el.addEventListener('change',()=>salvar())});
+    sec.addEventListener('click',async e=>{const t=e.target.closest('[data-pj]');if(!t)return;const a=t.dataset.pj;
+      if(a==='modo'){pt.modo=t.dataset.v;PJ.sel=null;await salvar();re()}
+      else if(a==='add-cam'){pt.cams=pt.cams||[];const n=pt.cams.length,c={id:uid(),x:[0.5,0.25,0.75,0.4,0.6][n%5],y:n%2?0.25:0.35,ang:90,alc:0.35,lente:'2.8',res:'2',nome:''};pt.cams.push(c);PJ.sel={pid:pt.id,cid:c.id};await salvar();re()}
+      else if(a==='sel'){PJ.sel={pid:pt.id,cid:t.dataset.c};re()}
+      else if(a==='ok'){PJ.sel=null;re()}
+      else if(a==='del-cam'){pt.cams=(pt.cams||[]).filter(c=>c.id!==PJ.sel.cid);PJ.sel=null;await salvar('Câmera tirada');re()}
+      else if(a==='up'){P.pontos.splice(pi,1);P.pontos.splice(pi-1,0,pt);await salvar();re()}
+      else if(a==='del-pt')confirmSheet('Apagar esta foto?','A foto e as câmeras marcadas nela saem do projeto.','Apagar',async()=>{P.pontos.splice(pi,1);PJ.sel=null;await salvar('Foto apagada');re()})});
+    // Arrastar na foto: número = mover; bolinha da ponta = girar e alcance.
+    const ponto=e=>{const r=cv.getBoundingClientRect();return {x:(e.clientX-r.left)/r.width,y:(e.clientY-r.top)/r.height,r}};
+    let drag=null;
+    cv.addEventListener('pointerdown',e=>{if(pt.modo==='visao'||!img)return;const p=ponto(e),W=p.r.width,H=p.r.height,D=Math.hypot(W,H),R=Math.max(22,W*0.04);
+      const s=sel();if(s){const a=s.ang*Math.PI/180,hx=s.x*W+Math.cos(a)*s.alc*D,hy=s.y*H+Math.sin(a)*s.alc*D;if(Math.hypot(p.x*W-hx,p.y*H-hy)<R){drag={c:s,tipo:'giro'}}}
+      if(!drag){const hit=[...(pt.cams||[])].reverse().find(c=>Math.hypot((c.x-p.x)*W,(c.y-p.y)*H)<R);if(hit){drag={c:hit,tipo:'mover',dx:hit.x-p.x,dy:hit.y-p.y};if(!s||s.id!==hit.id){PJ.sel={pid:pt.id,cid:hit.id};drag.trocou=true}}}
+      if(drag){PJ.ocupado=true;cv.setPointerCapture(e.pointerId);e.preventDefault();desenha()}});
+    cv.addEventListener('pointermove',e=>{if(!drag)return;const p=ponto(e),W=p.r.width,H=p.r.height,c=drag.c;drag.mexeu=true;
+      if(drag.tipo==='mover'){c.x=Math.min(1,Math.max(0,p.x+drag.dx));c.y=Math.min(1,Math.max(0,p.y+drag.dy))}
+      else{const dx=(p.x-c.x)*W,dy=(p.y-c.y)*H;c.ang=Math.round(Math.atan2(dy,dx)*180/Math.PI);c.alc=Math.min(0.9,Math.max(0.08,Math.hypot(dx,dy)/Math.hypot(W,H)))}
+      desenha();e.preventDefault()});
+    const fim=async()=>{if(!drag)return;const d=drag;drag=null;PJ.ocupado=false;if(d.mexeu)await salvar();if(d.trocou||d.mexeu)re()};
+    cv.addEventListener('pointerup',fim);cv.addEventListener('pointercancel',fim);
+    cv.style.touchAction=sel()?'none':'pan-y';
+    window.addEventListener('resize',desenha,{once:true})});
+}
+
 function vProposta(app){
   const o=S.orcamentos.find(x=>x.id===view.id);
   if(!o){app.innerHTML=`<div class="empty"><b>Orçamento não encontrado</b><button class="btn" data-nav="inicio">Voltar</button></div>`;return}
@@ -4287,6 +4415,7 @@ function vProposta(app){
   <div class="actions">
     ${sb?`<button class="btn ${vendido(o)?'':'primary'}" id="pp_link">${svg(UI.copy)}Link da proposta</button>`:''}
     <button class="btn" id="pp_pdf">${svg(UI.dl)}PDF / imprimir</button>
+    <button class="btn internal" id="pp_proj">${svg(ICON_CAM)}Projeto de câmeras${projPontos(o).length?` (${projPontos(o).length} foto${projPontos(o).length>1?'s':''})`:''}</button>
     <button class="btn ${vendido(o)||sb?'':'primary'}" id="pp_dl">${svg(UI.dl)}Baixar proposta com aceite</button>
     <button class="btn ${vendido(o)&&o.status!=='concluido'?'primary':''} internal" id="pp_buy">${svg(UI.cart)}Lista de compras</button>
     <button class="btn" id="pp_copy">${svg(UI.copy)}Copiar para WhatsApp</button>
@@ -4303,7 +4432,7 @@ function vProposta(app){
   if(sb)$('pp_link').onclick=async()=>{const b=$('pp_link');b.disabled=true;try{await linkProposta(o)}catch(e){toast('Não foi possível criar o link. Confira a internet e tente de novo.')}finally{b.disabled=false}};
   $('fx_pg').onclick=()=>registrarPagamento(o);
   $('fx_rc').onclick=()=>verRecibo(o.id);$('fx_nf').onclick=()=>nfseSheet(o);
-  $('pp_copy').onclick=()=>copyText(propostaTexto(o));$('pp_pdf').onclick=()=>pdfPropostaSheet(o);
+  $('pp_copy').onclick=()=>copyText(propostaTexto(o));$('pp_pdf').onclick=()=>pdfPropostaSheet(o);$('pp_proj').onclick=()=>{PJ.sel=null;go('projeto',{id:o.id})};
   $('pp_buy').onclick=()=>listaCompras(o.id);
   $('pp_edit').onclick=()=>editarOrc(o);
   $('pp_dup').onclick=()=>{const c=JSON.parse(JSON.stringify(o));delete c.aceite;delete c.pgto;delete c.comprados;delete c.linkToken;delete c.linkPagamento;delete c.agenda;delete c.emitidaEm;draft={...c,id:uid(),numero:null,status:'rascunho',criadoEm:new Date().toISOString(),_dirty:true,_new:true};go('editor',{force:true})};
@@ -4312,7 +4441,7 @@ function vProposta(app){
     const b=$('pp_dl');b.disabled=true;
     try{const pay=await pagamentoHTML(o);
       const dados=JSON.stringify(dadosCliente(o)).replace(/</g,'\\u003c');
-      const body=`${propostaHTML(o)}<div class="paper pp-extra"><div class="pp-body">${pay}${aceiteHTML(o)}</div></div><script id="dados" type="application/json">${dados}<\/script>`;
+      const body=`${propostaHTML(o)}${await projetoHTML(o)}<div class="paper pp-extra"><div class="pp-body">${pay}${aceiteHTML(o)}</div></div><script id="dados" type="application/json">${dados}<\/script>`;
       const ok=await baixar(`Proposta-${nOrc(o.numero)}-${arqNome(cliNome(o))}.html`,docHTML(`Proposta ${nOrc(o.numero)} — ${cliNome(o)}`,body,`<script>${CLIENT_JS}<\/script>`));
       if(ok){toast('Proposta salva. Mande o arquivo pelo WhatsApp para o cliente.');if(o.status==='rascunho'){try{await store.save('orcamentos',{...o,status:'enviado',atualizadoEm:new Date().toISOString()})}catch(e){}}}
     }finally{b.disabled=false}
