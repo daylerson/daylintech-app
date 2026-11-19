@@ -2441,11 +2441,13 @@ function registrarPagamento(o){
       <div class="field"><label for="pg_doc">CPF ou CNPJ para o recibo</label><input id="pg_doc" value="${esc(p.doc||a.doc||c.documento||'')}" inputmode="numeric"></div>
       ${campoConta('pg_ct',p.contaId,'Entrou na conta')}
       <div class="field full"><label for="pg_tipo">Tipo</label><select id="pg_tipo"><option value="total" ${p.tipo!=='parcial'?'selected':''}>Pagamento total (quitação)</option><option value="parcial" ${p.tipo==='parcial'?'selected':''}>Pagamento parcial ou sinal</option></select></div>
+      <div class="field full"><label>Comprovante do cliente <span class="hint">(opcional: foto ou PDF que ele mandou)</span></label><div id="pg_fotos"></div></div>
     </div>`,
     `${o.pgto?`<button class="btn danger left" id="pg_del">Desfazer pagamento</button>`:''}<button class="btn" data-act="close">Cancelar</button><button class="btn primary" id="pg_save">Salvar e gerar recibo</button>`,
-    L=>{const $=id=>L.querySelector('#'+id);
+    L=>{const $=id=>L.querySelector('#'+id),wf=campoFotos($('pg_fotos'),p.anexos,{max:4,rotulo:'Comprovante'});
       $('pg_save').onclick=async()=>{const v=num($('pg_valor').value),nome=$('pg_nome').value.trim();if(!(v>0)){toast('Informe o valor recebido.');return}if(!nome){toast('Informe o nome para o recibo.');return}
         const pg={valor:v,data:$('pg_data').value||hoje,forma:$('pg_forma').value,parcelas:Math.max(1,Math.round(num($('pg_parc').value))||1),nome,doc:$('pg_doc').value.trim(),tipo:$('pg_tipo').value,contaId:lerConta($('pg_ct'))};
+        const sv=$('pg_save');sv.disabled=true;try{const ax=await wf.salvar(o.id,'pgto');if(ax.length)pg.anexos=ax}catch(err){sv.disabled=false;toast('Não foi possível enviar o comprovante. Confira a internet.');return}sv.disabled=false;
         const cur=S.orcamentos.find(x=>x.id===o.id)||o,novo={...cur,pgto:pg,status:vendido(cur)?cur.status:'aprovado',atualizadoEm:new Date().toISOString()};
         try{await store.save('orcamentos',novo);closeSheet();render();verRecibo(novo.id)}catch(err){toast('Não foi possível salvar. Tente de novo.')}};
       if(o.pgto)$('pg_del').onclick=async()=>{const cur=S.orcamentos.find(x=>x.id===o.id)||o;const n={...cur};delete n.pgto;try{await store.save('orcamentos',n);closeSheet();render();toast('Pagamento removido')}catch(err){toast('Não foi possível salvar.')}};
@@ -3413,7 +3415,7 @@ function movimentos(){const out=[],cp=contaPadrao();
   (S.lancamentos||[]).forEach(l=>{if(l.tipo!=='transf'){out.push({...l,src:'fin',contaId:l.contaId||cp});return}
     const de=contaNome(l.contaId)||'outra conta',para=contaNome(l.contaDestino)||'outra conta',base={data:l.data,valor:num(l.valor),cat:'transf',src:'transf',ref:l.id,criadoEm:l.criadoEm,anexos:l.anexos};
     out.push({...base,id:l.id+'#s',tipo:'saida',contaId:l.contaId||cp,desc:`Transferência para ${para}${l.desc?' · '+l.desc:''}`},{...base,id:l.id+'#e',tipo:'entrada',contaId:l.contaDestino,desc:`Transferência de ${de}${l.desc?' · '+l.desc:''}`})});
-  S.orcamentos.forEach(o=>{const p=o.pgto;if(!p||!(num(p.valor)>0))return;out.push({id:'orc-'+o.id,src:'orc',ref:o.id,tipo:'entrada',data:String(p.data||'').slice(0,10),valor:num(p.valor),cat:'servicos',contaId:p.contaId||cp,
+  S.orcamentos.forEach(o=>{const p=o.pgto;if(!p||!(num(p.valor)>0))return;out.push({id:'orc-'+o.id,src:'orc',ref:o.id,tipo:'entrada',data:String(p.data||'').slice(0,10),valor:num(p.valor),cat:'servicos',contaId:p.contaId||cp,anexos:p.anexos,
     desc:`${o.tipo==='os'?osTipoNome(o)+' · OS':'Orçamento'} Nº ${nOrc(o.numero)} · ${cliNome(o)}${p.tipo==='parcial'?' (parcial)':''}`,forma:p.forma==='cartao'?'credito':p.forma,fornecedor:p.nome||cliNome(o),doc:p.doc,nf:o.nfse?{numero:o.nfse.numero,chave:o.nfse.chave}:null})});
   (S.gastos||[]).forEach(g=>{const v=(S.veiculos||[]).find(x=>x.id===g.veiculoId);out.push({id:'car-'+g.id,src:'carro',ref:g.id,tipo:'saida',data:g.data,valor:num(g.valor),cat:g.tipo==='combustivel'?'combustivel':'veiculo',contaId:g.contaId||cp,
     desc:(g.tipo==='combustivel'?`${COMB[g.comb]||'Combustível'}${g.litros?' · '+fmtL(g.litros):''}`:`${GASTO_TIPOS[g.tipo].split(' (')[0]}${g.desc?': '+g.desc:''}`)+(v?' · '+veicNome(v):''),fornecedor:g.local||'',nf:g.nf,anexos:g.anexos,pendente:g.tipo==='multa'&&g.situacao==='pendente'})});
