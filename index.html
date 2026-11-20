@@ -3639,6 +3639,7 @@ function vFinanceiro(app){(ui.finAba==='fixas'?vFinFixas:vFinGeral)(app)}
 const CAIX=[['imp','Impostos','Caixinha Impostos'],['desp','Despesas','Caixinha Despesas'],['mat','Materiais','Caixinha Materiais']];
 const caixCfg=()=>{const c=finCfg().caixinhas||{},ids=finCfg().contas.map(x=>x.id);return CAIX.some(([k])=>c[k]&&ids.includes(c[k]))?c:null};
 const r2=v=>Math.round(num(v)*100)/100;
+const ehCaixinha=id=>{const c=caixCfg();return !!(c&&id&&CAIX.some(([k])=>c[k]===id)&&!caixProblema(c))}; // conta de caixinha só aparece no quadro Caixinhas
 // Caixinha tem de ser uma conta só dela: não pode ser a conta que recebe os pagamentos nem a mesma de outra caixinha.
 const contaRecebe=id=>id&&(id===contaPadrao()||S.orcamentos.some(o=>o.pgto&&o.pgto.contaId===id)||(S.lancamentos||[]).some(l=>l.tipo==='entrada'&&l.contaId===id));
 function caixProblema(c){c=c||finCfg().caixinhas||{};const ks=CAIX.map(x=>x[0]).filter(k=>c[k]);
@@ -3701,7 +3702,7 @@ function vFinGeral(app){
   <div class="spread"><div><div class="eyebrow">Dinheiro da empresa</div><h1 class="h1">Financeiro</h1></div>
     <div class="row" style="gap:8px"><button class="btn primary" id="fn_nf">${svg('<path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/><path d="M10 13h5M10 17h3"/>')}Importar nota</button><button class="btn" id="fn_novo">${svg(UI.plus)}Lançamento</button></div></div>
   ${finTabs('geral')}
-  <div class="fin-contas">${cfg.contas.length?cfg.contas.map(c=>`<div class="fx-card fin-saldo fin-ext" data-ext="${c.id}" tabindex="0" role="button" aria-label="Extrato de ${esc(c.nome)}"><span>${esc(c.nome)} <span class="fin-ver">ver extrato ›</span></span><b class="${saldoConta(c,hoje,ms)<0?'neg':''}">${money(saldoConta(c,hoje,ms))}</b><span>saldo hoje · <button class="linkbtn" data-cf="${c.id}">conferir com o banco</button> · <button class="linkbtn" data-ce="${c.id}">editar</button></span></div>`).join('')+`<div class="row" style="gap:6px;align-self:center"><button class="btn sm" id="fn_tr">⇄ Transferir</button><button class="btn ghost sm" id="fn_conta">${svg(UI.plus)}Outra conta</button></div>`
+  <div class="fin-contas">${cfg.contas.length?cfg.contas.filter(c=>!ehCaixinha(c.id)).map(c=>`<div class="fx-card fin-saldo fin-ext" data-ext="${c.id}" tabindex="0" role="button" aria-label="Extrato de ${esc(c.nome)}"><span>${esc(c.nome)} <span class="fin-ver">ver extrato ›</span></span><b class="${saldoConta(c,hoje,ms)<0?'neg':''}">${money(saldoConta(c,hoje,ms))}</b><span>saldo hoje · <button class="linkbtn" data-cf="${c.id}">conferir com o banco</button> · <button class="linkbtn" data-ce="${c.id}">editar</button></span></div>`).join('')+`<div class="row" style="gap:6px;align-self:center"><button class="btn sm" id="fn_tr">⇄ Transferir</button><button class="btn ghost sm" id="fn_conta">${svg(UI.plus)}Outra conta</button></div>`
     :`<div class="fx-card fin-saldo"><span>Saldo da conta</span><b>—</b><span>Informe quanto tem no banco hoje para o app acompanhar o saldo.</span><button class="btn primary sm" id="fn_conta" style="align-self:flex-start;margin-top:6px">Informar saldo</button></div>`}</div>
   ${caixinhasHTML(ms)}
   ${previsaoHTML()}
