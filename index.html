@@ -3639,6 +3639,12 @@ function vFinanceiro(app){(ui.finAba==='fixas'?vFinFixas:vFinGeral)(app)}
 const CAIX=[['imp','Impostos','Caixinha Impostos'],['desp','Despesas','Caixinha Despesas'],['mat','Materiais','Caixinha Materiais']];
 const caixCfg=()=>{const c=finCfg().caixinhas||{},ids=finCfg().contas.map(x=>x.id);return CAIX.some(([k])=>c[k]&&ids.includes(c[k]))?c:null};
 const r2=v=>Math.round(num(v)*100)/100;
+// Caixinha tem de ser uma conta só dela: não pode ser a conta que recebe os pagamentos nem a mesma de outra caixinha.
+const contaRecebe=id=>id&&(id===contaPadrao()||S.orcamentos.some(o=>o.pgto&&o.pgto.contaId===id)||(S.lancamentos||[]).some(l=>l.tipo==='entrada'&&l.contaId===id));
+function caixProblema(c){c=c||finCfg().caixinhas||{};const ks=CAIX.map(x=>x[0]).filter(k=>c[k]);
+  if(ks.some((k,i)=>ks.findIndex(j=>c[j]===c[k])!==i))return 'Duas ou mais caixinhas estão na mesma conta. Cada caixinha precisa de uma conta só dela, começando em R$ 0.';
+  const k=ks.find(k=>contaRecebe(c[k]));if(k)return `A caixinha de ${CAIX.find(x=>x[0]===k)[1].toLowerCase()} está na conta "${contaNome(c[k])}", que recebe os pagamentos. Por isso ela mostra o saldo da conta toda. Escolha "Criar conta" para ela.`;
+  return ''}
 // Quanto separar de um pagamento de valor v: impostos e despesas pela % da empresa; materiais = custo dos materiais na proporção do que foi pago.
 function sepCalc(o,v){const c=caixCfg();if(!c)return [];const t=calc(o),{imp,desp}=taxas(),prop=t.total>0?Math.min(1,num(v)/t.total):0,
     custoMat=(o.itens||[]).filter(i=>!isMO(i)).reduce((s,i)=>s+num(i.custo)*num(i.qtd),0),
@@ -3660,14 +3666,19 @@ function caixinhasHTML(ms){const c=caixCfg(),cfg=finCfg();
     <p class="hint" style="margin:0">No banco, use a caixinha, o porquinho ou o cofrinho da conta da empresa. Aqui o app cria uma conta para cada um e calcula quanto guardar.</p>
     <button class="btn primary" id="cx_cfg" style="align-self:flex-start">Criar as caixinhas</button></section>`;
   const pend=sepPendentes(),totPend=pend.reduce((t,o)=>t+sepCalc(o,o.pgto.valor).reduce((s,x)=>s+x.v,0),0),das=dasAteDez();
-  return `<section class="panel caix"><div class="spread" style="align-items:center"><h2 class="h2">Caixinhas</h2><button class="btn sm" id="cx_cfg">Configurar</button></div>
+  const prob=caixProblema(c);
+  return `<section class="panel caix"><div class="spread" style="align-items:center"><h2 class="h2">Caixinhas</h2><button class="btn sm ${prob?'primary':''}" id="cx_cfg">${prob?'Corrigir':'Configurar'}</button></div>
+    ${prob?`<p class="note" style="margin:0;color:var(--bad)"><b>Atenção:</b> ${esc(prob)}</p>`:''}
     <div class="fx-cards">${CAIX.filter(([k])=>c[k]&&cfg.contas.some(x=>x.id===c[k])).map(([k,nome])=>{const ct=cfg.contas.find(x=>x.id===c[k]),s=saldoConta(ct,null,ms);
       return `<div class="fx-card fin-ext" data-ext="${ct.id}" tabindex="0" role="button"><span>${esc(nome)}</span><b>${money(s)}</b><span>${k==='imp'&&das!=null?(das<=0?'Guias do ano pagas':s>=das?`Cobre o DAS até dezembro (${money(das)}) ✓`:`DAS até dezembro: ${money(das)} · faltam ${money(das-s)}`):k==='desp'?'Pague daqui carro, combustível e contas':k==='mat'?'Para repor e comprar material':''}</span></div>`}).join('')}</div>
     ${pend.length?`<div class="sep-pend"><b>Falta separar ${money(totPend)}</b><span class="hint">Separe no aplicativo do banco e toque em "Já separei".</span>
       ${pend.map(o=>{const its=sepCalc(o,o.pgto.valor);return `<div class="sep-i"><div><b>${esc(cliNome(o))}</b> <span class="hint">· Nº ${nOrc(o.numero)} · recebido ${money(o.pgto.valor)} em ${dataBR(o.pgto.data)}</span><div class="hint">${its.map(x=>`${esc(x.nome)} ${money(x.v)}`).join(' · ')}</div></div><div class="row" style="gap:6px;flex-wrap:nowrap"><button class="btn sm" data-sep-pula="${o.id}">Não separar</button><button class="btn sm primary" data-sep="${o.id}">Já separei</button></div></div>`}).join('')}</div>`
       :'<p class="hint" style="margin:0">Tudo separado ✓. Ao registrar um pagamento, o app mostra quanto guardar em cada caixinha.</p>'}</section>`}
-function caixinhasSheet(){const cfg=finCfg(),c=finCfg().caixinhas||{};
-  const sel=(k,rot)=>`<div class="field"><label for="cx_${k}">${rot}</label><select id="cx_${k}"><option value="">Não usar</option><option value="novo" ${c[k]&&cfg.contas.some(x=>x.id===c[k])?'':'selected'}>Criar conta "${CAIX.find(x=>x[0]===k)[2]}"</option>${cfg.contas.map(x=>`<option value="${x.id}" ${c[k]===x.id?'selected':''}>${esc(x.nome)}</option>`).join('')}</select></div>`;
+function caixinhasSheet(){const cfg=finCfg(),c0=finCfg().caixinhas||{},c={};
+  // Começa pelo que está certo: conta própria que existe e não recebe pagamentos; senão uma conta com o nome da caixinha; senão criar.
+  CAIX.forEach(([k,,nomeC])=>{const ok=c0[k]&&cfg.contas.some(x=>x.id===c0[k])&&!contaRecebe(c0[k])&&!CAIX.some(([j])=>j!==k&&c0[j]===c0[k]);
+    const mesmo=cfg.contas.find(x=>normNome(x.nome)===normNome(nomeC)&&!contaRecebe(x.id));c[k]=ok?c0[k]:mesmo?mesmo.id:'novo'});
+  const sel=(k,rot)=>`<div class="field"><label for="cx_${k}">${rot}</label><select id="cx_${k}"><option value="">Não usar</option><option value="novo" ${c[k]==='novo'?'selected':''}>Criar conta "${CAIX.find(x=>x[0]===k)[2]}" (começa em R$ 0)</option>${cfg.contas.map(x=>`<option value="${x.id}" ${c[k]===x.id?'selected':''}>${esc(x.nome)}${contaRecebe(x.id)?' (recebe pagamentos)':''}</option>`).join('')}</select></div>`;
   const {imp,desp}=taxas();
   openSheet('Caixinhas',`<p class="muted" style="margin-top:0">A cada pagamento, o app calcula quanto guardar: <b>${fmtPct(imp)}</b> para impostos e <b>${fmtPct(desp)}</b> para despesas (as mesmas porcentagens do preço, na aba Empresa) e o <b>custo dos materiais</b> daquele orçamento.</p>
     <div class="form">${sel('imp','Caixinha dos impostos')}${sel('desp','Caixinha das despesas')}${sel('mat','Caixinha dos materiais')}</div>
@@ -3677,7 +3688,8 @@ function caixinhasSheet(){const cfg=finCfg(),c=finCfg().caixinhas||{};
     $('cx_ok').onclick=async()=>{const contas=[...cfg.contas],nova={},hoje=hojeISO();
       CAIX.forEach(([k,,nomeC])=>{const v=$('cx_'+k).value;if(v==='novo'){const ct={id:uid(),nome:nomeC,saldoIni:0,dataIni:hoje};contas.push(ct);nova[k]=ct.id}else nova[k]=v||''});
       if(!CAIX.some(([k])=>nova[k])){toast('Escolha pelo menos uma caixinha.');return}
-      try{await salvarFinCfg({contas,caixinhas:{...nova,desde:c.desde||hoje}});closeSheet();toast('Caixinhas prontas. Ao registrar um pagamento, o app mostra quanto separar.')}catch(e){toast('Não foi possível salvar.')}}})}
+      const pr=caixProblema(nova);if(pr){toast(pr);return}
+      try{await salvarFinCfg({contas,caixinhas:{...nova,desde:c0.desde||hoje}});closeSheet();toast('Caixinhas prontas. Ao registrar um pagamento, o app mostra quanto separar.')}catch(e){toast('Não foi possível salvar.')}}})}
 function vFinGeral(app){
   const ms=movimentos(),cfg=finCfg(),ym=ui.finMes||ymHoje(),r=resumoMes(ym,ms),fil=ui.finFil||'todos',hoje=hojeISO();
   const lista=r.doMes.filter(m=>fil==='todos'||fil==='semnota'?(fil==='todos'||r.semNota.includes(m)):m.tipo===fil);
