@@ -459,6 +459,14 @@ body.apresentacao .internal{display:none!important}
 .pj-bl{padding:6px 0 14px}.pj-h{font-weight:700;font-size:15px;margin:2px 0 8px;color:var(--paper-ink,#0f172a)}.pj-img{display:block;max-width:100%;height:auto;margin:0 auto 10px;border-radius:8px}.pj-leg{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:8px 16px}.pj-leg .pj-t,.pj-leg .pj-p{grid-column:1/-1}
 .pj-cam{display:flex;gap:9px;align-items:flex-start;font-size:12.5px}.pj-cam .pj-n{min-width:24px;height:24px;font-size:12.5px}.pj-cam>div{display:flex;flex-direction:column;gap:1px}.pj-p{font-size:12.5px;margin:0}.pj-t{width:100%;border-collapse:collapse;font-size:12px}.pj-t th,.pj-t td{text-align:left;padding:5px 6px;border-bottom:1px solid #e5e9f0}.pj-t th{font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:#64748b}
 .caix{display:flex;flex-direction:column;gap:10px}.sep-box{border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;background:var(--surface-2);display:flex;flex-direction:column;gap:4px}.sep-l{display:flex;justify-content:space-between;gap:10px;font-size:14px}.sep-t{border-top:1px solid var(--line);padding-top:6px;margin-top:2px}.sep-pend{display:flex;flex-direction:column;gap:6px;border:1px solid var(--line);border-radius:var(--r);padding:10px 12px}.sep-i{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:8px}
+.pinlock{position:fixed;inset:0;z-index:9999;background:#0b0d12;color:#f1f5f9;display:flex;align-items:center;justify-content:center;padding:24px 16px;overflow:auto}body.pin-on{overflow:hidden}
+.pl-in{width:100%;max-width:340px;display:flex;flex-direction:column;align-items:center;gap:10px}.pl-logo{width:112px;height:112px;border-radius:50%;object-fit:contain;background:#fff;padding:6px;border:3px solid #f59e0b;box-shadow:0 0 0 4px #0b0d12,0 0 24px rgba(245,158,11,.35)}
+.pl-t{font-family:var(--f-display);font-size:24px;font-weight:700;margin:10px 0 0;text-align:center}.pl-s{margin:0;color:#94a3b8;font-size:16px;text-align:center;min-height:22px}
+.pl-dots{display:flex;gap:22px;margin:18px 0 22px}.pl-dots i{width:14px;height:14px;border-radius:50%;border:1.5px solid #cbd5e1}.pl-dots i.on{background:#f1f5f9;border-color:#f1f5f9}.pl-dots.erro{animation:plTreme .4s}.pl-dots.erro i.on{background:#ef4444;border-color:#ef4444}
+@keyframes plTreme{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+.pl-kb{display:grid;grid-template-columns:repeat(3,1fr);gap:16px 26px}.pl-kb[hidden]{display:none}.pl-k{width:76px;height:76px;border-radius:50%;border:1px solid #2a2f3a;background:transparent;color:#f8fafc;font:400 30px var(--f-body,system-ui);cursor:pointer;display:grid;place-items:center}.pl-k:active{background:#1e2430}.pl-k.pl-txt{font-size:14px;font-weight:600;color:#cbd5e1}
+.pl-extra{display:flex;flex-direction:column;gap:10px;width:100%;margin-top:8px}.pl-extra p{margin:0;color:#cbd5e1;text-align:center;line-height:1.45}.pl-b{width:100%;padding:13px 14px;border-radius:12px;border:1px solid #334155;background:transparent;color:#f1f5f9;font:600 15px var(--f-body,system-ui);cursor:pointer}.pl-b.pri{background:#f07c12;border-color:#f07c12;color:#fff}.pl-b:disabled{opacity:.6}
+@media (max-height:640px){.pl-logo{width:72px;height:72px;padding:8px}.pl-k{width:64px;height:64px}.pl-dots{margin:10px 0 14px}}
 .cep-q{background:var(--surface-2,#f4f6fa);border:1px solid var(--line);border-radius:var(--r);padding:10px}.cep-res{display:flex;flex-direction:column;gap:6px;margin-top:8px;max-height:320px;overflow:auto}.cep-i{display:flex;flex-direction:column;align-items:flex-start;gap:1px;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font:inherit;color:inherit;cursor:pointer}.cep-i.seu{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 8%,var(--surface))}.cep-i:hover{border-color:var(--brand,#1b4fa0)}
 .ass-imp{display:grid;grid-template-columns:2fr 1.4fr 1fr;gap:24px;margin-top:46px}.ass-imp>div{display:flex;flex-direction:column;gap:6px}.ass-imp i{display:block;border-top:1px solid var(--paper-ink)}.ass-imp span{font-size:12px;color:var(--paper-muted)}
 .ig-wrap{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;align-items:start}
@@ -1878,7 +1886,8 @@ function vAjustes(app){
   ${sb?`<div><h2 class="h2">Conta</h2></div>
   <section class="panel"><p style="margin:0">Conectado como <b id="e_conta"></b>. Os dados ficam salvos na nuvem e aparecem em qualquer aparelho em que você entrar.</p>
     <div class="row" style="justify-content:flex-end"><button class="btn" id="e_sair" type="button">Sair</button></div>
-  </section>`:''}`;
+  </section>`:''}
+  ${pinSecaoHTML()}`;
   const $=id=>app.querySelector('#'+id);
   const ler=()=>({...S.empresa,nome:$('e_nome').value.trim()||'DaylinTech',cnpj:$('e_cnpj').value.trim(),slogan:$('e_slogan').value.trim(),telefone:$('e_tel').value.trim(),email:$('e_email').value.trim(),endereco:$('e_end').value.trim(),
     imposto:num($('e_imp').value),despesas:num($('e_desp').value),margem:num($('e_marg').value),arredondar:num($('e_arr').value),metaMensal:num($('e_meta').value),whatsapp:$('e_wa').value.trim(),cidade:$('e_cid').value.trim(),pixTipo:$('e_ptipo').value,pixChave:$('e_pchave').value.trim(),pixNome:$('e_pnome').value.trim(),descontoPix:num($('e_pdesc').value),cartaoMax:Math.max(1,Math.round(num($('e_cmax').value))||1),cartaoSemJuros:Math.max(1,Math.round(num($('e_csj').value))||1),cartaoJuros:num($('e_cjur').value),linkPagamento:normUrl($('e_link').value),linkAvaliacao:normUrl($('e_aval').value),googlePerfil:normUrl($('e_gperfil').value),instagram:$('e_insta').value.trim(),site:normUrl($('e_site').value),catalogoWa:normUrl($('e_catwa').value),responsavel:$('e_resp').value.trim(),
@@ -1907,6 +1916,7 @@ function vAjustes(app){
       let url='';if(x1>=0){const pad=6;x0=Math.max(0,x0-pad);y0=Math.max(0,y0-pad);x1=Math.min(w-1,x1+pad);y1=Math.min(h-1,y1+pad);const cw=x1-x0+1,ch=y1-y0+1,k=Math.min(1,140/ch,520/cw);const o=document.createElement('canvas');o.width=Math.round(cw*k);o.height=Math.round(ch*k);o.getContext('2d').drawImage(cv,x0,y0,cw,ch,0,0,o.width,o.height);url=o.toDataURL('image/png')}
       try{await store.saveEmpresa({...S.empresa,...ler(),assinatura:url});S.empresa={...S.empresa,assinatura:url,responsavel:$('e_resp').value.trim()};toast(url?'Assinatura salva':'Assinatura removida')}catch(err){toast('Não foi possível salvar a assinatura.')}};
   })();
+  pinSecaoLigar(app);
   if(sb){sb.auth.getSession().then(r=>{const u=r.data.session&&r.data.session.user;if(u&&$('e_conta'))$('e_conta').textContent=u.email}).catch(()=>{});$('e_sair').onclick=()=>sb.auth.signOut()}
   $('e_bkout').onclick=async()=>{
     const bk={...Object.fromEntries(COLS.map(c=>[c,S[c]])),empresa:S.empresa};
@@ -4630,12 +4640,101 @@ function oferecerRascLocal(){if(rascOferecido||!allReady()||tela||draft)return;r
       L.querySelector('#rl_ok').onclick=()=>{closeSheet();draft={...d,_dirty:true};go('editor',{force:true})}})}
 setInterval(oferecerRascLocal,1500);
 
+/* ---------- Bloqueio com PIN (por aparelho) ----------
+   localStorage 'dt:pin' = {salt, hash (PBKDF2-SHA256 100 mil voltas), nome, tempo (minutos fora do app até bloquear; 0 = sempre)}.
+   Bloqueia ao abrir o app e ao voltar depois de `tempo`. Esqueci o PIN: manda o link de nova senha para o e-mail da conta
+   (Supabase), apaga o PIN deste aparelho e sai; depois de entrar de novo, o app pede um PIN novo ('dt:pinCriar').
+   5 erros: espera 30 s; 10 erros: só pelo e-mail. O PIN não sai do aparelho e não substitui a senha da conta. */
+const PIN_LS='dt:pin',PIN_ERR='dt:pinErros',PIN_SAIU='dt:pinSaiu',PIN_CRIAR='dt:pinCriar';
+const pinLer=()=>{try{const p=JSON.parse(localStorage.getItem(PIN_LS)||'null');return p&&p.hash?p:null}catch(e){return null}};
+const pinAtivo=()=>!!pinLer();
+const b64=a=>btoa(String.fromCharCode(...new Uint8Array(a)));
+async function pinHash(pin,salt){const k=await crypto.subtle.importKey('raw',new TextEncoder().encode(pin),'PBKDF2',false,['deriveBits']);
+  return b64(await crypto.subtle.deriveBits({name:'PBKDF2',salt:Uint8Array.from(atob(salt),c=>c.charCodeAt(0)),iterations:100000,hash:'SHA-256'},k,256))}
+async function pinSalvar(pin,extra={}){const salt=b64(crypto.getRandomValues(new Uint8Array(16))),ant=pinLer()||{};
+  localStorage.setItem(PIN_LS,JSON.stringify({tempo:1,...ant,...extra,salt,hash:await pinHash(pin,salt),nome:(S.empresa&&(S.empresa.responsavel||S.empresa.nome))||ant.nome||''}));localStorage.removeItem(PIN_ERR)}
+async function pinConfere(pin){const p=pinLer();return !!p&&await pinHash(pin,p.salt)===p.hash}
+const pinErros=()=>{try{return JSON.parse(localStorage.getItem(PIN_ERR)||'{"n":0,"ate":0}')}catch(e){return {n:0,ate:0}}};
+// Teclado de PIN em tela cheia. cfg: {titulo, sub, onPin(pin) → true | 'mensagem de erro', cancelar, esqueci, sair}
+function pinTeclado(cfg){let el=document.getElementById('pinlock');if(el)el.remove();el=document.createElement('div');el.id='pinlock';el.className='pinlock';
+  el.setAttribute('role','dialog');el.setAttribute('aria-modal','true');el.setAttribute('aria-label',cfg.titulo);
+  const tecla=(v,rot,cls='')=>`<button type="button" class="pl-k ${cls}" data-k="${v}" aria-label="${rot||v}">${rot&&rot.length>2?rot:v}</button>`;
+  el.innerHTML=`<div class="pl-in"><img class="pl-logo" src="icons/icon-192.png" alt=""><h2 class="pl-t">${esc(cfg.titulo)}</h2><p class="pl-s" aria-live="polite">${esc(cfg.sub||'Digite seu PIN')}</p>
+    <div class="pl-dots">${'<i></i>'.repeat(4)}</div><div class="pl-kb">${[1,2,3,4,5,6,7,8,9].map(n=>tecla(n)).join('')}
+    ${cfg.esqueci?`<button type="button" class="pl-k pl-txt" data-k="esq">Esqueci</button>`:cfg.cancelar?`<button type="button" class="pl-k pl-txt" data-k="cancel">Cancelar</button>`:'<span></span>'}${tecla(0)}
+    <button type="button" class="pl-k pl-txt" data-k="apaga" aria-label="Apagar"><svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor"><path d="M21 5H8.4a2 2 0 0 0-1.5.7L2 12l4.9 6.3a2 2 0 0 0 1.5.7H21a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1zm-3.3 9.3-1.4 1.4-2.3-2.3-2.3 2.3-1.4-1.4 2.3-2.3-2.3-2.3 1.4-1.4 2.3 2.3 2.3-2.3 1.4 1.4-2.3 2.3z"/></svg></button></div>
+    <div class="pl-extra" hidden></div></div>`;
+  document.body.appendChild(el);document.body.classList.add('pin-on');
+  let pin='',ocupado=false;const dots=el.querySelectorAll('.pl-dots i'),sub=el.querySelector('.pl-s');
+  const pinta=()=>dots.forEach((d,i)=>d.classList.toggle('on',i<pin.length));
+  const espera=()=>{const e=pinErros(),s=Math.ceil((e.ate-Date.now())/1000);return s>0?s:0};
+  const tecla2=async k=>{if(ocupado)return;
+    if(k==='apaga'){pin=pin.slice(0,-1);pinta();return}
+    if(k==='cancel'){fechar();cfg.cancelar();return}
+    if(k==='esq'){cfg.esqueci(el);return}
+    if(cfg.travavel&&espera()){sub.textContent=`Muitas tentativas. Espere ${espera()} s.`;return}
+    if(pin.length>=4)return;pin+=k;pinta();if(pin.length<4)return;
+    ocupado=true;const r=await cfg.onPin(pin);ocupado=false;
+    if(r===true){fechar();return}
+    el.querySelector('.pl-dots').classList.add('erro');setTimeout(()=>{el.querySelector('.pl-dots').classList.remove('erro');pin='';pinta()},450);if(typeof r==='string')sub.textContent=r};
+  el.addEventListener('click',e=>{const b=e.target.closest('[data-k]');if(b)tecla2(b.dataset.k)});
+  const kd=e=>{if(!document.getElementById('pinlock'))return;if(/^\d$/.test(e.key)){e.preventDefault();tecla2(e.key)}else if(e.key==='Backspace'){e.preventDefault();tecla2('apaga')}};
+  document.addEventListener('keydown',kd);
+  function fechar(){document.removeEventListener('keydown',kd);el.remove();document.body.classList.remove('pin-on')}
+  return {el,sub,fechar}}
+function pinBloquear(){const p=pinLer();if(!p||document.getElementById('pinlock'))return;
+  pinTeclado({titulo:`Oi${p.nome?', '+p.nome:''}`,sub:'Digite seu PIN',travavel:true,esqueci:pinEsqueci,
+    onPin:async pin=>{if(await pinConfere(pin)){localStorage.removeItem(PIN_ERR);return true}
+      const e=pinErros();e.n++;if(e.n>=10){localStorage.setItem(PIN_ERR,JSON.stringify(e));pinEsqueci(document.getElementById('pinlock'),true);return 'PIN errado muitas vezes.'}
+      if(e.n>=5)e.ate=Date.now()+30000;localStorage.setItem(PIN_ERR,JSON.stringify(e));
+      return e.n>=5?`PIN errado. Espere 30 s para tentar de novo.`:`PIN errado. Tente de novo.`}})}
+async function pinEsqueci(el,forcado){const box=el.querySelector('.pl-extra'),kb=el.querySelector('.pl-kb'),dots=el.querySelector('.pl-dots');
+  let email='';try{email=sb?((await sb.auth.getSession()).data.session||{user:{}}).user.email||'':''}catch(e){}
+  kb.hidden=true;dots.hidden=true;box.hidden=false;el.querySelector('.pl-s').textContent=forcado?'Por segurança, agora só dá para entrar pelo e-mail.':'Esqueceu o PIN?';
+  const sairConta=async()=>{localStorage.removeItem(PIN_LS);localStorage.removeItem(PIN_ERR);localStorage.setItem(PIN_CRIAR,'1');try{await sb.auth.signOut()}catch(e){location.reload()}};
+  if(!sb||!email){box.innerHTML=`<p>Sem a nuvem ligada não dá para recuperar o PIN pelo e-mail.</p>${forcado?'':'<button type="button" class="pl-b" data-v="volta">Voltar</button>'}`;}
+  else box.innerHTML=`<p>Vamos mandar um link para <b>${esc(email)}</b>. Pelo link você cria uma senha nova e entra no app. Depois escolhe um PIN novo.</p>
+    <button type="button" class="pl-b pri" data-v="mail">Enviar link para o e-mail</button><button type="button" class="pl-b" data-v="senha">Lembro a senha da conta: entrar com e-mail e senha</button>${forcado?'':'<button type="button" class="pl-b" data-v="volta">Voltar</button>'}`;
+  box.onclick=async e=>{const b=e.target.closest('[data-v]');if(!b)return;const v=b.dataset.v;
+    if(v==='volta'){box.hidden=true;kb.hidden=false;dots.hidden=false;el.querySelector('.pl-s').textContent='Digite seu PIN';return}
+    if(v==='senha'){b.disabled=true;await sairConta();return}
+    if(v==='mail'){b.disabled=true;b.textContent='Enviando…';
+      try{const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});if(error)throw error;
+        box.innerHTML=`<p><b>Link enviado!</b> Abra o e-mail de ${esc(email)} neste aparelho e toque no link para criar a senha nova. Se não achar, olhe no spam.</p><button type="button" class="pl-b pri" data-v="ok">Entendi</button>`;
+        box.querySelector('[data-v="ok"]').onclick=sairConta}
+      catch(x){b.disabled=false;b.textContent='Enviar link para o e-mail';el.querySelector('.pl-s').textContent='Não consegui enviar agora. Confira a internet ou espere alguns minutos.'}}}}
+// Criar, trocar ou desligar o PIN (aba Empresa → Segurança).
+function pinConfigurar(modo){
+  const novo=()=>{const t=pinTeclado({titulo:'Criar PIN',sub:'Escolha 4 números',cancelar:()=>{},onPin:async p1=>{
+      setTimeout(()=>pinTeclado({titulo:'Criar PIN',sub:'Digite de novo para confirmar',cancelar:()=>{},onPin:async p2=>{if(p2!==p1)return 'Não bateu. Digite o mesmo PIN de novo.';
+        await pinSalvar(p2);toast('PIN criado. O app vai pedir ao abrir.');render();return true}}),0);return true}});return t};
+  if(modo==='criar'){novo();return}
+  pinTeclado({titulo:modo==='desligar'?'Desligar o PIN':'Trocar o PIN',sub:'Digite o PIN atual',cancelar:()=>{},onPin:async p=>{if(!(await pinConfere(p)))return 'PIN errado.';
+    if(modo==='desligar'){localStorage.removeItem(PIN_LS);toast('Bloqueio com PIN desligado neste aparelho');render();return true}
+    setTimeout(novo,0);return true}})}
+function pinIniciar(){
+  if(pinAtivo())pinBloquear();
+  document.addEventListener('visibilitychange',()=>{try{if(document.visibilityState==='hidden'){localStorage.setItem(PIN_SAIU,String(Date.now()));return}
+    const p=pinLer();if(!p)return;const fora=Date.now()-num(localStorage.getItem(PIN_SAIU));if(fora>=num(p.tempo)*60000)pinBloquear()}catch(e){}});
+  setInterval(()=>{try{if(localStorage.getItem(PIN_CRIAR)&&!pinAtivo()&&!tela&&allReady()&&db){localStorage.removeItem(PIN_CRIAR);pinConfigurar('criar')}}catch(e){}},1500)}
+const pinTempoTxt={0:'Sempre que sair do app',1:'Depois de 1 minuto fora',5:'Depois de 5 minutos fora',15:'Depois de 15 minutos fora'};
+function pinSecaoHTML(){const p=pinLer();
+  return `<div><h2 class="h2">Segurança</h2></div><section class="panel" id="pin_sec">
+    <p style="margin:0">Bloqueio com PIN: <b style="color:var(--${p?'ok':'muted'})">${p?'ligado':'desligado'}</b> neste aparelho.</p>
+    <p class="hint" style="margin:0">O app pede um PIN de 4 números ao abrir. Se esquecer, chega um link no e-mail da conta para entrar de novo e criar outro. Vale só para este aparelho: ligue em cada celular ou computador.</p>
+    ${p?`<div class="field"><label for="pin_tempo">Pedir o PIN de novo</label><select id="pin_tempo">${Object.entries(pinTempoTxt).map(([k,v])=>`<option value="${k}" ${String(p.tempo??1)===k?'selected':''}>${v}</option>`).join('')}</select></div>
+      <div class="row" style="justify-content:flex-end"><button class="btn" type="button" data-pin="desligar">Desligar</button><button class="btn" type="button" data-pin="trocar">Trocar PIN</button></div>`
+    :`<div class="row" style="justify-content:flex-end"><button class="btn primary" type="button" data-pin="criar">Criar PIN</button></div>`}</section>`}
+function pinSecaoLigar(app){const s=app.querySelector('#pin_sec');if(!s)return;s.querySelectorAll('[data-pin]').forEach(b=>b.onclick=()=>pinConfigurar(b.dataset.pin));
+  const t=s.querySelector('#pin_tempo');if(t)t.onchange=()=>{const p=pinLer();if(p){p.tempo=num(t.value);localStorage.setItem(PIN_LS,JSON.stringify(p));toast('Pronto')}}}
+
 /* Modo cliente */
 const pb=document.getElementById('presentBtn');
 function setPresent(on){document.body.classList.toggle('apresentacao',on);pb.setAttribute('aria-pressed',on);try{localStorage.setItem('daylintech:present',on?'1':'0')}catch(e){}}
 pb.onclick=()=>setPresent(pb.getAttribute('aria-pressed')!=='true');
 try{setPresent(localStorage.getItem('daylintech:present')==='1')}catch(e){}
 
+pinIniciar();
 render();
 initStore();
 })();
