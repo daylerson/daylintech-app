@@ -664,6 +664,7 @@ const ICON={
   servicos:'<path d="M14.5 5.5a4 4 0 0 0 4.9 4.9L11 18.8a2.1 2.1 0 0 1-3-3l8.4-8.4"/><path d="M14.5 5.5l2-2"/>',
 };
 const NAVI={
+  equipe:'<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.6"/><path d="M15.5 14.2c3 .2 5.5 2.6 5.5 5.8"/>',
   home:'<path d="M3 11l9-7 9 7"/><path d="M5 10v10h5v-6h4v6h5V10"/>',
   agenda:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M8 14h3v3H8z"/>',
   garantias:'<path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/>',
@@ -727,8 +728,8 @@ function idadePill(d){return d==null?'':`<span class="pill ${d>30?'conf-baixa':'
 
 const DEF_EMPRESA={nome:'DaylinTech',slogan:'Tecnologia que protege',cnpj:'',telefone:'',email:'',endereco:'',margem:30,imposto:6,despesas:0,arredondar:1,descontoPix:5,cartaoMax:12,cartaoSemJuros:3,cartaoJuros:2.99,pixTipo:'cpf',pixChave:'',pixNome:'',cidade:'',whatsapp:'',linkPagamento:'',responsavel:'',assinatura:'',validade:15,pagamento:'Oferecemos 3 formas de pagamento:\n1) 50% na aprovação e 50% na conclusão do serviço (Pix ou transferência).\n2) Pix à vista com 5% de desconto.\n3) Cartão de crédito em até 3x sem juros ou em até 12x com juros da operadora.',garantia:'Equipamentos: 12 meses de garantia do fabricante (verificar com o fabricante). Nos primeiros 30 dias, qualquer defeito tem troca expressa. Após os 30 dias, o equipamento com defeito é retirado e enviado para a análise de garantia do fabricante; durante esse período, o cliente pode ficar sem o equipamento.\nInstalação: 90 dias (3 meses) de garantia total com a DaylinTech: qualquer problema na instalação é resolvido sem custo. Após os 90 dias, é cobrada visita técnica de R$ 130,00 para diagnóstico.',garantiaEquipMeses:12,garantiaServDias:90,prazo:'Início da instalação em até 5 dias úteis após a aprovação.'};
 
-const COLS=['produtos','clientes','orcamentos','veiculos','gastos','compras','lancamentos','contasfixas','galeria','posts'];
-const S={produtos:[],clientes:[],orcamentos:[],veiculos:[],gastos:[],compras:[],lancamentos:[],contasfixas:[],galeria:[],posts:[],empresa:{...DEF_EMPRESA},ready:{produtos:false,clientes:false,orcamentos:false,veiculos:false,gastos:false,compras:false,lancamentos:false,contasfixas:false,galeria:false,posts:false,empresa:false}};
+const COLS=['produtos','clientes','orcamentos','veiculos','gastos','compras','lancamentos','contasfixas','galeria','posts','equipe','pagequipe'];
+const S={produtos:[],clientes:[],orcamentos:[],veiculos:[],gastos:[],compras:[],lancamentos:[],contasfixas:[],galeria:[],posts:[],equipe:[],pagequipe:[],empresa:{...DEF_EMPRESA},ready:{equipe:false,pagequipe:false,produtos:false,clientes:false,orcamentos:false,veiculos:false,gastos:false,compras:false,lancamentos:false,contasfixas:false,galeria:false,posts:false,empresa:false}};
 let view={name:'home'};
 let ui={busca:'',cat:'todas',status:'todos',buscaCli:'',buscaMO:'',grupo:'todos'};
 let draft=null;
@@ -918,9 +919,9 @@ function confirmSheet(title,msg,okLabel,onOk){
 }
 
 /* ---------- Navegação ---------- */
-const TABS=[['home','Início'],['inicio','Orçamentos'],['agenda','Agenda'],['garantias','Garantias'],['catalogo','Catálogo'],['maodeobra','Mão de obra'],['clientes','Clientes'],['impostos','Impostos'],['operacional','Operacional'],['ajustes','Empresa'],['financeiro','Financeiro'],['galeria','Galeria'],['posts','Postagens']];
+const TABS=[['equipe','Equipe'],['home','Início'],['inicio','Orçamentos'],['agenda','Agenda'],['garantias','Garantias'],['catalogo','Catálogo'],['maodeobra','Mão de obra'],['clientes','Clientes'],['impostos','Impostos'],['operacional','Operacional'],['ajustes','Empresa'],['financeiro','Financeiro'],['galeria','Galeria'],['posts','Postagens']];
 const NAV_MAIN=['home','inicio','agenda','financeiro','catalogo'];
-const NAV_MAIS=[['galeria','Fotos e vídeos dos serviços, por pasta'],['posts','Aprendizados, ideias e tutoriais em PDF'],['maodeobra','Serviços, preços e tempo de instalação'],['clientes','Cadastro, endereço e histórico de cada cliente'],['garantias','Clientes na garantia e notas fiscais'],['operacional','Carro, combustível e lista de compras',1],['impostos','Guias, declarações e CNPJ',1],['ajustes','Dados, Pix, textos padrão e backup',1]];
+const NAV_MAIS=[['galeria','Fotos e vídeos dos serviços, por pasta'],['posts','Aprendizados, ideias e tutoriais em PDF'],['maodeobra','Serviços, preços e tempo de instalação'],['clientes','Cadastro, endereço e histórico de cada cliente'],['garantias','Clientes na garantia e notas fiscais'],['equipe','Ajudantes, pagamentos e recibos assinados',1],['operacional','Carro, combustível e lista de compras',1],['impostos','Guias, declarações e CNPJ',1],['ajustes','Dados, Pix, textos padrão e backup',1]];
 const tabNome=k=>(TABS.find(t=>t[0]===k)||[k,k])[1];
 function abrirMais(){const cur=view.name;
   openSheet('Mais',`<div class="mais">${NAV_MAIS.map(([k,d,int])=>`<button class="mais-i ${int?'internal':''}" data-nav="${k}" ${cur===k?'aria-current="page"':''}>${svg(NAVI[k])}<span><b>${tabNome(k)}</b><span class="hint">${d}</span></span></button>`).join('')}</div>`)}
@@ -950,7 +951,7 @@ function render(fromSnap){
   if(view.name==='projeto'&&PJ.ocupado)return;
   const active=document.activeElement&&document.activeElement.id;
   const pos=document.activeElement&&document.activeElement.selectionStart;
-  ({home:vHome,inicio:vInicio,catalogo:vCatalogo,maodeobra:vMaoDeObra,clientes:vClientes,ajustes:vAjustes,editor:vEditor,proposta:vProposta,agenda:vAgenda,os:vOS,garantias:vGarantias,impostos:vImpostos,operacional:vOperacional,financeiro:vFinanceiro,galeria:vGaleria,posts:vPosts,projeto:vProjeto}[view.name]||vHome)(app);
+  ({home:vHome,inicio:vInicio,catalogo:vCatalogo,maodeobra:vMaoDeObra,clientes:vClientes,ajustes:vAjustes,editor:vEditor,proposta:vProposta,agenda:vAgenda,os:vOS,garantias:vGarantias,impostos:vImpostos,operacional:vOperacional,financeiro:vFinanceiro,galeria:vGaleria,posts:vPosts,projeto:vProjeto,equipe:vEquipe}[view.name]||vHome)(app);
   agendarSync();
   if(active){const el=document.getElementById(active);if(el&&el.tagName==='INPUT'&&el.type==='search'){el.focus();try{el.setSelectionRange(pos,pos)}catch(e){}}}
 }
@@ -3391,7 +3392,7 @@ function vCompras(el){
 const FIN_CATS={servicos:['Serviços e vendas','e'],outras_ent:['Outras entradas','e'],aporte:['Dinheiro do dono (aporte)','e'],
   material:['Material para obras','s'],ferramentas:['Ferramentas e equipamentos','s'],combustivel:['Combustível','s'],veiculo:['Veículo (mecânica, IPVA, seguro, multas)','s'],
   impostos:['Impostos e taxas','s'],alimentacao:['Alimentação','s'],telefone:['Telefone e internet','s'],marketing:['Marketing e anúncios','s'],contador:['Contador','s'],
-  tarifas:['Tarifas do banco e maquininha','s'],escritorio:['Escritório, aluguel e contas','s'],retirada:['Retirada do dono (pró-labore)','s'],outros:['Outras despesas','s'],ajuste:['Ajuste de saldo','x'],transf:['Transferência entre contas','x']};
+  tarifas:['Tarifas do banco e maquininha','s'],escritorio:['Escritório, aluguel e contas','s'],equipe:['Equipe e ajudantes','s'],retirada:['Retirada do dono (pró-labore)','s'],outros:['Outras despesas','s'],ajuste:['Ajuste de saldo','x'],transf:['Transferência entre contas','x']};
 const FIN_FORMAS={pix:'Pix',dinheiro:'Dinheiro',debito:'Cartão de débito',credito:'Cartão de crédito',boleto:'Boleto',transferencia:'Transferência'};
 // Categorias padrão + as criadas pelo dono (S.empresa.financeiro.cats: [{id, nome, tipo 'e'|'s'}]).
 const finCats=()=>{const m={...FIN_CATS};((S.empresa.financeiro||{}).cats||[]).forEach(c=>{m[c.id]=[c.nome,c.tipo]});return m};
@@ -3441,12 +3442,13 @@ function movimentos(){const out=[],cp=contaPadrao();
   (S.gastos||[]).forEach(g=>{const v=(S.veiculos||[]).find(x=>x.id===g.veiculoId);out.push({id:'car-'+g.id,src:'carro',ref:g.id,tipo:'saida',data:g.data,valor:num(g.valor),cat:g.tipo==='combustivel'?'combustivel':'veiculo',contaId:g.contaId||cp,
     desc:(g.tipo==='combustivel'?`${COMB[g.comb]||'Combustível'}${g.litros?' · '+fmtL(g.litros):''}`:`${GASTO_TIPOS[g.tipo].split(' (')[0]}${g.desc?': '+g.desc:''}`)+(v?' · '+veicNome(v):''),fornecedor:g.local||'',nf:g.nf,anexos:g.anexos,pendente:g.tipo==='multa'&&g.situacao==='pendente'})});
   (S.compras||[]).forEach(c=>{if(c.status!=='comprado'||!(num(c.valorPago)>0))return;out.push({id:'cmp-'+c.id,src:'compra',ref:c.id,tipo:'saida',data:c.compradoEm,valor:num(c.valorPago),cat:'ferramentas',contaId:cp,desc:c.nome,fornecedor:c.onde||dominio(c.link),contaId:c.contaId||cp})});
+  (S.pagequipe||[]).forEach(g=>{const p=eqPessoa(g.pessoaId);out.push({id:'eq-'+g.id,src:'equipe',ref:g.id,tipo:'saida',data:g.data,valor:num(g.valor),cat:'equipe',contaId:g.contaId||cp,desc:`Pagamento a ${p.nome||'equipe'}${g.referente?' · '+g.referente:''}`,fornecedor:p.nome||'',doc:p.cpf,forma:g.forma==='dinheiro'?'dinheiro':g.forma==='pix'?'pix':'transferencia',anexos:g.anexos,nf:g.assinatura?{numero:'Recibo '+nRec(g.numero)}:null})});
   const f=S.empresa.fiscal||{};Object.entries(f.das||{}).forEach(([ym,r])=>{if(r.st!=='pago'||!r.data)return;const vl=r.valor!=null&&r.valor!==''?num(r.valor):valorGuia(ym,fiscal());
     out.push({id:'das-'+ym,src:'das',ref:ym,tipo:'saida',data:r.data,valor:vl,cat:'impostos',contaId:r.contaId||(S.empresa.financeiro&&S.empresa.financeiro.caixinhas&&S.empresa.financeiro.caixinhas.imp&&finCfg().contas.some(c=>c.id===S.empresa.financeiro.caixinhas.imp)?S.empresa.financeiro.caixinhas.imp:cp),desc:`Guia de imposto (DAS) de ${ymTxt(ym)}`,fornecedor:'Receita Federal'})});
   return out.filter(m=>m.data&&m.valor>0).sort((a,b)=>String(b.data).localeCompare(String(a.data))||String(b.criadoEm||'').localeCompare(String(a.criadoEm||'')))}
 const sinal=m=>m.tipo==='entrada'?1:-1;
 function saldoConta(c,ate,ms){ms=ms||movimentos();return num(c.saldoIni)+ms.filter(m=>m.contaId===c.id&&m.data>=c.dataIni&&(!ate||m.data<=ate)).reduce((t,m)=>t+sinal(m)*m.valor,0)}
-const SRC_NOME={sep:'Caixinhas',orc:'Orçamento',carro:'Carro',compra:'Compras',das:'Impostos',fin:''};
+const SRC_NOME={equipe:'Equipe',sep:'Caixinhas',orc:'Orçamento',carro:'Carro',compra:'Compras',das:'Impostos',fin:''};
 // Nota fiscal: XML da NF-e, PDF do DANFE ou foto do cupom (QR Code + leitura do texto).
 const JSQR_SRC='https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js';
 async function lerCodigos(blob){const out=[];
@@ -3702,12 +3704,103 @@ function caixinhasSheet(){const cfg=finCfg(),c0=finCfg().caixinhas||{},c={};
       if(!CAIX.some(([k])=>nova[k])){toast('Escolha pelo menos uma caixinha.');return}
       const pr=caixProblema(nova);if(pr){toast(pr);return}
       try{await salvarFinCfg({contas,caixinhas:{...nova,desde:c0.desde||hoje}});closeSheet();toast('Caixinhas prontas. Ao registrar um pagamento, o app mostra quanto separar.')}catch(e){toast('Não foi possível salvar.')}}})}
+/* ---------- Equipe: ajudantes e funcionários (view 'equipe', no menu Mais) ----------
+   Coleções: equipe ({nome, cpf, telefone, pix, funcao, obs, ativo}) e pagequipe ({numero, pessoaId, valor, data, forma, referente,
+   orcId, contaId, anexos, assinatura (PNG), assinaNome, assinadoEm}). Cada pagamento entra no Financeiro como saída 'equipe'
+   e tem um recibo para a pessoa assinar na tela do celular; o recibo assinado sai em PDF para guardar ou compartilhar. */
+const EQ_FORMAS={pix:'Pix',dinheiro:'Dinheiro',transferencia:'Transferência'};
+const eqPessoa=id=>(S.equipe||[]).find(p=>p.id===id)||{};
+const eqPags=pid=>(S.pagequipe||[]).filter(g=>!pid||g.pessoaId===pid).sort((a,b)=>String(b.data).localeCompare(String(a.data))||num(b.numero)-num(a.numero));
+const eqSemAss=()=>(S.pagequipe||[]).filter(g=>!g.assinatura);
+const nRec=n=>String(n||0).padStart(4,'0');
+function vEquipe(app){const ps=[...(S.equipe||[])].sort((a,b)=>(b.ativo!==false)-(a.ativo!==false)||String(a.nome).localeCompare(String(b.nome))),ym=ymHoje(),gs=eqPags();
+  const mes=gs.filter(g=>String(g.data).startsWith(ym)),sem=eqSemAss();
+  const linha=g=>{const p=eqPessoa(g.pessoaId);return `<div class="li" data-pgeq="${g.id}" tabindex="0" role="button"><div><div class="t">${esc(p.nome||'Pessoa apagada')} · ${money(g.valor)}</div><div class="d">${dataBR(g.data)} · ${esc(EQ_FORMAS[g.forma]||'')}${g.referente?' · '+esc(g.referente):''}</div></div><div class="r">${g.assinatura?'<span class="pill fx-ok">Assinado ✓</span>':'<span class="pill fx-bad">Falta assinar</span>'}</div></div>`};
+  app.innerHTML=`<div class="spread"><div><div class="eyebrow">Ajudantes e funcionários</div><h1 class="h1">Equipe</h1></div>
+    <div class="row" style="gap:8px"><button class="btn" id="eq_novo">${svg(UI.plus)}Pessoa</button><button class="btn primary" id="eq_pagar">${svg(UI.plus)}Pagamento</button></div></div>
+    <div class="fx-cards"><div class="fx-card"><span>Pago em ${esc(mesNomeFin(ym).toLowerCase())}</span><b>${money(mes.reduce((t,g)=>t+num(g.valor),0))}</b><span>${mes.length} pagamento${mes.length===1?'':'s'}</span></div>
+      <div class="fx-card ${sem.length?'bad':'ok'}"><span>Recibos sem assinatura</span><b>${sem.length}</b><span>${sem.length?'Peça para assinar na próxima vez que encontrar':'Tudo assinado'}</span></div></div>
+    <section class="panel"><h2 class="h2">Pessoas</h2>${ps.length?`<div class="list">${ps.map(p=>{const pg=eqPags(p.id),tm=pg.filter(g=>String(g.data).startsWith(ym)).reduce((t,g)=>t+num(g.valor),0);
+      return `<div class="li" data-eqp="${p.id}" tabindex="0" role="button"><div><div class="t">${esc(p.nome)}${p.ativo===false?' <span class="pill">inativo</span>':''}</div><div class="d">${esc([p.funcao,p.telefone].filter(Boolean).join(' · ')||'—')}</div></div><div class="r"><span class="num">${money(tm)}</span><span class="hint">no mês</span></div></div>`}).join('')}</div>`
+      :'<p class="muted" style="margin:0">Cadastre quem trabalha com você (nome, CPF, Pix e WhatsApp) para emitir os recibos.</p>'}</section>
+    <section class="panel"><h2 class="h2">Pagamentos</h2>${gs.length?`<div class="list">${gs.slice(0,40).map(linha).join('')}</div>`:'<p class="muted" style="margin:0">Nenhum pagamento ainda. Toque em <b>Pagamento</b> quando pagar alguém.</p>'}</section>`;
+  const $=id=>app.querySelector('#'+id);
+  $('eq_novo').onclick=()=>formPessoa();$('eq_pagar').onclick=()=>formPagEq();
+  app.querySelectorAll('[data-eqp]').forEach(el=>el.onclick=()=>pessoaSheet(eqPessoa(el.dataset.eqp)));
+  app.querySelectorAll('[data-pgeq]').forEach(el=>el.onclick=()=>verPagEq(el.dataset.pgeq))}
+function formPessoa(p,depois){const n=!p;p=p||{id:uid(),nome:'',cpf:'',telefone:'',pix:'',funcao:'Ajudante',obs:'',ativo:true,criadoEm:new Date().toISOString()};
+  openSheet(n?'Nova pessoa':'Editar pessoa',`<div class="form">
+    <div class="field full"><label for="ep_nome">Nome completo</label><input id="ep_nome" value="${esc(p.nome)}" autocomplete="off"></div>
+    <div class="field"><label for="ep_cpf">CPF</label><input id="ep_cpf" value="${esc(p.cpf)}" inputmode="numeric" placeholder="000.000.000-00"><span class="hint" id="ep_cpfh"></span></div>
+    <div class="field"><label for="ep_fun">Função</label><input id="ep_fun" value="${esc(p.funcao||'')}" placeholder="Ajudante, eletricista…"></div>
+    <div class="field"><label for="ep_tel">WhatsApp</label><input id="ep_tel" value="${esc(p.telefone)}" inputmode="tel" placeholder="(21) 99999-9999"></div>
+    <div class="field"><label for="ep_pix">Chave Pix</label><input id="ep_pix" value="${esc(p.pix||'')}" autocomplete="off"></div>
+    <div class="field full"><label for="ep_obs">Observações</label><textarea id="ep_obs" placeholder="Ex.: diária R$ 150, combinado em…">${esc(p.obs||'')}</textarea></div>
+    ${n?'':`<label class="chk full" style="display:flex"><input type="checkbox" id="ep_at" ${p.ativo!==false?'checked':''}> <span>Ainda trabalha comigo</span></label>`}</div>`,
+  `${n?'':'<button class="btn danger left" id="ep_del">Apagar</button>'}<button class="btn" data-act="close">Cancelar</button><button class="btn primary" id="ep_ok">Salvar</button>`,L=>{const $=id=>L.querySelector('#'+id);
+    const cpfH=()=>{const d=soDig($('ep_cpf').value);$('ep_cpfh').textContent=d.length===11?(cpfValido(d)?'CPF válido':'Confira os números do CPF'):''};$('ep_cpf').addEventListener('input',cpfH);cpfH();
+    $('ep_ok').onclick=async()=>{const nome=$('ep_nome').value.trim();if(!nome){toast('Informe o nome.');return}const d=soDig($('ep_cpf').value);
+      const o={...p,nome,cpf:d.length===11?fmtCPF(d):$('ep_cpf').value.trim(),funcao:$('ep_fun').value.trim(),telefone:$('ep_tel').value.trim(),pix:$('ep_pix').value.trim(),obs:$('ep_obs').value.trim(),ativo:$('ep_at')?$('ep_at').checked:true};
+      if(await salvarOp('equipe',o,n?'Pessoa cadastrada':'Dados salvos')){closeSheet();render();depois&&depois(o)}};
+    if($('ep_del'))$('ep_del').onclick=()=>{const tem=eqPags(p.id).length;confirmSheet('Apagar esta pessoa?',tem?`${esc(p.nome)} tem ${tem} pagamento(s) registrado(s). Os recibos continuam guardados. Se só parou de trabalhar com você, desmarque "Ainda trabalha comigo".`:`${esc(p.nome)} sai da lista.`,'Apagar',async()=>{try{await store.remove('equipe',p.id);toast('Pessoa apagada')}catch(e){toast('Não foi possível apagar.')}})}})}
+function pessoaSheet(p){if(!p||!p.id)return;const gs=eqPags(p.id),ano=ymHoje().slice(0,4),tAno=gs.filter(g=>String(g.data).startsWith(ano)).reduce((t,g)=>t+num(g.valor),0);
+  openSheet(p.nome,`<p class="muted" style="margin-top:0">${esc([p.funcao,p.cpf&&'CPF '+p.cpf,p.telefone,p.pix&&'Pix '+p.pix].filter(Boolean).join(' · '))}</p>
+    <div class="fx-cards"><div class="fx-card"><span>Pago em ${ano}</span><b>${money(tAno)}</b><span>${gs.filter(g=>String(g.data).startsWith(ano)).length} pagamentos</span></div><div class="fx-card"><span>Total</span><b>${money(gs.reduce((t,g)=>t+num(g.valor),0))}</b><span>${gs.filter(g=>!g.assinatura).length} sem assinatura</span></div></div>
+    ${gs.length?`<div class="list">${gs.map(g=>`<div class="li" data-pgeq2="${g.id}" tabindex="0" role="button"><div><div class="t">Recibo Nº ${nRec(g.numero)} · ${money(g.valor)}</div><div class="d">${dataBR(g.data)}${g.referente?' · '+esc(g.referente):''}</div></div><div class="r">${g.assinatura?'<span class="pill fx-ok">Assinado ✓</span>':'<span class="pill fx-bad">Falta assinar</span>'}</div></div>`).join('')}</div>`:'<p class="muted">Nenhum pagamento ainda.</p>'}`,
+  `<button class="btn left" id="ps_ed">${svg(UI.edit)}Editar</button><button class="btn primary" id="ps_pg">${svg(UI.plus)}Pagamento</button>`,L=>{
+    L.querySelector('#ps_ed').onclick=()=>formPessoa(p);L.querySelector('#ps_pg').onclick=()=>formPagEq(null,p.id);
+    L.querySelectorAll('[data-pgeq2]').forEach(el=>el.onclick=()=>verPagEq(el.dataset.pgeq2))})}
+function formPagEq(g,pessoaId){const n=!g,ps=(S.equipe||[]).filter(p=>p.ativo!==false||(g&&g.pessoaId===p.id));
+  if(!ps.length){formPessoa(null,p=>formPagEq(null,p.id));toast('Primeiro cadastre a pessoa');return}
+  g=g||{id:uid(),pessoaId:pessoaId||ps[0].id,valor:'',data:hojeISO(),forma:'pix',referente:'',orcId:'',contaId:'',anexos:[],criadoEm:new Date().toISOString()};
+  const orcs=S.orcamentos.filter(o=>vendido(o)||o.tipo==='os').sort((a,b)=>String(b.atualizadoEm||b.criadoEm).localeCompare(String(a.atualizadoEm||a.criadoEm))).slice(0,30);
+  openSheet(n?'Pagamento da equipe':'Editar pagamento',`<div class="form">
+    <div class="field"><label for="pe_p">Quem recebeu</label><select id="pe_p">${ps.map(p=>`<option value="${p.id}" ${g.pessoaId===p.id?'selected':''}>${esc(p.nome)}</option>`).join('')}</select></div>
+    <div class="field"><label for="pe_v">Valor (R$)</label><input id="pe_v" inputmode="decimal" value="${g.valor?String(num(g.valor).toFixed(2)).replace('.',','):''}" placeholder="0,00"></div>
+    <div class="field"><label for="pe_d">Data</label><input id="pe_d" type="date" value="${esc(g.data)}"></div>
+    <div class="field"><label for="pe_f">Forma</label><select id="pe_f">${Object.entries(EQ_FORMAS).map(([k,v])=>`<option value="${k}" ${g.forma===k?'selected':''}>${v}</option>`).join('')}</select></div>
+    <div class="field full"><label for="pe_r">Referente a</label><input id="pe_r" value="${esc(g.referente||'')}" placeholder="Ex.: diária de 20/11, instalação de câmeras na Escola Sol"></div>
+    <div class="field full"><label for="pe_o">Serviço (opcional)</label><select id="pe_o"><option value="">Nenhum</option>${orcs.map(o=>`<option value="${o.id}" ${g.orcId===o.id?'selected':''}>Nº ${nOrc(o.numero)} · ${esc(cliNome(o))}${o.titulo?' · '+esc(o.titulo):''}</option>`).join('')}</select></div>
+    ${campoConta('pe_ct',g.contaId,'Saiu da conta')}
+    <div class="field full"><label>Comprovante <span class="hint">(opcional: print do Pix)</span></label><div id="pe_fotos"></div></div></div>`,
+  `${n?'':'<button class="btn danger left" id="pe_del">Apagar</button>'}<button class="btn" data-act="close">Cancelar</button><button class="btn primary" id="pe_ok">${n?'Salvar e ver recibo':'Salvar'}</button>`,L=>{const $=id=>L.querySelector('#'+id),wf=campoFotos($('pe_fotos'),g.anexos,{max:3,rotulo:'Comprovante'});
+    $('pe_o').onchange=()=>{const o=S.orcamentos.find(x=>x.id===$('pe_o').value);if(o&&!$('pe_r').value.trim())$('pe_r').value=`${o.tipo==='os'?osTipoNome(o):(o.titulo||'serviço')} – ${cliNome(o)}`};
+    $('pe_ok').onclick=async()=>{const v=num($('pe_v').value);if(!(v>0)){toast('Informe o valor pago.');return}const b=$('pe_ok');b.disabled=true;
+      let ax=g.anexos||[];try{ax=await wf.salvar(g.id,'equipe')}catch(e){b.disabled=false;toast('Não foi possível enviar o comprovante.');return}
+      const numero=g.numero||((S.pagequipe||[]).reduce((m,x)=>Math.max(m,num(x.numero)),0)+1);
+      const mudou=g.assinatura&&(num(g.valor)!==v||g.pessoaId!==$('pe_p').value);
+      const o={...g,numero,pessoaId:$('pe_p').value,valor:v,data:$('pe_d').value||hojeISO(),forma:$('pe_f').value,referente:$('pe_r').value.trim(),orcId:$('pe_o').value,contaId:lerConta($('pe_ct')),anexos:ax};
+      if(mudou){delete o.assinatura;delete o.assinadoEm;delete o.assinaNome}
+      const ok=await salvarOp('pagequipe',o,mudou?'Valor ou pessoa mudou: o recibo precisa ser assinado de novo':n?'Pagamento registrado':'Pagamento salvo');b.disabled=false;
+      if(ok){closeSheet();render();if(n)setTimeout(()=>verPagEq(o.id),60)}};
+    if($('pe_del'))$('pe_del').onclick=()=>confirmSheet('Apagar este pagamento?','O recibo e a saída no Financeiro serão apagados.','Apagar',async()=>{try{await store.remove('pagequipe',g.id);toast('Pagamento apagado')}catch(e){toast('Não foi possível apagar.')}})})}
+function reciboEqHTML(g){const e=S.empresa,p=eqPessoa(g.pessoaId),d=new Date(String(g.data).slice(0,10)+'T12:00:00'),o=g.orcId&&S.orcamentos.find(x=>x.id===g.orcId);
+  return `<div class="paper recibo"><div class="pp-band"><div class="pp-id"><img class="pp-logo2" src="${LOGO}" alt="${esc(e.nome)}"></div><div class="pp-num"><div class="k">Recibo de pagamento</div><div class="n">Nº ${nRec(g.numero)}</div></div></div><div class="pp-stripe"></div>
+    <div class="pp-body"><div class="rc-valor"><span class="pp-k">Valor recebido</span><b>${money(g.valor)}</b></div>
+      <p class="rc-txt">Eu, <b>${esc(p.nome||'')}</b>${p.cpf?`, CPF <b>${esc(p.cpf)}</b>,`:''} declaro que recebi de <b>${esc(e.nome||'DaylinTech')}</b>${e.cnpj?`, CNPJ ${esc(e.cnpj)},`:''} a importância de <b>${money(g.valor)}</b> (${esc(extenso(g.valor))})${g.referente?`, referente a ${esc(g.referente)}`:''}${o?` (${o.tipo==='os'?'OS':'serviço'} Nº ${nOrc(o.numero)})`:''}, paga via ${esc(g.forma==='pix'?'Pix':(EQ_FORMAS[g.forma]||'').toLowerCase())}${p.funcao?`, pelo trabalho de ${esc(p.funcao.toLowerCase())}`:''}.</p>
+      <p class="rc-txt">Pelo que dou plena e geral quitação do valor acima.</p>
+      <p class="rc-local">${esc(e.cidade||'')}${e.cidade?', ':''}${d.toLocaleDateString('pt-BR',{day:'numeric',month:'long',year:'numeric'})}.</p>
+      <div class="rc-sign">${g.assinatura?`<img src="${g.assinatura}" alt="Assinatura">`:'<div class="rc-blank"></div>'}<div class="rc-line"><b>${esc(g.assinaNome||p.nome||'')}</b><span>${p.cpf?'CPF '+esc(p.cpf):'Quem recebeu'}${g.assinadoEm?` · assinado em ${fmtDT(g.assinadoEm)}`:''}</span></div></div>
+    </div></div>`}
+async function verPagEq(id){const g=(S.pagequipe||[]).find(x=>x.id===id);if(!g)return;const p=eqPessoa(g.pessoaId),nomeArq=`Recibo-equipe-${nRec(g.numero)}-${arqNome(p.nome||'pessoa').normalize('NFD').replace(/[\u0300-\u036f]/g,'')}.pdf`;
+  let pdf=null;const pronto=htmlPDF(reciboEqHTML(g)).then(b=>pdf=new File([b],nomeArq,{type:'application/pdf'}),()=>null);
+  const legenda=`Recibo Nº ${nRec(g.numero)} — pagamento de ${money(g.valor)} em ${dataBR(g.data)}${g.referente?', referente a '+g.referente:''}. ${S.empresa.nome||'DaylinTech'}`;
+  openSheet('Recibo da equipe',`${g.assinatura?'':`<p class="note" style="margin-top:0"><b>Falta a assinatura de ${esc((p.nome||'').split(' ')[0])}.</b> Entregue o celular para a pessoa assinar na tela.</p>`}<div class="paper-wrap">${reciboEqHTML(g)}</div>
+    ${(g.anexos||[]).length?`<div class="sec-k">Comprovante</div><div class="os-fotos">${g.anexos.map((a,i)=>`<div class="os-th"><img data-pax="${i}" alt="Comprovante" style="cursor:zoom-in"></div>`).join('')}</div>`:''}`,
+  `<button class="btn left" id="re_ed">${svg(UI.edit)}Editar</button>${g.assinatura?'<button class="btn" id="re_ass">Assinar de novo</button>':''}<button class="btn" id="re_dl">${svg(UI.dl)}Baixar PDF</button><button class="btn ${g.assinatura?'primary':''}" id="re_sh">${svg(ICON_SHARE)}Compartilhar</button>${g.assinatura?'':'<button class="btn primary" id="re_ass">✍ Assinar agora</button>'}`,L=>{const $=id=>L.querySelector('#'+id);
+    L.querySelector('.sheet').style.maxWidth='860px';L.querySelectorAll('[data-pax]').forEach(im=>{fotoEm(im,g.anexos[+im.dataset.pax]);im.onclick=()=>verFoto(im.src)});
+    $('re_ed').onclick=()=>formPagEq(g);
+    $('re_ass').onclick=()=>assinarSheet(`Assinatura de ${p.nome||'quem recebeu'}`,'Nome de quem está assinando',p.nome,async(png,nome)=>{await store.save('pagequipe',{...g,assinatura:png,assinaNome:nome,assinadoEm:new Date().toISOString()});setTimeout(()=>verPagEq(g.id),80)});
+    $('re_dl').onclick=async()=>{const b=$('re_dl');b.disabled=true;await pronto;b.disabled=false;if(!pdf){toast('Não foi possível gerar o PDF.');return}await baixar(nomeArq,pdf,'application/pdf');toast('Recibo em PDF salvo')};
+    $('re_sh').onclick=async()=>{const b=$('re_sh');if(!pdf){b.disabled=true;await pronto;b.disabled=false}if(!pdf){toast('Não foi possível gerar o PDF.');return}
+      if(navigator.canShare&&navigator.canShare({files:[pdf]})){try{await navigator.share({files:[pdf],title:`Recibo Nº ${nRec(g.numero)}`,text:legenda});return}catch(err){if(err&&err.name==='AbortError')return;if(err&&err.name==='NotAllowedError'){toast('PDF pronto. Toque de novo em Compartilhar.');return}}}
+      await baixar(nomeArq,pdf,'application/pdf');const t=soDig(p.telefone);if(t)window.open(`https://wa.me/${t.length<=11?'55'+t:t}?text=${encodeURIComponent(legenda)}`,'_blank','noopener');toast('PDF baixado: anexe na conversa.')}})}
 function vFinGeral(app){
   const ms=movimentos(),cfg=finCfg(),ym=ui.finMes||ymHoje(),r=resumoMes(ym,ms),fil=ui.finFil||'todos',hoje=hojeISO();
   const lista=r.doMes.filter(m=>fil==='todos'||fil==='semnota'?(fil==='todos'||r.semNota.includes(m)):m.tipo===fil);
   const mx=Math.max(...r.catS.map(x=>x[1]),1);
   const item=m=>`<div class="li fin-m" data-mv="${esc(m.id)}" tabindex="0" role="button"><span class="fin-s ${m.tipo}">${m.tipo==='entrada'?'+':'−'}</span><div><div class="t">${esc(m.desc||catNomeFin(m.cat))}${m.pendente?' <span class="pill fx-bad">para pagar</span>':''}</div>
-    <div class="d">${dataBR(m.data)} · ${esc(catNomeFin(m.cat))}${contaNome(m.contaId)?` · <b>${esc(contaNome(m.contaId))}</b>`:''}${SRC_NOME[m.src]?` · <span class="fin-src">${SRC_NOME[m.src]}</span>`:''}${m.fornecedor?' · '+esc(m.fornecedor):''}${m.nf&&m.nf.numero?' · NF '+esc(m.nf.numero):''}${m.anexos&&m.anexos.length?' · 📎 nota':''}</div></div>
+    <div class="d">${dataBR(m.data)} · ${esc(catNomeFin(m.cat))}${contaNome(m.contaId)?` · <b>${esc(contaNome(m.contaId))}</b>`:''}${SRC_NOME[m.src]?` · <span class="fin-src">${SRC_NOME[m.src]}</span>`:''}${m.fornecedor?' · '+esc(m.fornecedor):''}${m.nf&&m.nf.numero?(/^Recibo/.test(m.nf.numero)?' · '+esc(m.nf.numero)+' assinado ✓':' · NF '+esc(m.nf.numero)):''}${m.anexos&&m.anexos.length?' · 📎 nota':''}</div></div>
     <div class="r"><span class="num" style="color:var(--${m.tipo==='entrada'?'ok':'bad'})">${m.tipo==='entrada'?'+':'−'} ${money(m.valor)}</span></div></div>`;
   app.innerHTML=`
   <div class="spread"><div><div class="eyebrow">Dinheiro da empresa</div><h1 class="h1">Financeiro</h1></div>
@@ -3774,6 +3867,7 @@ function abrirMov(m){
     else if(m.src==='orc'){const o=S.orcamentos.find(x=>x.id===m.ref);go(o&&o.tipo==='os'&&o.agenda?'os':'proposta',{id:m.ref})}
     else if(m.src==='carro'){const g=S.gastos.find(x=>x.id===m.ref),v=g&&S.veiculos.find(x=>x.id===g.veiculoId);if(g&&v)formGasto(v,g)}
     else if(m.src==='compra')formCompra(S.compras.find(x=>x.id===m.ref));
+    else if(m.src==='equipe')verPagEq(m.ref);
     else if(m.src==='das')go('impostos')}
 /* ---------- Contas fixas, a receber e previsão ---------- */
 // Coleção "contasfixas": {nome, valor, freq: mensal|anual|unica, dia, mes (anual), data (única), inicio 'AAAA-MM', parcelas, cat, contaId, ativo}.
@@ -3803,6 +3897,7 @@ function previsao(dias){const hoje=hojeISO(),ate=isoDia(new Date(Date.now()+dias
 function avisosFinanceiros(){const hoje=hojeISO(),ate=isoDia(new Date(Date.now()+3*864e5)),ab=contasAbertas(ate),venc=ab.filter(o=>o.vence<hoje),prox=ab.filter(o=>o.vence>=hoje),out=[];
   if(venc.length)out.push({cls:'warn',t:`${venc.length} conta${venc.length>1?'s':''} vencida${venc.length>1?'s':''} · ${money(venc.reduce((t,o)=>t+num(o.cf.valor),0))}`,h:venc.slice(0,3).map(o=>o.cf.nome).join(', ')});
   prox.forEach(o=>{const d=diasAte(o.vence);out.push({cls:d===0?'warn':'info',t:`Pagar ${o.cf.nome}: ${money(o.cf.valor)}`,h:`Vence ${d===0?'hoje':d===1?'amanhã':'em '+dataBR(o.vence)}`})});
+  const sa=eqSemAss();if(sa.length)out.push({cls:'info',t:`${sa.length} recibo${sa.length>1?'s':''} da equipe sem assinatura`,h:sa.slice(0,3).map(g=>eqPessoa(g.pessoaId).nome).filter(Boolean).join(', ')+'. Abra em Mais → Equipe e peça para assinar.'});
   const sp=sepPendentes();if(sp.length)out.push({cls:'info',t:`Separar ${money(sp.reduce((t,o)=>t+sepCalc(o,o.pgto.valor).reduce((s,x)=>s+x.v,0),0))} para as caixinhas`,h:`${sp.length} pagamento${sp.length>1?'s':''} ainda não separado${sp.length>1?'s':''}. Separe no banco e toque em "Já separei".`});
   return out}
 function formContaFixa(cf){const n=!cf,cfg=finCfg();cf=cf||{id:uid(),freq:'mensal',dia:10,cat:'',contaId:contaPadrao(),inicio:ymHoje(),ativo:true,criadoEm:new Date().toISOString()};
