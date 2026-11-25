@@ -2445,7 +2445,8 @@ function registrarAceite(o){
 function registrarPagamento(o){
   const p=o.pgto||{},a=o.aceite||{},c=S.clientes.find(x=>x.id===o.clienteId)||{},t=calc(o);
   const hoje=new Date().toISOString().slice(0,10);
-  openSheet('Registrar pagamento',`
+  openSheet(o.pgto?'Editar pagamento':'Registrar pagamento',`
+    ${o.pgto&&view.name!=='proposta'&&view.name!=='os'?`<button type="button" class="linkbtn" id="pg_abrir" style="align-self:flex-start;margin-bottom:6px">Abrir ${o.tipo==='os'?'a OS':'a proposta'} Nº ${nOrc(o.numero)} · ${esc(cliNome(o))} ›</button>`:''}
     <div class="form">
       <div class="field"><label for="pg_valor">Valor recebido (R$)</label><input id="pg_valor" inputmode="decimal" value="${String((p.valor||a.valor||t.total).toFixed(2)).replace('.',',')}"></div>
       <div class="field"><label for="pg_data">Data do pagamento</label><input id="pg_data" type="date" value="${esc((p.data||'').slice(0,10)||hoje)}"></div>
@@ -2460,6 +2461,7 @@ function registrarPagamento(o){
     </div>`,
     `${o.pgto?`<button class="btn danger left" id="pg_del">Desfazer pagamento</button>`:''}<button class="btn" data-act="close">Cancelar</button><button class="btn primary" id="pg_save">Salvar e gerar recibo</button>`,
     L=>{const $=id=>L.querySelector('#'+id),wf=campoFotos($('pg_fotos'),p.anexos,{max:4,rotulo:'Comprovante'});
+      if($('pg_abrir'))$('pg_abrir').onclick=()=>{closeSheet();go(o.tipo==='os'&&o.agenda?'os':'proposta',{id:o.id})};
       const sepBox=()=>{const el=$('pg_sepbox');if(!caixCfg()){el.innerHTML='<p class="hint" style="margin:0">Dica: crie as <b>caixinhas</b> no Financeiro para o app calcular quanto separar de imposto, despesas e materiais.</p>';return}
         const its=sepCalc(o,num($('pg_valor').value)),marc=$('pg_sep')?$('pg_sep').checked:!(p.sep&&p.sep.pulou)&&!(o.pgto&&!p.sep);
         el.innerHTML=its.length?`<div class="sep-box"><label class="chk" style="display:flex"><input type="checkbox" id="pg_sep" ${marc?'checked':''}> <span><b>Já separei para as caixinhas</b> <span class="hint">(desmarcado, fica em "Falta separar")</span></span></label>${sepLinhasHTML(its,num($('pg_valor').value))}</div>`:'';};
@@ -3014,13 +3016,16 @@ function guiaSheet(g,f){const v=g.valor,st=g.st;
     <div class="form" id="g_pg" ${st==='pago'?'':'hidden'}>
       <div class="field"><label for="g_dt">Pago em</label><input id="g_dt" type="date" value="${esc(g.r.data||hojeISO())}"></div>
       <div class="field"><label for="g_v">Valor pago (R$)</label><input id="g_v" inputmode="decimal" value="${esc(String(g.r.valor!=null?g.r.valor:'').replace('.',','))}" placeholder="${esc(String(v.toFixed(2)).replace('.',','))}"></div>
+      ${campoConta('g_ct',g.r.contaId||((finCfg().caixinhas||{}).imp)||'','Saiu da conta')}
+      <div class="field full"><label>Comprovante da guia</label><div id="g_fotos"></div></div>
     </div>
     <p class="note" style="margin:0">O valor certo, com multa e juros do dia, aparece quando você emite a guia no ${f.regime==='mei'?'PGMEI':'Portal do Simples Nacional'}.</p>
     <a class="btn" href="${f.regime==='mei'?FX_LINK.pgmei:FX_LINK.simples}" target="_blank" rel="noopener">${f.regime==='mei'?'Emitir guia no PGMEI':'Abrir Portal do Simples Nacional'}</a>`,
     `<button class="btn" data-act="close">Cancelar</button><button class="btn primary" id="g_ok">Salvar</button>`,L=>{
-      const $=id=>L.querySelector('#'+id),sel=()=>L.querySelector('input[name=g_st]:checked').value;
+      const $=id=>L.querySelector('#'+id),sel=()=>L.querySelector('input[name=g_st]:checked').value,wf=campoFotos($('g_fotos'),g.r.anexos,{max:3,rotulo:'Comprovante'});
       L.querySelectorAll('input[name=g_st]').forEach(r=>r.onchange=()=>{$('g_pg').hidden=sel()!=='pago'});
-      $('g_ok').onclick=async()=>{const s=sel(),das={...f.das};if(s==='aberto')delete das[g.ym];else das[g.ym]={st:s,...(s==='pago'?{data:$('g_dt').value,valor:$('g_v').value.trim()?num($('g_v').value):null}:{})};
+      $('g_ok').onclick=async()=>{const s=sel(),das={...f.das};let anexos=g.r.anexos||[];if(s==='pago'){try{anexos=await wf.salvar('das-'+g.ym,'fin')}catch(e){toast('Não foi possível enviar o comprovante.');return}}
+        if(s==='aberto')delete das[g.ym];else das[g.ym]={st:s,...(s==='pago'?{data:$('g_dt').value,valor:$('g_v').value.trim()?num($('g_v').value):null,contaId:lerConta($('g_ct')),anexos}:{})};
         try{await salvarFiscal({das});closeSheet();toast('Guia atualizada')}catch(e){toast('Não foi possível salvar. Tente de novo.')}}})}
 function vImpostos(app){
   const f=fiscal(),c=f.consulta,t=f.titular||{},mei=f.regime==='mei',r=resumoFiscal(f),hoje=hojeISO(),ano=+hoje.slice(0,4);
@@ -3300,12 +3305,15 @@ function formCompra(c){const n=!c;c=c||{id:uid(),status:'pendente',prioridade:'n
       if(await salvarOp('compras',{...c,nome,uso:$('cp_u').value.trim(),link:normUrl($('cp_l').value),valor:$('cp_v').value.trim()?num($('cp_v').value):'',prioridade:$('cp_p').value,atualizadoEm:new Date().toISOString()},'Item salvo'))closeSheet()};
     if(!n)$('cp_del').onclick=()=>confirmSheet('Excluir item?',`${esc(c.nome)} sai da lista.`,'Excluir',()=>store.remove('compras',c.id).then(()=>toast('Excluído'),()=>toast('Não foi possível excluir.')));
   })}
-function compreiSheet(c){openSheet('Comprei',`<p style="margin-top:0"><b>${esc(c.nome)}</b></p><div class="form">
-    <div class="field"><label for="cq_v">Quanto pagou (R$)</label><input id="cq_v" inputmode="decimal" value="${esc(opV(c.valor))}"></div>
-    <div class="field"><label for="cq_d">Data</label><input id="cq_d" type="date" value="${hojeISO()}"></div>
-    <div class="field full"><label for="cq_o">Onde comprou (opcional)</label><input id="cq_o" value="${esc(c.onde||'')}"></div>${campoConta('cq_ct',c.contaId,'Saiu da conta')}</div>`,
-  `<button class="btn" data-act="close">Cancelar</button><button class="btn primary" id="cq_ok">Marcar como comprado</button>`,L=>{const $=id=>L.querySelector('#'+id);
-    $('cq_ok').onclick=async()=>{if(await salvarOp('compras',{...c,status:'comprado',valorPago:$('cq_v').value.trim()?num($('cq_v').value):num(c.valor)||'',compradoEm:$('cq_d').value||hojeISO(),onde:$('cq_o').value.trim(),contaId:lerConta($('cq_ct')),atualizadoEm:new Date().toISOString()},'Marcado como comprado'))closeSheet()}})}
+function compreiSheet(c){const ja=c.status==='comprado';openSheet(ja?'Editar compra':'Comprei',`<p style="margin-top:0"><b>${esc(c.nome)}</b></p><div class="form">
+    <div class="field"><label for="cq_v">Quanto pagou (R$)</label><input id="cq_v" inputmode="decimal" value="${esc(opV(ja&&c.valorPago!==''&&c.valorPago!=null?c.valorPago:c.valor))}"></div>
+    <div class="field"><label for="cq_d">Data</label><input id="cq_d" type="date" value="${esc(ja&&c.compradoEm||hojeISO())}"></div>
+    <div class="field full"><label for="cq_o">Onde comprou (opcional)</label><input id="cq_o" value="${esc(c.onde||'')}"></div>${campoConta('cq_ct',c.contaId,'Saiu da conta')}
+    <div class="field full"><label>Nota ou comprovante</label><div id="cq_fotos"></div></div></div>`,
+  `${ja?'<button class="btn left" id="cq_item">Editar o item</button>':''}<button class="btn" data-act="close">Cancelar</button><button class="btn primary" id="cq_ok">${ja?'Salvar':'Marcar como comprado'}</button>`,L=>{const $=id=>L.querySelector('#'+id),wf=campoFotos($('cq_fotos'),c.anexos,{max:4,rotulo:'Comprovante'});
+    if($('cq_item'))$('cq_item').onclick=()=>formCompra(c);
+    $('cq_ok').onclick=async()=>{const b=$('cq_ok');b.disabled=true;let anexos=c.anexos||[];try{anexos=await wf.salvar(c.id,'fin')}catch(e){b.disabled=false;toast('Não foi possível enviar o comprovante.');return}
+      const ok=await salvarOp('compras',{...c,status:'comprado',valorPago:$('cq_v').value.trim()?num($('cq_v').value):num(c.valor)||'',compradoEm:$('cq_d').value||hojeISO(),onde:$('cq_o').value.trim(),contaId:lerConta($('cq_ct')),anexos,atualizadoEm:new Date().toISOString()},ja?'Compra salva':'Marcado como comprado');b.disabled=false;if(ok)closeSheet()}})}
 const dominio=u=>{try{return new URL(u).hostname.replace(/^www\./,'')}catch(e){return ''}};
 function vOperacional(app){
   const aba=ui.opAba||'carro';
@@ -3438,14 +3446,14 @@ function movimentos(){const out=[],cp=contaPadrao();
     out.push({...base,id:l.id+'#s',tipo:'saida',contaId:l.contaId||cp,desc:`Transferência para ${para}${l.desc?' · '+l.desc:''}`},{...base,id:l.id+'#e',tipo:'entrada',contaId:l.contaDestino,desc:`Transferência de ${de}${l.desc?' · '+l.desc:''}`})});
   S.orcamentos.forEach(o=>{const p=o.pgto;if(!p||!(num(p.valor)>0))return;out.push({id:'orc-'+o.id,src:'orc',ref:o.id,tipo:'entrada',data:String(p.data||'').slice(0,10),valor:num(p.valor),cat:'servicos',contaId:p.contaId||cp,anexos:p.anexos,
     desc:`${o.tipo==='os'?osTipoNome(o)+' · OS':'Orçamento'} Nº ${nOrc(o.numero)} · ${cliNome(o)}${p.tipo==='parcial'?' (parcial)':''}`,forma:p.forma==='cartao'?'credito':p.forma,fornecedor:p.nome||cliNome(o),doc:p.doc,nf:o.nfse?{numero:o.nfse.numero,chave:o.nfse.chave}:null});
-    if(p.sep&&p.sep.itens)p.sep.itens.forEach(x=>{if(!(num(x.v)>0)||!x.para)return;const base={data:p.sep.data,valor:num(x.v),cat:'transf',src:'sep',ref:o.id},nm=(CAIX.find(c=>c[0]===x.k)||[0,'Caixinha'])[1];
+    if(p.sep&&p.sep.itens)p.sep.itens.forEach(x=>{if(!(num(x.v)>0)||!x.para)return;const base={data:p.sep.data,valor:num(x.v),cat:'transf',src:'sep',ref:o.id,anexos:p.sep.anexos},nm=(CAIX.find(c=>c[0]===x.k)||[0,'Caixinha'])[1];
       out.push({...base,id:`sep-${o.id}-${x.k}#s`,tipo:'saida',contaId:p.sep.de||p.contaId||cp,desc:`Separado para ${contaNome(x.para)||'caixinha'} (${nm.toLowerCase()}) · Nº ${nOrc(o.numero)} · ${cliNome(o)}`},{...base,id:`sep-${o.id}-${x.k}#e`,tipo:'entrada',contaId:x.para,desc:`${nm} do Nº ${nOrc(o.numero)} · ${cliNome(o)}`})})});
   (S.gastos||[]).forEach(g=>{const v=(S.veiculos||[]).find(x=>x.id===g.veiculoId);out.push({id:'car-'+g.id,src:'carro',ref:g.id,tipo:'saida',data:g.data,valor:num(g.valor),cat:g.tipo==='combustivel'?'combustivel':'veiculo',contaId:g.contaId||cp,
     desc:(g.tipo==='combustivel'?`${COMB[g.comb]||'Combustível'}${g.litros?' · '+fmtL(g.litros):''}`:`${GASTO_TIPOS[g.tipo].split(' (')[0]}${g.desc?': '+g.desc:''}`)+(v?' · '+veicNome(v):''),fornecedor:g.local||'',nf:g.nf,anexos:g.anexos,pendente:g.tipo==='multa'&&g.situacao==='pendente'})});
-  (S.compras||[]).forEach(c=>{if(c.status!=='comprado'||!(num(c.valorPago)>0))return;out.push({id:'cmp-'+c.id,src:'compra',ref:c.id,tipo:'saida',data:c.compradoEm,valor:num(c.valorPago),cat:'ferramentas',contaId:cp,desc:c.nome,fornecedor:c.onde||dominio(c.link),contaId:c.contaId||cp})});
+  (S.compras||[]).forEach(c=>{if(c.status!=='comprado'||!(num(c.valorPago)>0))return;out.push({id:'cmp-'+c.id,src:'compra',ref:c.id,tipo:'saida',data:c.compradoEm,valor:num(c.valorPago),cat:'ferramentas',contaId:cp,desc:c.nome,fornecedor:c.onde||dominio(c.link),contaId:c.contaId||cp,anexos:c.anexos})});
   (S.pagequipe||[]).forEach(g=>{const p=eqPessoa(g.pessoaId);out.push({id:'eq-'+g.id,src:'equipe',ref:g.id,tipo:'saida',data:g.data,valor:num(g.valor),cat:'equipe',contaId:g.contaId||cp,desc:`Pagamento a ${p.nome||'equipe'}${g.referente?' · '+g.referente:''}`,fornecedor:p.nome||'',doc:p.cpf,forma:g.forma==='dinheiro'?'dinheiro':g.forma==='pix'?'pix':'transferencia',anexos:g.anexos,nf:g.assinatura?{numero:'Recibo '+nRec(g.numero)}:null})});
   const f=S.empresa.fiscal||{};Object.entries(f.das||{}).forEach(([ym,r])=>{if(r.st!=='pago'||!r.data)return;const vl=r.valor!=null&&r.valor!==''?num(r.valor):valorGuia(ym,fiscal());
-    out.push({id:'das-'+ym,src:'das',ref:ym,tipo:'saida',data:r.data,valor:vl,cat:'impostos',contaId:r.contaId||(S.empresa.financeiro&&S.empresa.financeiro.caixinhas&&S.empresa.financeiro.caixinhas.imp&&finCfg().contas.some(c=>c.id===S.empresa.financeiro.caixinhas.imp)?S.empresa.financeiro.caixinhas.imp:cp),desc:`Guia de imposto (DAS) de ${ymTxt(ym)}`,fornecedor:'Receita Federal'})});
+    out.push({id:'das-'+ym,src:'das',ref:ym,tipo:'saida',data:r.data,valor:vl,cat:'impostos',contaId:r.contaId||(S.empresa.financeiro&&S.empresa.financeiro.caixinhas&&S.empresa.financeiro.caixinhas.imp&&finCfg().contas.some(c=>c.id===S.empresa.financeiro.caixinhas.imp)?S.empresa.financeiro.caixinhas.imp:cp),desc:`Guia de imposto (DAS) de ${ymTxt(ym)}`,fornecedor:'Receita Federal',anexos:r.anexos})});
   return out.filter(m=>m.data&&m.valor>0).sort((a,b)=>String(b.data).localeCompare(String(a.data))||String(b.criadoEm||'').localeCompare(String(a.criadoEm||'')))}
 const sinal=m=>m.tipo==='entrada'?1:-1;
 function saldoConta(c,ate,ms){ms=ms||movimentos();return num(c.saldoIni)+ms.filter(m=>m.contaId===c.id&&m.data>=c.dataIni&&(!ate||m.data<=ate)).reduce((t,m)=>t+sinal(m)*m.valor,0)}
@@ -3679,6 +3687,17 @@ function sepLinhasHTML(its,v){const tot=its.reduce((t,x)=>t+x.v,0);
 async function marcarSep(o,pulou){const cur=S.orcamentos.find(x=>x.id===o.id)||o,p=cur.pgto;if(!p)return;
   const sep=pulou?{pulou:true}:{data:hojeISO(),de:p.contaId||contaPadrao(),itens:sepCalc(cur,p.valor).map(({k,v,para})=>({k,v,para}))};
   try{await store.save('orcamentos',{...cur,pgto:{...p,sep},atualizadoEm:new Date().toISOString()});toast(pulou?'Esse pagamento não vai ser separado':'Separação anotada')}catch(e){toast('Não foi possível salvar.')}}
+// Editar a separação de um pagamento: valores, data, comprovante ou desfazer (volta para "Falta separar").
+function sepSheet(o){const p=o.pgto,sp=p&&p.sep;if(!sp||!sp.itens)return;
+  openSheet('Separação para as caixinhas',`<p class="muted" style="margin-top:0">${esc(cliNome(o))} · Nº ${nOrc(o.numero)} · recebido ${money(p.valor)}</p><div class="form">
+    ${sp.itens.map((x,i)=>`<div class="field"><label for="sp_${i}">${esc((CAIX.find(c=>c[0]===x.k)||[0,'Caixinha'])[1])} → ${esc(contaNome(x.para)||'caixinha')}</label><input id="sp_${i}" inputmode="decimal" value="${num(x.v).toFixed(2).replace('.',',')}"></div>`).join('')}
+    <div class="field"><label for="sp_d">Data</label><input id="sp_d" type="date" value="${esc(sp.data||hojeISO())}"></div>
+    <div class="field full"><label>Comprovante (opcional)</label><div id="sp_fotos"></div></div></div>`,
+  `<button class="btn danger left" id="sp_des">Desfazer</button><button class="btn" data-act="close">Cancelar</button><button class="btn primary" id="sp_ok">Salvar</button>`,L=>{const $=id=>L.querySelector('#'+id),wf=campoFotos($('sp_fotos'),sp.anexos,{max:3,rotulo:'Comprovante'});
+    const grava=async sep=>{const cur=S.orcamentos.find(x=>x.id===o.id)||o,pg={...cur.pgto};if(sep)pg.sep=sep;else delete pg.sep;try{await store.save('orcamentos',{...cur,pgto:pg,atualizadoEm:new Date().toISOString()});closeSheet();toast(sep?'Separação salva':'Separação desfeita: o pagamento voltou para "Falta separar"')}catch(e){toast('Não foi possível salvar.')}};
+    $('sp_ok').onclick=async()=>{let anexos=sp.anexos||[];try{anexos=await wf.salvar(o.id,'fin')}catch(e){toast('Não foi possível enviar o comprovante.');return}
+      grava({...sp,data:$('sp_d').value||sp.data,anexos,itens:sp.itens.map((x,i)=>({...x,v:r2(num($('sp_'+i).value))}))})};
+    $('sp_des').onclick=()=>grava(null)})}
 function dasAteDez(){const f=fiscal();if(f.regime==='outro'||!f.inicio)return null;const ano=ymHoje().slice(0,4),gs=guias(f),vistos=new Set(gs.map(g=>g.ym));
   let tot=gs.filter(g=>g.st==='aberto'&&g.vence.slice(0,4)<=ano).reduce((t,g)=>t+num(g.valor),0);
   for(let ym=ymHoje();ym<=ano+'-11';ym=ymMais(ym,1))if(!vistos.has(ym))tot+=valorGuia(ym,f);return tot}
@@ -3922,22 +3941,25 @@ function transfSheet(l,deId){const n=!l,cs=finCfg().contas;l=l||{id:uid(),tipo:'
     ${campoConta('tr_de',l.contaId,'Sai da conta')}${campoConta('tr_para',l.contaDestino,'Entra na conta')}
     <div class="field"><label for="tr_v">Valor (R$)</label><input id="tr_v" inputmode="decimal" value="${l.valor!==''?num(l.valor).toFixed(2).replace('.',','):''}"></div>
     <div class="field"><label for="tr_d">Data</label><input id="tr_d" type="date" value="${esc(l.data)}"></div>
-    <div class="field full"><label for="tr_o">Observação (opcional)</label><input id="tr_o" value="${esc(l.desc||'')}" placeholder="Ex.: saque para o caixa"></div></div>`,
-  `${n?'':'<button class="btn danger left" id="tr_del">Excluir</button>'}<button class="btn" data-act="close">Cancelar</button><button class="btn primary" id="tr_ok">${n?'Transferir':'Salvar'}</button>`,L=>{const $=id=>L.querySelector('#'+id);
+    <div class="field full"><label for="tr_o">Observação (opcional)</label><input id="tr_o" value="${esc(l.desc||'')}" placeholder="Ex.: saque para o caixa"></div>
+    <div class="field full"><label>Comprovante (opcional)</label><div id="tr_fotos"></div></div></div>`,
+  `${n?'':'<button class="btn danger left" id="tr_del">Excluir</button>'}<button class="btn" data-act="close">Cancelar</button><button class="btn primary" id="tr_ok">${n?'Transferir':'Salvar'}</button>`,L=>{const $=id=>L.querySelector('#'+id),wf=campoFotos($('tr_fotos'),l.anexos,{max:3,rotulo:'Comprovante'});
     if(n&&$('tr_para').value===$('tr_de').value){const o=[...$('tr_para').options].find(x=>x.value&&x.value!=='__nova'&&x.value!==$('tr_de').value);if(o)$('tr_para').value=o.value}
     $('tr_ok').onclick=async()=>{const de=lerConta($('tr_de')),para=$('tr_para').value,vl=num($('tr_v').value);
       if(!para||para==='__nova'){toast('Escolha a conta que recebe (ou crie em "+ Adicionar conta…").');return}if(de===para){toast('Escolha contas diferentes.');return}if(!(vl>0)){toast('Informe o valor.');return}
-      if(await salvarOp('lancamentos',{...l,tipo:'transf',contaId:de,contaDestino:para,valor:vl,data:$('tr_d').value||hojeISO(),desc:$('tr_o').value.trim(),cat:'transf',atualizadoEm:new Date().toISOString()},'Transferência lançada'))closeSheet()};
+      let anexos=l.anexos||[];try{anexos=await wf.salvar(l.id,'fin')}catch(e){toast('Não foi possível enviar o comprovante.');return}
+      if(await salvarOp('lancamentos',{...l,tipo:'transf',contaId:de,contaDestino:para,valor:vl,data:$('tr_d').value||hojeISO(),desc:$('tr_o').value.trim(),cat:'transf',anexos,atualizadoEm:new Date().toISOString()},n?'Transferência lançada':'Transferência salva'))closeSheet()};
     if(!n)$('tr_del').onclick=()=>confirmSheet('Excluir transferência?','Os saldos das duas contas voltam como eram.','Excluir',()=>store.remove('lancamentos',l.id).then(()=>toast('Excluída'),()=>toast('Não foi possível excluir.')));
   })}
 function abrirMov(m){
     if(m.src==='transf')transfSheet(S.lancamentos.find(l=>l.id===m.ref));
     else if(m.src==='fin')formLanc(S.lancamentos.find(l=>l.id===m.id));
-    else if(m.src==='orc'){const o=S.orcamentos.find(x=>x.id===m.ref);go(o&&o.tipo==='os'&&o.agenda?'os':'proposta',{id:m.ref})}
+    else if(m.src==='orc'){const o=S.orcamentos.find(x=>x.id===m.ref);if(o&&o.pgto)registrarPagamento(o);else go(o&&o.tipo==='os'&&o.agenda?'os':'proposta',{id:m.ref})}
     else if(m.src==='carro'){const g=S.gastos.find(x=>x.id===m.ref),v=g&&S.veiculos.find(x=>x.id===g.veiculoId);if(g&&v)formGasto(v,g)}
-    else if(m.src==='compra')formCompra(S.compras.find(x=>x.id===m.ref));
+    else if(m.src==='compra'){const c=S.compras.find(x=>x.id===m.ref);if(c)compreiSheet(c)}
     else if(m.src==='equipe')verPagEq(m.ref);
-    else if(m.src==='das')go('impostos')}
+    else if(m.src==='sep'){const o=S.orcamentos.find(x=>x.id===m.ref);if(o)sepSheet(o)}
+    else if(m.src==='das'){const f=fiscal(),g=guias(f).find(x=>x.ym===m.ref);if(g)guiaSheet(g,f);else go('impostos')}}
 /* ---------- Contas fixas, a receber e previsão ---------- */
 // Coleção "contasfixas": {nome, valor, freq: mensal|anual|unica, dia, mes (anual), data (única), inicio 'AAAA-MM', parcelas, cat, contaId, ativo}.
 // Pagar uma conta cria um lançamento com contaFixaId + competencia ('AAAA-MM' ou 'AAAA'), que marca aquele mês como pago.
