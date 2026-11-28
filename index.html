@@ -2000,6 +2000,7 @@ function vEditor(app){
           <div class="field"><label for="o_vate">Válida até</label><input id="o_vate" type="date" value="${esc(isoDia(new Date(validaAte(draft))))}"></div>
           <div class="field"><label for="o_prazo">Prazo de instalação</label><input id="o_prazo" value="${esc(draft.prazo)}"></div>
           <div class="field full"><label for="o_pag">Pagamento</label><textarea id="o_pag">${esc(draft.pagamento)}</textarea></div>
+          <div class="field full"><label for="o_pxm">Pix deste orçamento</label><div class="row" style="gap:8px;flex-wrap:nowrap"><select id="o_pxm" style="flex:1;min-width:0">${[['','Desconto padrão ('+fmtPct(S.empresa.descontoPix)+')'],['valor','Valor fechado no Pix'],['pct','Outra porcentagem'],['sem','Sem desconto no Pix']].map(([k,t])=>`<option value="${k}" ${(draft.pixModo||'')===k?'selected':''}>${t}</option>`).join('')}</select><input id="o_pxv" inputmode="decimal" style="width:120px" ${draft.pixModo==='valor'||draft.pixModo==='pct'?'':'hidden'} value="${esc(draft.pixModo==='valor'?String(num(draft.pixValor).toFixed(2)).replace('.',','):draft.pixModo==='pct'?String(num(draft.pixPct)).replace('.',','):'')}" placeholder="${draft.pixModo==='pct'?'%':'R$'}" aria-label="Valor ou porcentagem do Pix"></div><span class="hint" id="o_pxh"></span></div>
           <div class="field full"><label for="o_link">Link de pagamento do cartão</label><input id="o_link" inputmode="url" value="${esc(draft.linkPagamento)}" placeholder="https://…"><span class="hint">Gere na maquininha ou no app de pagamento com o valor deste orçamento e cole aqui. Na proposta aparece o botão “Pagar com cartão”.</span></div>
           <div class="field full"><label for="o_gar">Garantia</label><textarea id="o_gar">${esc(draft.garantia)}</textarea></div>
           <div class="field full"><label for="o_obs">Observações para o cliente</label><textarea id="o_obs" placeholder="Ex.: Infraestrutura de tubulação por conta do cliente.">${esc(draft.obs)}</textarea></div>
@@ -2011,12 +2012,17 @@ function vEditor(app){
   const $=id=>app.querySelector('#'+id);
   const bind=(id,key,fn=v=>v)=>{$(id).addEventListener('input',e=>{draft[key]=fn(e.target.value);draft._dirty=true;if(key==='descontoPct')renderEditorParts(true)})};
   bind('o_tit','titulo');bind('o_val','validadeDias',v=>Math.round(num(v)));const vate=()=>{if(num(draft.validadeDias)>=0)$('o_vate').value=isoDia(new Date(validaAte(draft)))};$('o_val').addEventListener('input',vate);$('o_emi').addEventListener('change',e=>{if(!e.target.value)return;draft.emitidaEm=e.target.value;draft._dirty=true;vate()});$('o_vate').addEventListener('change',e=>{if(!e.target.value)return;const d=Math.round((new Date(e.target.value+'T12:00:00')-new Date(isoDia(new Date(emissao(draft)))+'T12:00:00'))/864e5);if(d<0){toast('A validade não pode ser antes da emissão.');vate();return}draft.validadeDias=d;$('o_val').value=d;draft._dirty=true});bind('o_prazo','prazo');bind('o_pag','pagamento');bind('o_link','linkPagamento',v=>String(v).trim());bind('o_gar','garantia');bind('o_obs','obs');bind('o_dserv','descServico');$('o_fech').onchange=e=>{draft.valorFechado=e.target.checked;draft._dirty=true;$('o_fech_box').hidden=!e.target.checked};
+  // Pix deste orçamento: valor fechado (ex.: R$ 280 no Pix, R$ 300 no cartão), outra % ou sem desconto.
+  const pxSync=()=>{const m=$('o_pxm').value,v=num($('o_pxv').value);$('o_pxv').hidden=!(m==='valor'||m==='pct');$('o_pxv').placeholder=m==='pct'?'%':'R$';
+    draft.pixModo=m||undefined;delete draft.pixValor;delete draft.pixPct;if(m==='valor')draft.pixValor=v;if(m==='pct')draft.pixPct=v;draft._dirty=true;pixHintEd()};
+  $('o_pxm').onchange=()=>{$('o_pxv').value='';pxSync();if(!$('o_pxv').hidden)$('o_pxv').focus()};$('o_pxv').addEventListener('input',pxSync);pixHintEd();
   $('o_cli').onchange=e=>{draft.clienteId=e.target.value;draft._dirty=true};
   $('o_cli_new').onclick=()=>formCli(null,c=>{draft.clienteId=c.id;draft._dirty=true;vEditor(app)});
   $('o_add').onclick=()=>openPicker('mat');$('o_add_mo').onclick=()=>openPicker('mo');$('o_av').onclick=()=>formItem('mat');$('o_av_mo').onclick=()=>formItem('mo');
   renderEditorParts();
 }
-function renderEditorParts(onlySide){
+function pixHintEd(){const h=document.getElementById('o_pxh');if(!h||!draft)return;const t=calc(draft).total,px=pixDe(draft);h.innerHTML=t>0?`No Pix: <b>${money(px.vp)}</b>${px.dp?` (${pixQ(px)} de desconto)`:''} · no cartão: <b>${money(t)}</b>`:'Coloque os itens para ver o valor no Pix.'}
+function renderEditorParts(onlySide){setTimeout(pixHintEd,0);
   const box=document.getElementById('o_items'),boxMo=document.getElementById('o_mo'),side=document.getElementById('o_side');if(!box||!side)return;
   if(!onlySide){
     const linha=(i,ix)=>`<div class="it">
@@ -2198,7 +2204,7 @@ function propostaTexto(o){
   else o.itens.forEach(i=>{L.push(`• ${String(num(i.qtd)).replace('.',',')} ${i.unidade||'un'} — ${i.nome}: ${money(num(i.preco)*num(i.qtd))}`);const pr=S.produtos.find(x=>x.id===i.produtoId);const ds=safeUrl((pr&&pr.datasheet)||i.datasheet);if(ds)L.push(`   Datasheet: ${ds}`)});
   L.push('');
   if(t.mat&&t.mo&&!o.valorFechado)L.push(`Materiais: ${money(t.mat)}`,`Mão de obra: ${money(t.mo)}`);
-  const totLinha=()=>{if(num(S.empresa.descontoPix)&&pixChave())L.push(`No Pix: ${money(valorPix(t.total))} (${fmtPct(S.empresa.descontoPix)} de desconto)`)};
+  const totLinha=()=>{const px=pixDe(o);if(px.dp>0&&pixChave())L.push(`No Pix: ${money(px.vp)} (${pixQ(px)} de desconto)`)};
   if(t.desc&&!o.valorFechado)L.push(`Subtotal: ${money(t.sub)}`,`Desconto: −${money(t.desc)}`);
   L.push(`*Total: ${money(t.total)}*`);totLinha();L.push('');
   if(o.pagamento)L.push(`Pagamento: ${o.pagamento}`);
@@ -2229,6 +2235,13 @@ function pixPayload(valor,txid){const e=S.empresa,ch=pixChave();if(!ch)return ''
   const p=f('00','01')+f('26',f('00','br.gov.bcb.pix')+f('01',ch))+f('52','0000')+f('53','986')+(valor>0?f('54',valor.toFixed(2)):'')+f('58','BR')+f('59',nome)+f('60',cid)+f('62',f('05',tx))+'6304';
   return p+crc16(p)}
 const valorPix=total=>Math.round(total*(1-num(S.empresa.descontoPix)/100)*100)/100;
+// Pix de cada orçamento/OS: padrão da empresa, outra %, valor fechado no Pix ou sem desconto (o.pixModo, o.pixPct, o.pixValor).
+function pixDe(o){const t=calc(o).total,m=o&&o.pixModo,r=v=>Math.round(v*100)/100;
+  if(m==='valor'&&num(o.pixValor)>0){const vp=r(Math.min(num(o.pixValor),t));return {vp,dp:t>0?Math.round((1-vp/t)*1000)/10:0,q:t-vp>0?money(r(t-vp)):''}}
+  if(m==='pct')return {vp:r(t*(1-num(o.pixPct)/100)),dp:num(o.pixPct)};
+  if(m==='sem')return {vp:r(t),dp:0};
+  return {vp:valorPix(t),dp:num(S.empresa.descontoPix)}}
+const pixQ=px=>px.q||fmtPct(px.dp); // "5%" ou, no valor fechado, "R$ 20,00"
 function parcelas(total){const e=S.empresa,max=Math.max(1,Math.min(24,Math.round(num(e.cartaoMax)||1))),sj=Math.max(1,Math.round(num(e.cartaoSemJuros)||1)),i=num(e.cartaoJuros)/100,out=[];
   for(let n=1;n<=max;n++){const jur=n>sj&&i>0;let p=jur?total*i/(1-Math.pow(1+i,-n)):total/n;p=Math.ceil(p*100-1e-6)/100;out.push({n,p,total:Math.round(p*n*100)/100,juros:jur})}
   return out}
@@ -2285,10 +2298,10 @@ function pdfPropostaSheet(o){let pag=true,ass=false;try{pag=localStorage.getItem
       await baixar(f.name,f,f.type);toast('PDF baixado: anexe na conversa ou no e-mail do cliente.')};
   })}
 async function pagamentoHTML(o){
-  const t=calc(o),e=S.empresa,dp=num(e.descontoPix),vp=valorPix(t.total),pl=pixPayload(vp,'DT'+nOrc(o.numero)),qr=pl?await qrSVG(pl):'',lk=safeUrl(o.linkPagamento)||safeUrl(e.linkPagamento),ct=cartaoTxt();
+  const t=calc(o),e=S.empresa,px=pixDe(o),{dp,vp}=px,pl=pixPayload(vp,'DT'+nOrc(o.numero)),qr=pl?await qrSVG(pl):'',lk=safeUrl(o.linkPagamento)||safeUrl(e.linkPagamento),ct=cartaoTxt();
   return `<div class="pay"><div class="pp-cat">Formas de pagamento</div><div class="pay-g">
     ${pl?`<div class="pay-c pix-box" id="pay_pix">${qr?`<div class="pix-qr">${qr}</div>`:''}
-      <div class="pix-info"><b style="color:var(--paper-ink)">Pix</b><div class="pay-h"><b class="pix-v">${money(vp)}</b>${dp?`<span class="pay-tag">${fmtPct(dp)} de desconto</span>`:''}</div>
+      <div class="pix-info"><b style="color:var(--paper-ink)">Pix</b><div class="pay-h"><b class="pix-v">${money(vp)}</b>${dp?`<span class="pay-tag">${pixQ(px)} de desconto</span>`:''}</div>
         ${dp?`<div class="pay-s">em vez de <s>${money(t.total)}</s></div>`:''}
         <div class="pay-s">Recebedor: ${esc(e.pixNome||e.nome)}</div>
         <button type="button" class="pay-copy" data-copy="${esc(pl)}">Copiar código Pix</button></div></div>`:''}
@@ -2297,7 +2310,7 @@ async function pagamentoHTML(o){
       ${lk?`<div class="pay-s">Clique no botão abaixo para ver os juros e pagar pelo link de pagamento.</div><a class="pay-link" href="${esc(lk)}" target="_blank" rel="noopener">Pagar com cartão ↗</a>`:''}</div>
   </div></div>`}
 function aceiteHTML(o,link){
-  const t=calc(o),e=S.empresa,dp=num(e.descontoPix),pl=!!pixChave(),c=S.clientes.find(x=>x.id===o.clienteId)||{};
+  const t=calc(o),e=S.empresa,dp=pixDe(o).dp,pl=!!pixChave(),c=S.clientes.find(x=>x.id===o.clienteId)||{};
   const n=nOrc(o.numero),emp=e.nome||'DaylinTech';
   const simples=`*ACEITE DE PROPOSTA*\nProposta: Nº ${n} — ${emp}\nCliente: ${cliNome(o)}\nValor da proposta: ${money(t.total)}\n\nLi e aceito a proposta e as condições.`;
   const ajuste=`Olá! Sobre a proposta Nº ${n} da ${emp}, gostaria de ajustar: `;
@@ -2315,7 +2328,7 @@ function aceiteHTML(o,link){
       <label>Seu WhatsApp<input id="acc_tel" value="${esc(c.telefone||'')}" inputmode="tel" autocomplete="tel" placeholder="(21) 90000-0000"></label>
       <fieldset><legend>Como prefere pagar?</legend>
         <label class="acc-r"><input type="radio" name="fp" value="metade"> <span style="flex:1;min-width:0">50% na aprovação (<b>${money(Math.round(t.total*50)/100)}</b>) e 50% na conclusão</span></label>
-        ${pl?`<label class="acc-r"><input type="radio" name="fp" value="pix" checked> Pix${dp?` com ${fmtPct(dp)} de desconto`:''}: <b>${money(valorPix(t.total))}</b></label>`:''}
+        ${pl?`<label class="acc-r"><input type="radio" name="fp" value="pix" checked> Pix${dp?` com ${pixQ(pixDe(o))} de desconto`:''}: <b>${money(pixDe(o).vp)}</b></label>`:''}
         <label class="acc-r"><input type="radio" name="fp" value="cartao" ${pl?'':'checked'}> <span style="flex:1;min-width:0">Cartão de crédito: ${esc(cartaoTxt())}</span></label>
         <label class="acc-r"><input type="radio" name="fp" value="combinar"> Prefiro combinar depois</label>
       </fieldset>
@@ -2341,7 +2354,7 @@ var d=new Date(),dt=d.toLocaleDateString('pt-BR')+' '+String(d.getHours()).padSt
 var msg=['*ACEITE DE PROPOSTA*','Proposta: Nº '+D.num+' — '+D.emp,'Cliente: '+nome,'CPF/CNPJ: '+(doc||'não informado'),'WhatsApp: '+(($('acc_tel')&&$('acc_tel').value.trim())||'não informado'),'Valor da proposta: '+D.total,'Pagamento: '+pg,'Data: '+dt,'','Li e aceito a proposta e as condições.'].join('\\n');
 var url='https://wa.me/'+D.wa+'?text='+encodeURIComponent(msg);$('acc_wa').href=url;f.hidden=true;$('acc_done').hidden=false;
 if(x==='pix'){$('acc_pix').hidden=false;var px=$('pay_pix');if(px){px.classList.add('hl');}}window.location.href=url});})();`;
-function dadosCliente(o){const t=calc(o),e=S.empresa,r2=v=>Math.round(num(v)*100)/100,ent=r2(t.total/2),pe=pixPayload(ent,'DT'+nOrc(o.numero)+'E');return {metade:money(ent),metadeN:ent,...(pe?{pixMetade:pe}:{}),num:nOrc(o.numero),emp:e.nome||'DaylinTech',total:money(t.total),totalN:r2(t.total),vp:money(valorPix(t.total)),...(pixChave()?{vpN:r2(valorPix(t.total))}:{}),dp:num(e.descontoPix)?fmtPct(e.descontoPix):'',wa:waNum(),parc:parcelas(t.total).map(x=>({n:x.n,p:money(x.p),t:money(x.total),tN:r2(x.total),j:x.juros}))}}
+function dadosCliente(o){const t=calc(o),e=S.empresa,r2=v=>Math.round(num(v)*100)/100,ent=r2(t.total/2),pe=pixPayload(ent,'DT'+nOrc(o.numero)+'E');return {metade:money(ent),metadeN:ent,...(pe?{pixMetade:pe}:{}),num:nOrc(o.numero),emp:e.nome||'DaylinTech',total:money(t.total),totalN:r2(t.total),vp:money(pixDe(o).vp),...(pixChave()?{vpN:r2(pixDe(o).vp)}:{}),dp:pixDe(o).dp?pixQ(pixDe(o)):'',wa:waNum(),parc:parcelas(t.total).map(x=>({n:x.n,p:money(x.p),t:money(x.total),tN:r2(x.total),j:x.juros}))}}
 function docHTML(title,body,script){
   const css=[...document.querySelectorAll('style')].map(s=>s.textContent).join('\n');
   return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)}</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Barlow:wght@400;500;600;700&display=swap"><style>${css}\nbody{background:#EEF2F7;padding:20px 12px;color-scheme:light}.paper{margin-bottom:16px}@media print{body{background:#fff;padding:0}.paper{box-shadow:none}.acc{display:none}}</style></head><body>${body}${script||''}</body></html>`}
@@ -2392,7 +2405,7 @@ function textoCliente(o){
   const L=[`Olá${nome?', '+nome:''}! Recebemos o seu aceite da proposta Nº ${nOrc(o.numero)} da ${emp}. Obrigado pela confiança!`];
   if(!o.pgto){
     if(a.forma==='metade'){const ent=Math.round(t.total*50)/100;L.push(`Vimos que você prefere pagar 50% na aprovação e 50% na conclusão. A entrada é de ${money(ent)}${prop?` e o código Pix da entrada está na proposta:\n${prop}`:'.'}\nOs outros ${money(t.total-ent)} ficam para a conclusão do serviço.`)}
-    else if(a.forma==='pix')L.push(`Vimos que você prefere pagar no Pix${num(e.descontoPix)?`, com ${fmtPct(e.descontoPix)} de desconto`:''}: ${money(a.valor||valorPix(t.total))}.${prop?` Se ainda não pagou, o QR Code e o código copia e cola estão na proposta:\n${prop}`:''}`);
+    else if(a.forma==='pix')L.push(`Vimos que você prefere pagar no Pix${pixDe(o).dp?`, com ${pixQ(pixDe(o))} de desconto`:''}: ${money(a.valor||pixDe(o).vp)}.${prop?` Se ainda não pagou, o QR Code e o código copia e cola estão na proposta:\n${prop}`:''}`);
     else if(a.forma==='cartao')L.push(`Vimos que você prefere pagar no cartão de crédito (${cartaoTxt()}).${lk?` Para pagar, é só usar este link:\n${lk}`:' Vamos te enviar o link de pagamento.'}`);
     else L.push('Vamos combinar com você a melhor forma de pagamento.');
   }
@@ -2429,7 +2442,7 @@ function registrarAceite(o){
       <div class="field"><label for="ac_tel">WhatsApp do cliente</label><input id="ac_tel" value="${esc(a.whats||c.telefone||'')}" inputmode="tel"></div>
       <div class="field"><label for="ac_forma">Forma de pagamento</label><select id="ac_forma">${Object.entries(FORMAS).map(([k,l])=>`<option value="${k}" ${(a.forma||'pix')===k?'selected':''}>${l}</option>`).join('')}</select></div>
       <div class="field"><label for="ac_parc">Parcelas</label><input id="ac_parc" inputmode="numeric" value="${esc(a.parcelas||1)}"></div>
-      <div class="field"><label for="ac_valor">Valor combinado (R$)</label><input id="ac_valor" inputmode="decimal" value="${String((a.valor||valorPix(t.total)).toFixed(2)).replace('.',',')}"></div>
+      <div class="field"><label for="ac_valor">Valor combinado (R$)</label><input id="ac_valor" inputmode="decimal" value="${String((a.valor||pixDe(o).vp).toFixed(2)).replace('.',',')}"></div>
       <div class="field"><label for="ac_data">Data e hora do aceite</label><input id="ac_data" type="datetime-local" value="${localDT(a.data?new Date(a.data):new Date())}"></div>
     </div>`,
     `${o.aceite?`<button class="btn danger left" id="ac_del">Desfazer aceite</button>`:''}<button class="btn" data-act="close">Cancelar</button><button class="btn primary" id="ac_save">Salvar aceite</button>`,
@@ -2813,14 +2826,14 @@ function novaOS(pre={}){
     });
 }
 // Formas de pagamento da OS cobrada (Pix e cartão em QR Code, porque no PDF o link não é clicável).
-async function prepPagOS(o){if(o.tipo!=='os'||o.pgto)return;const t=calc(o);if(!(t.total>0))return;const pl=pixPayload(valorPix(t.total),'OS'+nOrc(o.numero));if(pl)await qrPNG(pl)}
+async function prepPagOS(o){if(o.tipo!=='os'||o.pgto)return;const t=calc(o);if(!(t.total>0))return;const pl=pixPayload(pixDe(o).vp,'OS'+nOrc(o.numero));if(pl)await qrPNG(pl)}
 const linkCartao=o=>safeUrl(o.linkPagamento)||safeUrl(S.empresa.linkPagamento);
 function pagOSHTML(o){const t=calc(o);if(!(t.total>0))return '';
   if(o.pgto)return `<div class="os-pago"><b>Pago</b> · ${money(o.pgto.valor)} via ${esc(formaTxt(o.pgto))} em ${dataBR(o.pgto.data)}.</div>`;
-  const vp=valorPix(t.total),pl=pixPayload(vp,'OS'+nOrc(o.numero)),qp=pl&&qrCache[pl],lk=linkCartao(o);
+  const px=pixDe(o),{vp,dp}=px,pl=pixPayload(vp,'OS'+nOrc(o.numero)),qp=pl&&qrCache[pl],lk=linkCartao(o);
   if(!pl&&!lk)return '';
   return `<div class="os-pag">
-    ${pl?`<div class="os-pg"><div class="os-pg-t"><b>Pix: ${money(vp)}</b>${num(S.empresa.descontoPix)?`<span>Com ${fmtPct(S.empresa.descontoPix)} de desconto · ${esc(S.empresa.pixNome||S.empresa.nome)}</span>`:`<span>${esc(S.empresa.pixNome||S.empresa.nome)}</span>`}<span class="os-pg-k">Pix copia e cola</span><span class="os-pg-c">${esc(pl)}</span></div>${qp?`<img class="os-pg-qr" src="${qp}" alt="QR Code do Pix">`:''}</div>`:''}
+    ${pl?`<div class="os-pg"><div class="os-pg-t"><b>Pix: ${money(vp)}</b>${dp?`<span>Com ${pixQ(px)} de desconto · ${esc(S.empresa.pixNome||S.empresa.nome)}</span>`:`<span>${esc(S.empresa.pixNome||S.empresa.nome)}</span>`}<span class="os-pg-k">Pix copia e cola</span><span class="os-pg-c">${esc(pl)}</span></div>${qp?`<img class="os-pg-qr" src="${qp}" alt="QR Code do Pix">`:''}</div>`:''}
     ${lk?`<div class="os-pg"><div class="os-pg-t"><b>Cartão de crédito</b><span>${esc(cap(cartaoTxt()))}.</span><span class="os-pg-k">Link de pagamento</span><a class="os-pg-c pdf-lk" href="${esc(lk)}" target="_blank" rel="noopener" data-pdf-link="${esc(lk)}">${esc(urlCurta(lk))}</a></div></div>`:''}
   </div>`}
 // Página online da OS (mesmo esquema da proposta): o cliente copia o código Pix e abre o link do cartão.
