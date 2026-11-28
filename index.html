@@ -2467,6 +2467,7 @@ function registrarPagamento(o){
       <div class="field"><label for="pg_data">Data do pagamento</label><input id="pg_data" type="date" value="${esc((p.data||'').slice(0,10)||hoje)}"></div>
       <div class="field"><label for="pg_forma">Forma</label><select id="pg_forma">${Object.entries(FORMAS).filter(([k])=>k!=='combinar').map(([k,l])=>`<option value="${k}" ${(p.forma||a.forma||'pix')===k?'selected':''}>${l}</option>`).join('')}</select></div>
       <div class="field"><label for="pg_parc">Parcelas</label><input id="pg_parc" inputmode="numeric" value="${esc(p.parcelas||a.parcelas||1)}"></div>
+      <div class="field full" id="pg_liqw" hidden><label for="pg_liq">Valor que cai na conta (depois da taxa do cartão)</label><input id="pg_liq" inputmode="decimal" value="${num(p.liquido)>0?num(p.liquido).toFixed(2).replace('.',','):''}" placeholder="Veja no app da maquininha"><span class="hint" id="pg_liqh"></span></div>
       <div class="field"><label for="pg_nome">Nome para o recibo</label><input id="pg_nome" value="${esc(p.nome||a.nome||c.nome||'')}"></div>
       <div class="field"><label for="pg_doc">CPF ou CNPJ para o recibo</label><input id="pg_doc" value="${esc(p.doc||a.doc||c.documento||'')}" inputmode="numeric"></div>
       ${campoConta('pg_ct',p.contaId,'Entrou na conta')}
@@ -2478,14 +2479,20 @@ function registrarPagamento(o){
     L=>{const $=id=>L.querySelector('#'+id),wf=campoFotos($('pg_fotos'),p.anexos,{max:4,rotulo:'Comprovante'});
       if($('pg_abrir'))$('pg_abrir').onclick=()=>{closeSheet();go(o.tipo==='os'&&o.agenda?'os':'proposta',{id:o.id})};
       const sepBox=()=>{const el=$('pg_sepbox');if(!caixCfg()){el.innerHTML='<p class="hint" style="margin:0">Dica: crie as <b>caixinhas</b> no Financeiro para o app calcular quanto separar de imposto, despesas e materiais.</p>';return}
-        const its=sepCalc(o,num($('pg_valor').value)),marc=$('pg_sep')?$('pg_sep').checked:!(p.sep&&p.sep.pulou)&&!(o.pgto&&!p.sep);
-        el.innerHTML=its.length?`<div class="sep-box"><label class="chk" style="display:flex"><input type="checkbox" id="pg_sep" ${marc?'checked':''}> <span><b>Já separei para as caixinhas</b> <span class="hint">(desmarcado, fica em "Falta separar")</span></span></label>${sepLinhasHTML(its,num($('pg_valor').value))}</div>`:'';};
-      sepBox();$('pg_valor').addEventListener('input',sepBox);
+        const its=sepCalc(o,num($('pg_valor').value),liqForm()),marc=$('pg_sep')?$('pg_sep').checked:!(p.sep&&p.sep.pulou)&&!(o.pgto&&!p.sep);
+        el.innerHTML=its.length?`<div class="sep-box"><label class="chk" style="display:flex"><input type="checkbox" id="pg_sep" ${marc?'checked':''}> <span><b>Já separei para as caixinhas</b> <span class="hint">(desmarcado, fica em "Falta separar")</span></span></label>${sepLinhasHTML(its,liqForm())}</div>`:'';};
+      // Cartão: valor líquido que cai na conta → taxa (despesa da maquininha) e base das caixinhas.
+      const ehCart=()=>$('pg_forma').value==='cartao',liqForm=()=>{const v=num($('pg_valor').value),l=num($('pg_liq').value);return ehCart()&&l>0&&l<v?l:v};
+      const liqUi=()=>{$('pg_liqw').hidden=!ehCart();if(!ehCart())return;const v=num($('pg_valor').value),l=num($('pg_liq').value);
+        $('pg_liqh').innerHTML=!l?'Coloque quanto vai cair na conta. O app calcula a taxa e separa as caixinhas sobre esse valor.':l>=v?'<span style="color:var(--bad)">O valor que cai na conta precisa ser menor que o valor pago.</span>':`Taxa: <b>${money(v-l)}</b> (${fmtPct(Math.round((v-l)/v*1000)/10)}) · entra como despesa "Tarifas do banco e maquininha". As caixinhas usam <b>${money(l)}</b>.`};
+      const tudo=()=>{liqUi();sepBox()};$('pg_forma').addEventListener('change',tudo);$('pg_liq').addEventListener('input',tudo);
+      sepBox();liqUi();$('pg_valor').addEventListener('input',tudo);
       $('pg_save').onclick=async()=>{const v=num($('pg_valor').value),nome=$('pg_nome').value.trim();if(!(v>0)){toast('Informe o valor recebido.');return}if(!nome){toast('Informe o nome para o recibo.');return}
         const pg={valor:v,data:$('pg_data').value||hoje,forma:$('pg_forma').value,parcelas:Math.max(1,Math.round(num($('pg_parc').value))||1),nome,doc:$('pg_doc').value.trim(),tipo:$('pg_tipo').value,contaId:lerConta($('pg_ct'))};
+        {const l=num($('pg_liq').value);if(pg.forma==='cartao'&&l>0&&l<v){pg.liquido=l;pg.taxa=r2(v-l)}}
         const sv=$('pg_save');sv.disabled=true;try{const ax=await wf.salvar(o.id,'pgto');if(ax.length)pg.anexos=ax}
         catch(err){sv.disabled=false;toast('Não foi possível enviar o comprovante. Confira a internet.');return}
-        try{if($('pg_sep')){if($('pg_sep').checked)pg.sep={data:(p.sep&&p.sep.data)||hojeISO(),de:pg.contaId||contaPadrao(),itens:sepCalc(o,v).map(({k,v,para})=>({k,v,para}))}}else if(p.sep&&p.sep.pulou)pg.sep=p.sep}catch(err){}sv.disabled=false;
+        try{if($('pg_sep')){if($('pg_sep').checked)pg.sep={data:(p.sep&&p.sep.data)||hojeISO(),de:pg.contaId||contaPadrao(),itens:sepCalc(o,v,liqDe(pg)).map(({k,v,para})=>({k,v,para}))}}else if(p.sep&&p.sep.pulou)pg.sep=p.sep}catch(err){}sv.disabled=false;
         const cur=S.orcamentos.find(x=>x.id===o.id)||o,novo={...cur,pgto:pg,status:vendido(cur)?cur.status:'aprovado',atualizadoEm:new Date().toISOString()};
         try{await store.save('orcamentos',novo);closeSheet();render();verRecibo(novo.id)}catch(err){toast('Não foi possível salvar. Tente de novo.')}};
       if(o.pgto)$('pg_del').onclick=async()=>{const cur=S.orcamentos.find(x=>x.id===o.id)||o;const n={...cur};delete n.pgto;try{await store.save('orcamentos',n);closeSheet();render();toast('Pagamento removido')}catch(err){toast('Não foi possível salvar.')}};
@@ -3462,6 +3469,7 @@ function movimentos(){const out=[],cp=contaPadrao();
     out.push({...base,id:l.id+'#s',tipo:'saida',contaId:l.contaId||cp,desc:`Transferência para ${para}${l.desc?' · '+l.desc:''}`},{...base,id:l.id+'#e',tipo:'entrada',contaId:l.contaDestino,desc:`Transferência de ${de}${l.desc?' · '+l.desc:''}`})});
   S.orcamentos.forEach(o=>{const p=o.pgto;if(!p||!(num(p.valor)>0))return;out.push({id:'orc-'+o.id,src:'orc',ref:o.id,tipo:'entrada',data:String(p.data||'').slice(0,10),valor:num(p.valor),cat:'servicos',contaId:p.contaId||cp,anexos:p.anexos,
     desc:`${o.tipo==='os'?osTipoNome(o)+' · OS':'Orçamento'} Nº ${nOrc(o.numero)} · ${cliNome(o)}${p.tipo==='parcial'?' (parcial)':''}`,forma:p.forma==='cartao'?'credito':p.forma,fornecedor:p.nome||cliNome(o),doc:p.doc,nf:o.nfse?{numero:o.nfse.numero,chave:o.nfse.chave}:null});
+    if(num(p.taxa)>0)out.push({id:'orctx-'+o.id,src:'orc',ref:o.id,tipo:'saida',data:String(p.data||'').slice(0,10),valor:num(p.taxa),cat:'tarifas',contaId:p.contaId||cp,desc:`Taxa do cartão${num(p.parcelas)>1?` (${num(p.parcelas)}x)`:''} · Nº ${nOrc(o.numero)} · ${cliNome(o)}`,fornecedor:'Maquininha'});
     if(p.sep&&p.sep.itens)p.sep.itens.forEach(x=>{if(!(num(x.v)>0)||!x.para)return;const base={data:p.sep.data,valor:num(x.v),cat:'transf',src:'sep',ref:o.id,anexos:p.sep.anexos},nm=(CAIX.find(c=>c[0]===x.k)||[0,'Caixinha'])[1];
       out.push({...base,id:`sep-${o.id}-${x.k}#s`,tipo:'saida',contaId:p.sep.de||p.contaId||cp,desc:`Separado para ${contaNome(x.para)||'caixinha'} (${nm.toLowerCase()}) · Nº ${nOrc(o.numero)} · ${cliNome(o)}`},{...base,id:`sep-${o.id}-${x.k}#e`,tipo:'entrada',contaId:x.para,desc:`${nm} do Nº ${nOrc(o.numero)} · ${cliNome(o)}`})})});
   (S.gastos||[]).forEach(g=>{const v=(S.veiculos||[]).find(x=>x.id===g.veiculoId);out.push({id:'car-'+g.id,src:'carro',ref:g.id,tipo:'saida',data:g.data,valor:num(g.valor),cat:g.tipo==='combustivel'?'combustivel':'veiculo',contaId:g.contaId||cp,
@@ -3615,9 +3623,9 @@ function formLanc(l,pre={}){const n=!l,cfg=finCfg();l=l||{id:uid(),tipo:pre.tipo
     ['lc_f','lc_ds'].forEach(i=>$(i).addEventListener('change',sugere));$('lc_c').onchange=()=>{manual=true;$('lc_auto').textContent='';carro()};
     if(cat&&!l.cat)$('lc_auto').textContent='· sugerida';carro();
     // Serviço: preenche a descrição e, no dízimo, o valor (% do que o cliente pagou).
-    const osInfo=()=>{const o=S.orcamentos.find(x=>x.id===$('lc_os').value);$('lc_osh').textContent=o&&o.pgto&&ehDizimo($('lc_c').value)?`Dízimo deste serviço: ${money(dizimoDe(o,o.pgto.valor)||r2(num(o.pgto.valor)*num(dizCfg().pct)/100))}`:''};
+    const osInfo=()=>{const o=S.orcamentos.find(x=>x.id===$('lc_os').value);$('lc_osh').textContent=o&&o.pgto&&ehDizimo($('lc_c').value)?`Dízimo deste serviço: ${money(dizimoDe(o,o.pgto.valor,liqDe(o.pgto))||r2(num(o.pgto.valor)*num(dizCfg().pct)/100))}`:''};
     $('lc_os').onchange=()=>{const o=S.orcamentos.find(x=>x.id===$('lc_os').value);if(o){const dz=ehDizimo($('lc_c').value);if(!$('lc_ds').value.trim()||/^Dízimo|^Nº|^OS /.test($('lc_ds').value))$('lc_ds').value=`${dz?'Dízimo · ':''}${o.tipo==='os'?'OS':'Nº'} ${nOrc(o.numero)} · ${cliNome(o)}`;
-      if(dz&&o.pgto&&!num($('lc_v').value))$('lc_v').value=(dizimoDe(o,o.pgto.valor)||r2(num(o.pgto.valor)*num(dizCfg().pct)/100)).toFixed(2).replace('.',',')}osInfo()};
+      if(dz&&o.pgto&&!num($('lc_v').value))$('lc_v').value=(dizimoDe(o,o.pgto.valor,liqDe(o.pgto))||r2(num(o.pgto.valor)*num(dizCfg().pct)/100)).toFixed(2).replace('.',',')}osInfo()};
     $('lc_c').addEventListener('change',osInfo);osInfo();
     // Cartão de crédito: parcelas e fatura (calculada pela data e pelo fechamento; dá para trocar com as setas).
     let fatMan=l.fatura||'';const fatAtual=()=>{const c=cartao($('lc_ct').value);return c?(fatMan||faturaYm(c,$('lc_d').value||hojeISO())):''};
@@ -3666,7 +3674,7 @@ const mesNomeFin=ym=>cap(new Date(+ym.slice(0,4),+ym.slice(5,7)-1,15).toLocaleDa
 function resumoMes(ym,ms){ms=ms||movimentos();const doMes=ms.filter(m=>m.data.startsWith(ym)),sem=doMes.filter(m=>m.cat!=='ajuste'&&m.cat!=='transf'&&m.cat!=='fatura');
   const ent=sem.filter(m=>m.tipo==='entrada'),sai=sem.filter(m=>m.tipo==='saida'),soma=l=>l.reduce((t,m)=>t+m.valor,0);
   const porCat=l=>Object.entries(l.reduce((a,m)=>{a[m.cat]=(a[m.cat]||0)+m.valor;return a},{})).sort((a,b)=>b[1]-a[1]);
-  return {doMes,ent:soma(ent),sai:soma(sai),catE:porCat(ent),catS:porCat(sai),semNota:sai.filter(m=>!(m.anexos&&m.anexos.length)&&!(m.nf&&(m.nf.numero||m.nf.chave))&&m.src!=='das'&&m.src!=='fatura')}}
+  return {doMes,ent:soma(ent),sai:soma(sai),catE:porCat(ent),catS:porCat(sai),semNota:sai.filter(m=>!(m.anexos&&m.anexos.length)&&!(m.nf&&(m.nf.numero||m.nf.chave))&&m.src!=='das'&&m.src!=='fatura'&&!String(m.id).startsWith('orctx-'))}} // taxa do cartão não tem nota
 function relatorioHTML(ym,comFotos){const e=S.empresa,ms=movimentos(),r=resumoMes(ym,ms),cs=finCfg().contas,fim=ym+'-31',ini=ymMais(ym,-1)+'-31';
   const linha=m=>`<tr><td>${dataBR(m.data)}</td><td><div style="font-weight:600">${esc(m.desc||catNomeFin(m.cat))}</div><div class="desc">${esc([catNomeFin(m.cat),m.fornecedor,m.doc&&soDig(m.doc).length===14?'CNPJ '+fmtCNPJ(m.doc):'',m.nf&&m.nf.numero?'NF '+m.nf.numero:'',FIN_FORMAS[m.forma]||''].filter(Boolean).join(' · '))}</div></td><td class="v" style="color:${m.tipo==='entrada'?'#1a7f45':'#b42318'}">${m.tipo==='entrada'?'+':'−'} ${money(m.valor)}</td></tr>`;
   const cat=(t,l,tot)=>l.length?`<div><div class="pp-cat">${t}</div><table class="pp-table"><tbody>${l.map(([k,v])=>`<tr><td>${esc(catNomeFin(k))}</td><td class="v">${money(v)}</td><td class="v" style="width:60px">${tot?Math.round(v/tot*100):0}%</td></tr>`).join('')}</tbody></table></div>`:'';
@@ -3714,16 +3722,19 @@ function caixProblema(c){c=c||finCfg().caixinhas||{};const ks=CAIX.map(x=>x[0]).
   const k=ks.find(k=>contaRecebe(c[k]));if(k)return `A caixinha de ${CAIX.find(x=>x[0]===k)[1].toLowerCase()} está na conta "${contaNome(c[k])}", que recebe os pagamentos. Por isso ela mostra o saldo da conta toda. Escolha "Criar conta" para ela.`;
   return ''}
 // Quanto separar de um pagamento de valor v: impostos e despesas pela % da empresa; materiais = custo dos materiais na proporção do que foi pago.
-function sepCalc(o,v){const c=caixCfg();if(!c)return [];const t=calc(o),{imp,desp}=taxas(),prop=t.total>0?Math.min(1,num(v)/t.total):0,
+// Valor que caiu na conta: no cartão, o valor depois da taxa (p.liquido); nos outros, o valor recebido.
+const liqDe=p=>p&&num(p.liquido)>0?num(p.liquido):num(p&&p.valor);
+// v = valor que o cliente pagou (proporção dos materiais); liq = o que caiu na conta (base de impostos, despesas e dízimo).
+function sepCalc(o,v,liq){liq=liq==null?num(v):num(liq);const c=caixCfg();if(!c)return [];const t=calc(o),{imp,desp}=taxas(),prop=t.total>0?Math.min(1,num(v)/t.total):0,
     custoMat=(o.itens||[]).filter(i=>!isMO(i)).reduce((s,i)=>s+num(i.custo)*num(i.qtd),0),
-    val={imp:r2(num(v)*imp/100),desp:r2(num(v)*desp/100),mat:r2(custoMat*prop),diz:dizimoDe(o,v)},pct={imp:fmtPct(imp),desp:fmtPct(desp),mat:'custo',diz:fmtPct(dizCfg().pct)+(dizCfg().base==='liquido'?' do que sobrou':'')};
+    val={imp:r2(liq*imp/100),desp:r2(liq*desp/100),mat:r2(custoMat*prop),diz:dizimoDe(o,v,liq)},pct={imp:fmtPct(imp),desp:fmtPct(desp),mat:'custo',diz:fmtPct(dizCfg().pct)+(dizCfg().base==='liquido'?' do que sobrou':'')};
   return CAIX.filter(([k])=>c[k]&&val[k]>0).map(([k,nome])=>({k,nome,v:val[k],para:c[k],pct:pct[k]}))}
-const sepPendente=o=>{const c=caixCfg(),p=o.pgto;return !!(c&&p&&!p.sep&&num(p.valor)>0&&String(p.data||'')>=(c.desde||'')&&sepCalc(o,p.valor).length)};
+const sepPendente=o=>{const c=caixCfg(),p=o.pgto;return !!(c&&p&&!p.sep&&num(p.valor)>0&&String(p.data||'')>=(c.desde||'')&&sepCalc(o,p.valor,liqDe(p)).length)};
 const sepPendentes=()=>S.orcamentos.filter(sepPendente).sort((a,b)=>String(a.pgto.data).localeCompare(String(b.pgto.data)));
 function sepLinhasHTML(its,v){const tot=its.reduce((t,x)=>t+x.v,0);
   return `${its.map(x=>`<div class="sep-l"><span>${esc(x.nome)} <span class="hint">(${x.pct==='custo'?'custo dos materiais':x.pct})</span> → ${esc(contaNome(x.para)||'caixinha')}</span><b>${money(x.v)}</b></div>`).join('')}<div class="sep-l sep-t"><span>Fica para você</span><b>${money(Math.max(0,num(v)-tot))}</b></div>`}
 async function marcarSep(o,pulou){const cur=S.orcamentos.find(x=>x.id===o.id)||o,p=cur.pgto;if(!p)return;
-  const sep=pulou?{pulou:true}:{data:hojeISO(),de:p.contaId||contaPadrao(),itens:sepCalc(cur,p.valor).map(({k,v,para})=>({k,v,para}))};
+  const sep=pulou?{pulou:true}:{data:hojeISO(),de:p.contaId||contaPadrao(),itens:sepCalc(cur,p.valor,liqDe(p)).map(({k,v,para})=>({k,v,para}))};
   try{await store.save('orcamentos',{...cur,pgto:{...p,sep},atualizadoEm:new Date().toISOString()});toast(pulou?'Esse pagamento não vai ser separado':'Separação anotada')}catch(e){toast('Não foi possível salvar.')}}
 // Editar a separação de um pagamento: valores, data, comprovante ou desfazer (volta para "Falta separar").
 function sepSheet(o){const p=o.pgto,sp=p&&p.sep;if(!sp||!sp.itens)return;
@@ -3744,14 +3755,14 @@ function caixinhasHTML(ms){const c=caixCfg(),cfg=finCfg();
     <p class="muted" style="margin:0">Separe de cada pagamento a parte do <b>imposto</b>, das <b>despesas</b> (carro, combustível, ferramentas, celular) e o <b>custo dos materiais</b>. O que sobra é seu de verdade.</p>
     <p class="hint" style="margin:0">No banco, use a caixinha, o porquinho ou o cofrinho da conta da empresa. Aqui o app cria uma conta para cada um e calcula quanto guardar.</p>
     <button class="btn primary" id="cx_cfg" style="align-self:flex-start">Criar as caixinhas</button></section>`;
-  const pend=sepPendentes(),totPend=pend.reduce((t,o)=>t+sepCalc(o,o.pgto.valor).reduce((s,x)=>s+x.v,0),0),das=dasAteDez();
+  const pend=sepPendentes(),totPend=pend.reduce((t,o)=>t+sepCalc(o,o.pgto.valor,liqDe(o.pgto)).reduce((s,x)=>s+x.v,0),0),das=dasAteDez();
   const prob=caixProblema(c);
   return `<section class="panel caix"><div class="spread" style="align-items:center"><h2 class="h2">Caixinhas <button type="button" class="ajuda-b" data-ajuda="caix" aria-label="Como funciona">?</button></h2><button class="btn sm ${prob?'primary':''}" id="cx_cfg">${prob?'Corrigir':'Configurar'}</button></div>
     ${prob?`<p class="note" style="margin:0;color:var(--bad)"><b>Atenção:</b> ${esc(prob)}</p>`:''}
     <div class="fx-cards">${CAIX.filter(([k])=>c[k]&&cfg.contas.some(x=>x.id===c[k])).map(([k,nome])=>{const ct=cfg.contas.find(x=>x.id===c[k]),s=saldoConta(ct,null,ms);
       return `<div class="fx-card fin-ext" data-ext="${ct.id}" tabindex="0" role="button"><span>${esc(nome)} <button type="button" class="ajuda-b" data-ajuda="${k}" aria-label="Como funciona a caixinha de ${esc(nome)}">?</button></span><b>${money(s)}</b><span>${k==='imp'&&das!=null?(das<=0?'Guias do ano pagas':s>=das?`Cobre o DAS até dezembro (${money(das)}) ✓`:`DAS até dezembro: ${money(das)} · faltam ${money(das-s)}`):k==='desp'?'Pague daqui carro, combustível e contas':k==='mat'?'Para repor e comprar material':k==='diz'?'Guardado para o dízimo':''}</span></div>`}).join('')}</div>
     ${pend.length?`<div class="sep-pend"><b>Falta separar ${money(totPend)}</b><span class="hint">Separe no aplicativo do banco e toque em "Já separei".</span>
-      ${pend.map(o=>{const its=sepCalc(o,o.pgto.valor);return `<div class="sep-i"><div><b>${esc(cliNome(o))}</b> <span class="hint">· Nº ${nOrc(o.numero)} · recebido ${money(o.pgto.valor)} em ${dataBR(o.pgto.data)}</span><div class="hint">${its.map(x=>`${esc(x.nome)} ${money(x.v)}`).join(' · ')}</div></div><div class="row" style="gap:6px;flex-wrap:nowrap"><button class="btn sm" data-sep-pula="${o.id}">Não separar</button><button class="btn sm primary" data-sep="${o.id}">Já separei</button></div></div>`}).join('')}</div>`
+      ${pend.map(o=>{const its=sepCalc(o,o.pgto.valor,liqDe(o.pgto));return `<div class="sep-i"><div><b>${esc(cliNome(o))}</b> <span class="hint">· Nº ${nOrc(o.numero)} · recebido ${money(o.pgto.valor)} em ${dataBR(o.pgto.data)}</span><div class="hint">${its.map(x=>`${esc(x.nome)} ${money(x.v)}`).join(' · ')}</div></div><div class="row" style="gap:6px;flex-wrap:nowrap"><button class="btn sm" data-sep-pula="${o.id}">Não separar</button><button class="btn sm primary" data-sep="${o.id}">Já separei</button></div></div>`}).join('')}</div>`
       :'<p class="hint" style="margin:0">Tudo separado ✓. Ao registrar um pagamento, o app mostra quanto guardar em cada caixinha.</p>'}</section>`}
 // Botão "?" das caixinhas e do dízimo: explica o fundamento de cada uma.
 function ajudaCaixinha(k){const {imp,desp}=taxas(),d=dizCfg(),ex=1000,ul=a=>`<ul class="ajuda-l">${a.map(x=>`<li>${x}</li>`).join('')}</ul>`;
@@ -3759,7 +3770,7 @@ function ajudaCaixinha(k){const {imp,desp}=taxas(),d=dizCfg(),ex=1000,ul=a=>`<ul
     caix:['Como funcionam as caixinhas',`<p>Tudo o que o cliente paga cai na mesma conta, e aí parece que sobrou dinheiro. As caixinhas separam, a cada pagamento, a parte que <b>já tem dono</b>. <b>O que fica na conta principal é seu de verdade.</b></p>
       ${ul(['<b>Impostos</b>: para o DAS e uma reserva.','<b>Despesas</b>: carro, combustível, ferramentas, celular.','<b>Materiais</b>: o custo do material, para repor e comprar o próximo.',d.ativo?'<b>Dízimo</b>: guardado até o dia de entregar.':''].filter(Boolean))}
       <p><b>Passo a passo:</b> ao registrar um pagamento o app mostra quanto vai para cada caixinha. Você guarda esses valores na caixinha, porquinho ou cofrinho do banco e deixa marcado "Já separei". Se não der na hora, o pagamento fica em "Falta separar" até você tocar em "Já separei".</p>
-      <p><b>Para gastar:</b> ao pagar algo, escolha a caixinha certa em "Saiu da conta".</p>`],
+      <p><b>Para gastar:</b> ao pagar algo, escolha a caixinha certa em "Saiu da conta".</p><p><b>Pagamento no cartão:</b> informe o valor que cai na conta. A taxa da maquininha vira despesa e as caixinhas são calculadas sobre o que realmente entrou.</p>`],
     imp:['Caixinha Impostos',`<p>No MEI você paga um valor fixo por mês, o <b>DAS</b>, de cerca de R$ 86, vendendo pouco ou muito. Emitir nota não gera imposto a mais.</p>
       <p>Mesmo assim, o preço já tem <b>${fmtPct(imp)} de imposto</b> embutido. Essa parte vem para cá. Num serviço de ${money(ex)}, ficam <b>${money(ex*imp/100)}</b> aqui.</p>
       ${ul(['Paga o <b>DAS todo mês</b> sem aperto: a guia marcada como paga sai daqui sozinha.','Garante uma folga se um dia passar do limite do MEI e virar ME, quando o imposto passa a ser uma porcentagem.','Ajuda no imposto de renda pessoa física, se precisar.'])}
@@ -3892,10 +3903,10 @@ async function verPagEq(id){const g=(S.pagequipe||[]).find(x=>x.id===id);if(!g)r
    (`ehDizimo`: 'dizimo' ou categoria criada com "dízimo" no nome). Lançamento com `orcId` marca o serviço como entregue. */
 const dizCfg=()=>{const d=finCfg().dizimo||{};return {ativo:false,pct:10,base:'bruto',...d}};
 const ehDizimo=c=>c==='dizimo'||normNome((finCats()[c]||[''])[0]).includes('dizimo');
-function dizimoDe(o,v){const d=dizCfg();if(!d.ativo)return 0;let base=num(v);
-  if(d.base==='liquido'){const t=calc(o),{imp,desp}=taxas(),prop=t.total>0?Math.min(1,num(v)/t.total):0,mat=(o.itens||[]).filter(i=>!isMO(i)).reduce((s,i)=>s+num(i.custo)*num(i.qtd),0)*prop;base=Math.max(0,num(v)*(1-(imp+desp)/100)-mat)}
+function dizimoDe(o,v,liq){liq=liq==null?num(v):num(liq);const d=dizCfg();if(!d.ativo)return 0;let base=liq;
+  if(d.base==='liquido'){const t=calc(o),{imp,desp}=taxas(),prop=t.total>0?Math.min(1,num(v)/t.total):0,mat=(o.itens||[]).filter(i=>!isMO(i)).reduce((s,i)=>s+num(i.custo)*num(i.qtd),0)*prop;base=Math.max(0,liq*(1-(imp+desp)/100)-mat)}
   return r2(base*num(d.pct)/100)}
-function dizimoMes(ym){const ps=S.orcamentos.filter(o=>o.pgto&&num(o.pgto.valor)>0&&String(o.pgto.data||'').startsWith(ym)).map(o=>({o,v:dizimoDe(o,o.pgto.valor)})).filter(x=>x.v>0);
+function dizimoMes(ym){const ps=S.orcamentos.filter(o=>o.pgto&&num(o.pgto.valor)>0&&String(o.pgto.data||'').startsWith(ym)).map(o=>({o,v:dizimoDe(o,o.pgto.valor,liqDe(o.pgto))})).filter(x=>x.v>0);
   const ls=(S.lancamentos||[]).filter(l=>l.tipo==='saida'&&ehDizimo(l.cat));
   ps.forEach(x=>{x.entregue=ls.filter(l=>l.orcId===x.o.id).reduce((t,l)=>t+num(l.valor),0)});
   const devido=ps.reduce((t,x)=>t+x.v,0),entregue=ls.filter(l=>String(l.data).startsWith(ym)).reduce((t,l)=>t+num(l.valor),0);
@@ -4128,7 +4139,7 @@ function avisosFinanceiros(){const hoje=hojeISO(),ate=isoDia(new Date(Date.now()
   faturasAPagar(ate).forEach(({c,f})=>{const d=diasAte(f.vence);out.push({cls:d<=0?'warn':'info',t:`Pagar fatura ${c.nome}: ${money(f.falta)}`,h:f.vence<hoje?`Venceu em ${dataBR(f.vence)}`:`Vence ${d===0?'hoje':d===1?'amanhã':'em '+dataBR(f.vence)}`})});
   cartoes().forEach(c=>{const lim=num(c.limite);if(lim>0){const ab=emAbertoCartao(c);if(ab>lim*0.9)out.push({cls:ab>lim?'warn':'info',t:`Limite do ${c.nome}: ${ab>lim?'estourado':'quase no fim'}`,h:`Em aberto ${money(ab)} de ${money(lim)}`})}});
   const sa=eqSemAss();if(sa.length)out.push({cls:'info',t:`${sa.length} recibo${sa.length>1?'s':''} da equipe sem assinatura`,h:sa.slice(0,3).map(g=>eqPessoa(g.pessoaId).nome).filter(Boolean).join(', ')+'. Abra em Mais → Equipe e peça para assinar.'});
-  const sp=sepPendentes();if(sp.length)out.push({cls:'info',t:`Separar ${money(sp.reduce((t,o)=>t+sepCalc(o,o.pgto.valor).reduce((s,x)=>s+x.v,0),0))} para as caixinhas`,h:`${sp.length} pagamento${sp.length>1?'s':''} ainda não separado${sp.length>1?'s':''}. Separe no banco e toque em "Já separei".`});
+  const sp=sepPendentes();if(sp.length)out.push({cls:'info',t:`Separar ${money(sp.reduce((t,o)=>t+sepCalc(o,o.pgto.valor,liqDe(o.pgto)).reduce((s,x)=>s+x.v,0),0))} para as caixinhas`,h:`${sp.length} pagamento${sp.length>1?'s':''} ainda não separado${sp.length>1?'s':''}. Separe no banco e toque em "Já separei".`});
   return out}
 function formContaFixa(cf){const n=!cf,cfg=finCfg();cf=cf||{id:uid(),freq:'mensal',dia:10,cat:'',contaId:contaPadrao(),inicio:ymHoje(),ativo:true,criadoEm:new Date().toISOString()};
   const cats=Object.entries(finCats()).filter(([,v])=>v[1]==='s');
